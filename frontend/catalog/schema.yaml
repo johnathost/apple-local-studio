@@ -107,6 +107,16 @@ groups:
         default: ""
         placeholder: "e.g. black lace bra, thigh highs"
 
+      - id: heels
+        label: High heels
+        type: choice
+        default: none
+        options:
+          - { id: none, label: None }
+          - { id: black, label: Black }
+          - { id: red, label: Red }
+          - { id: blue, label: Blue }
+
   - id: position
     label: Position
     fields:
@@ -161,6 +171,7 @@ groups:
         options:
           - { id: medium, label: Medium shot }
           - { id: pov, label: POV }
+          - { id: pov_45, label: POV 45° }
           - { id: from_behind, label: From behind }
           - { id: side, label: Side view }
           - { id: closeup, label: Close-up }

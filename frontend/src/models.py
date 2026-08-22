@@ -19,6 +19,8 @@ class ComposeRequest(BaseModel):
     max_loras: int | None = None
     include_triggers: bool = True
     mode: str = "gen"
+    # Field path the user just changed, e.g. "act.primary". Last-write wins.
+    winner: str | None = None
 
 
 class ComposeResponse(BaseModel):
@@ -26,6 +28,8 @@ class ComposeResponse(BaseModel):
     tags: list[str]
     loras: list[dict[str, Any]]
     scene: dict[str, Any]
+    dropped: list[str] = Field(default_factory=list)
+    blocked: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class GenerateRequest(BaseModel):
@@ -45,6 +49,7 @@ class GenerateRequest(BaseModel):
     mode: str = "gen"
     image_strength: float | None = None
     guidance: float | None = None
+    winner: str | None = None
 
 
 class JobResponse(BaseModel):

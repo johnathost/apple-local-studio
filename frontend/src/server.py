@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from src.catalog_loader import default_scene, engine_defaults, load_schema, reload_catalogs
 from src.composer import compose_prompt, scene_tags
+from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
 from src.system_prompts import SYSTEM_EDIT, SYSTEM_GEN
 from src.engine import engine
 from src.imageutil import MAX_IMAGE_BYTES, sniffed_image_suffix
@@ -64,6 +65,13 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
             base[k] = v
     scene = base
 
+    winner = (req.winner or "").strip() or None
+    if mode == "edit" and winner == "preset.scene":
+        preset_id = (scene.get("preset") or {}).get("scene")
+        scene = apply_edit_preset(scene, preset_id)
+
+    scene, dropped = sanitize_scene(scene, winner=winner, mode=mode)
+
     matched = match_loras(
         scene,
         on_disk=set(engine.list_lora_files()),
@@ -86,6 +94,8 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
         tags=sorted(scene_tags(scene)),
         loras=[m.to_dict() for m in matched],
         scene=scene,
+        dropped=dropped,
+        blocked=blocked_options(scene),
     )
 
 
@@ -135,6 +145,7 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             mode=req.mode,
             max_loras=req.max_loras,
             include_triggers=req.include_triggers,
+            winner=req.winner,
         )
     )
     prompt = (req.prompt or composed.prompt or "").strip()

@@ -1,7 +1,9 @@
 # LoRA catalog for auto-matching.
 # Source of filenames + triggers: /lora.md
-# Matching uses tags + priority; conflicts drop weaker options.
+# require_all: every tag must be present. require_any: at least one.
+# tags: extra scoring overlap. conflicts drop the entry.
 # exclusive_group: only the highest-scoring member of a group is stacked.
+# auto: false → manual pin only.
 
 loras:
   - id: huge_gape_vaginal
@@ -9,6 +11,9 @@ loras:
     file: HugeGape_Vagina_Light_v2.safetensors
     default_scale: 0.85
     priority: 90
+    exclusive_group: gape
+    require_all:
+      - act:vaginal_gape
     tags:
       - act:vaginal_gape
       - act:spreading
@@ -23,6 +28,13 @@ loras:
     file: FK_missionary.safetensors
     default_scale: 0.85
     priority: 100
+    exclusive_group: pose
+    require_all:
+      - act:vaginal
+    require_any:
+      - position:missionary
+      - position:lying_back
+      - position:legs_spread
     tags:
       - position:missionary
       - act:vaginal
@@ -38,7 +50,11 @@ loras:
       - position:doggy
       - position:cowgirl
       - position:reverse_cowgirl
+      - position:all_fours
       - act:anal
+      - partners:two_men
+      - camera:from_behind
+      - camera:ass_focus
 
   - id: cum_on_face
     name: Cum On Face
@@ -46,6 +62,8 @@ loras:
     default_scale: 0.8
     priority: 50
     exclusive_group: cum
+    require_all:
+      - finish:cum_face
     tags:
       - finish:cum_face
     triggers:
@@ -58,6 +76,9 @@ loras:
     file: HugeGape_Anal_V3_AIO.safetensors
     default_scale: 0.85
     priority: 90
+    exclusive_group: gape
+    require_all:
+      - act:anal_gape
     tags:
       - act:anal_gape
     triggers:
@@ -71,6 +92,12 @@ loras:
     file: klein-pov-anal-11epoc-k3nk.safetensors
     default_scale: 0.85
     priority: 95
+    exclusive_group: pose
+    require_all:
+      - act:anal
+    require_any:
+      - position:reverse_cowgirl
+      - position:cowgirl
     tags:
       - act:anal
       - camera:pov
@@ -90,6 +117,14 @@ loras:
     file: FK_spitroastanal.safetensors
     default_scale: 0.85
     priority: 100
+    exclusive_group: pose
+    require_all:
+      - partners:two_men
+      - act:anal
+    require_any:
+      - position:doggy
+      - position:all_fours
+      - act:oral
     tags:
       - position:doggy
       - position:all_fours
@@ -112,6 +147,9 @@ loras:
     file: MrWeaz_ProlapseAnus_v2.safetensors
     default_scale: 0.8
     priority: 95
+    exclusive_group: gape
+    require_all:
+      - act:prolapse
     tags:
       - act:prolapse
     triggers:
@@ -125,6 +163,9 @@ loras:
     file: SelfFisting_Anal_v1.safetensors
     default_scale: 0.85
     priority: 95
+    exclusive_group: fisting
+    require_all:
+      - act:anal_fisting
     tags:
       - act:anal_fisting
       - partners:solo
@@ -142,6 +183,13 @@ loras:
     file: FK_bbcanalcowgirl_epoch_20.safetensors
     default_scale: 0.85
     priority: 100
+    exclusive_group: pose
+    require_all:
+      - act:anal
+    require_any:
+      - position:cowgirl
+      - position:reverse_cowgirl
+      - position:sitting_lap
     tags:
       - position:cowgirl
       - position:reverse_cowgirl
@@ -166,6 +214,9 @@ loras:
     file: FK_sloppydeepthroat_epoch_10.safetensors
     default_scale: 0.85
     priority: 95
+    exclusive_group: oral
+    require_all:
+      - act:deepthroat
     tags:
       - act:deepthroat
       - act:oral
@@ -184,6 +235,8 @@ loras:
     default_scale: 0.85
     priority: 95
     exclusive_group: oral
+    require_all:
+      - act:facehumping
     tags:
       - act:facehumping
     triggers:
@@ -205,6 +258,9 @@ loras:
     default_scale: 0.8
     priority: 45
     exclusive_group: cum
+    require_any:
+      - finish:cum_body
+      - finish:cum_inside
     tags:
       - finish:cum_body
       - finish:cum_inside
@@ -219,6 +275,9 @@ loras:
     default_scale: 0.8
     priority: 60
     exclusive_group: identity
+    require_any:
+      - subject:femboy
+      - subject:futa
     tags:
       - subject:femboy
       - subject:futa
@@ -233,6 +292,8 @@ loras:
     default_scale: 0.8
     priority: 65
     exclusive_group: identity
+    require_all:
+      - subject:futa
     tags:
       - subject:futa
     triggers:
@@ -244,6 +305,10 @@ loras:
     file: nipplediffusion-f2-klein-9b_v3.safetensors
     default_scale: 0.7
     priority: 30
+    auto: false
+    require_any:
+      - body.nipples:erect
+      - body.nipples:puffy
     tags:
       - body.nipples:erect
       - body.nipples:puffy
@@ -258,6 +323,9 @@ loras:
     default_scale: 0.85
     priority: 90
     exclusive_group: oral
+    require_all:
+      - act:oral
+      - camera:pov
     tags:
       - act:oral
       - camera:pov
@@ -274,6 +342,9 @@ loras:
     file: The_Body_Version_A_Flux2.k.9B_r16_AdamW8Bit_Weighted_768_woman_000005000.safetensors
     default_scale: 0.7
     priority: 25
+    auto: false
+    require_all:
+      - body:emphasis
     tags:
       - body:emphasis
     triggers:
@@ -285,6 +356,9 @@ loras:
     file: Dildo riding.safetensors
     default_scale: 0.8
     priority: 80
+    exclusive_group: pose
+    require_all:
+      - act:dildo
     tags:
       - act:dildo
       - partners:solo
@@ -298,18 +372,30 @@ loras:
     file: spread_legs_beta1.safetensors
     default_scale: 0.8
     priority: 70
+    require_any:
+      - position:legs_spread
+      - act:spreading
     tags:
       - position:legs_spread
       - act:spreading
+      - position:lying_back
     triggers:
       - "a woman spreading legs"
-    conflicts: []
+    conflicts:
+      - position:doggy
+      - position:all_fours
+      - position:from_behind_stand
+      - position:reverse_cowgirl
+      - position:cowgirl
 
   - id: breast_implants
     name: Breast Implants
     file: Breast_Implanter_v5.0_exp.safetensors
     default_scale: 0.75
     priority: 40
+    require_any:
+      - body:implants
+      - body.breasts:implants
     tags:
       - body:implants
       - body.breasts:implants
@@ -323,6 +409,9 @@ loras:
     file: klein-tittyfuck-11epoc-k3nk.safetensors
     default_scale: 0.85
     priority: 90
+    exclusive_group: pose
+    require_all:
+      - act:titfuck
     tags:
       - act:titfuck
     triggers:
@@ -340,6 +429,8 @@ loras:
     default_scale: 0.8
     priority: 55
     exclusive_group: identity
+    require_all:
+      - subject:femboy
     tags:
       - subject:femboy
     triggers:
@@ -351,6 +442,9 @@ loras:
     file: SelfFisting_Vaginal_v1.safetensors
     default_scale: 0.85
     priority: 90
+    exclusive_group: fisting
+    require_all:
+      - act:vaginal_fisting
     tags:
       - act:vaginal_fisting
       - partners:solo
@@ -368,6 +462,8 @@ loras:
     file: SEXGOD_FemaleMasturbation_Klein9b_v1.safetensors
     default_scale: 0.8
     priority: 80
+    require_all:
+      - act:masturbation
     tags:
       - act:masturbation
       - partners:solo

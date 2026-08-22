@@ -251,6 +251,33 @@ button.sm { padding: 4px 8px; font-size: 0.78rem; }
   border-color: rgba(192, 132, 252, 0.55);
   color: #e9d5ff;
 }
+.chip.conflict {
+  opacity: 0.42;
+  text-decoration: line-through;
+  text-decoration-color: rgba(139, 144, 160, 0.7);
+}
+.chip.conflict:hover { opacity: 0.7; }
+.group.preset-group .chip {
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.constraint-line {
+  margin: 6px 14px 0;
+  font-size: 0.75rem;
+  color: var(--warn);
+}
+.lora-add-row {
+  padding: 0 14px 12px;
+}
+.lora-add-row select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 8px 10px;
+  font: inherit;
+}
 
 input[type="text"], input[type="number"], textarea {
   width: 100%;

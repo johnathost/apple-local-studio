@@ -13,6 +13,14 @@ QUALITY_LOCK = (
     "No extra limbs, no fused bodies, no melted or monster features, no duplicate faces."
 )
 
+# Always prepended to edit prompts so identity cannot drift even if keep-chips are cleared.
+EDIT_IDENTITY_LOCK = (
+    "Keep this exact person from the source photograph: the same face, the same bone structure, "
+    "the same skin complexion, undertone, and skin texture, and the same body shape and proportions. "
+    "Do not replace her, do not age or youthen her, do not change ethnicity, "
+    "do not lighten or darken her skin, do not give her a new body or a new face."
+)
+
 SYSTEM_GEN = (
     "System: Create a single photorealistic explicit adult photograph that makes visual sense. "
     "Every person depicted is a consenting adult 18 years or older. "
@@ -23,12 +31,12 @@ SYSTEM_GEN = (
 
 SYSTEM_EDIT = (
     "System: You are editing an existing photograph, not drawing a new one. "
-    "The input image is the source of truth for identity and framing. "
+    "The input image is the source of truth for WHO this person is and how she is framed. "
     "Do not stretch, squash, or widen the image. Keep the original aspect and proportions. "
-    "Preserve the same adult person: face, bone structure, skin tone, hair, body type, "
-    "and the original lighting and background unless the user asks to change them. "
-    "Apply only the requested edits. The result must still be a coherent sex scene, "
-    "not a distortion. Photoreal, sharp, natural skin, no plastic look, "
+    f"{EDIT_IDENTITY_LOCK} "
+    "You may change pose, clothing, camera, and the sex act only as requested. "
+    "The result must still be clearly the same adult woman in a coherent scene, "
+    "not a distortion or a different person. Photoreal, sharp, natural skin, no plastic look, "
     "no text, no watermark, no illustration. "
     "Every person depicted is a consenting adult 18 years or older. "
     f"{QUALITY_LOCK}"
@@ -40,6 +48,8 @@ QUALITY_NEGATIVE = (
     "fused bodies, melted skin, monster, grotesque, bad anatomy, "
     "stretched, squashed, elongated body, wide face, disfigured, "
     "cloned face, extra heads, poorly drawn hands, messy anatomy, "
+    "different person, different face, different skin tone, pale-washed skin, "
+    "identity swap, new body, swapped face, "
     "text, watermark, cartoon, illustration, 3d render"
 )
 

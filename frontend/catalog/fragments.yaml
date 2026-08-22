@@ -55,6 +55,12 @@ clothing.state:
   dress_hiked: "dress hiked up around the waist, bottomless"
   keep_outfit: "keeping her current outfit and hairstyle"
 
+clothing.heels:
+  none: ""
+  black: "wearing black high heels"
+  red: "wearing red high heels"
+  blue: "wearing blue high heels"
+
 position.pose:
   standing: "standing"
   lying_back: "lying on her back"
@@ -88,6 +94,7 @@ act.primary:
 camera.angle:
   medium: "medium shot"
   pov: "POV, first-person view, looking at the camera"
+  pov_45: "POV from a 45 degree angle, looking down so her face, breasts, genitals, asshole and buttocks are all fully visible"
   from_behind: "viewed from behind"
   side: "side view"
   closeup: "close-up"

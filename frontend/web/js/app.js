@@ -7,6 +7,7 @@ const state = {
   scene: {},
   engine: {},
   loras: [],
+  catalog: [],
   prompt: "",
   tags: [],
   matched: [],
@@ -15,6 +16,9 @@ const state = {
   pollTimer: null,
   mode: "gen", // gen | edit
   systemPrompts: { gen: "", edit: "" },
+  winner: null,
+  blocked: {},
+  dropped: [],
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -57,6 +61,15 @@ function getSceneValue(groupId, fieldId) {
 function setSceneValue(groupId, fieldId, value) {
   if (!state.scene[groupId]) state.scene[groupId] = {};
   state.scene[groupId][fieldId] = value;
+  state.winner = `${groupId}.${fieldId}`;
+  if (
+    groupId !== "preset" &&
+    ["position", "act", "camera", "partners"].includes(groupId) &&
+    state.scene.preset?.scene &&
+    state.scene.preset.scene !== "none"
+  ) {
+    state.scene.preset.scene = "none";
+  }
   // Sync notes quick box into style.notes
   if (groupId === "style" && fieldId === "notes") {
     const nq = $("#notes-quick");
@@ -65,13 +78,27 @@ function setSceneValue(groupId, fieldId, value) {
   scheduleCompose();
 }
 
+function openGroupIds() {
+  return [...document.querySelectorAll("#builder-root details.group")]
+    .filter((d) => d.open)
+    .map((d) => d.dataset.group);
+}
+
+function optionBlocked(groupId, fieldId, optId) {
+  const blocked = state.blocked[`${groupId}.${fieldId}`] || [];
+  return blocked.includes(optId);
+}
+
 function renderBuilder() {
   const root = $("#builder-root");
+  const keptOpen = new Set(openGroupIds());
   root.innerHTML = "";
+  const defaultOpen = new Set(["preset", "subject", "keep", "body", "position", "act", "camera"]);
   for (const group of state.schema.groups || []) {
     const details = document.createElement("details");
-    details.className = "group";
-    details.open = ["subject", "body", "position", "act", "camera"].includes(group.id);
+    details.className = "group" + (group.id === "preset" ? " preset-group" : "");
+    details.dataset.group = group.id;
+    details.open = keptOpen.size ? keptOpen.has(group.id) : defaultOpen.has(group.id);
     const summary = document.createElement("summary");
     summary.textContent = group.label;
     details.appendChild(summary);
@@ -95,11 +122,17 @@ function renderBuilder() {
           btn.className = "chip";
           btn.textContent = opt.label;
           btn.dataset.value = opt.id;
-          if (getSceneValue(group.id, field.id) === opt.id) btn.classList.add("active");
+          const selected = getSceneValue(group.id, field.id) === opt.id;
+          if (selected) btn.classList.add("active");
+          else if (optionBlocked(group.id, field.id, opt.id)) {
+            btn.classList.add("conflict");
+            btn.title = "Conflicts with the current scene — click to switch";
+          }
           btn.addEventListener("click", () => {
             setSceneValue(group.id, field.id, opt.id);
             chips.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
             btn.classList.add("active");
+            btn.classList.remove("conflict");
           });
           chips.appendChild(btn);
         }
@@ -114,6 +147,10 @@ function renderBuilder() {
           btn.className = "chip multi";
           btn.textContent = opt.label;
           if (selected.has(opt.id)) btn.classList.add("active");
+          else if (optionBlocked(group.id, field.id, opt.id)) {
+            btn.classList.add("conflict");
+            btn.title = "Conflicts with the current scene — click to switch";
+          }
           btn.addEventListener("click", () => {
             const cur = new Set(getSceneValue(group.id, field.id) || []);
             if (opt.id === "none") {
@@ -127,6 +164,7 @@ function renderBuilder() {
             chips.querySelectorAll(".chip").forEach((c) => {
               const id = c.dataset.value;
               c.classList.toggle("active", cur.has(id));
+              c.classList.toggle("conflict", !cur.has(id) && optionBlocked(group.id, field.id, id));
             });
           });
           btn.dataset.value = opt.id;
@@ -172,6 +210,7 @@ function renderLoras() {
         <span class="muted">scale</span>
         <input type="range" min="0.1" max="1.2" step="0.05" value="${scale}" data-id="${m.id}" />
         <span class="muted scale-val">${Number(scale).toFixed(2)}</span>
+        ${m.auto ? "" : `<button type="button" class="ghost sm unpin" data-id="${m.id}">unpin</button>`}
       </div>
     `;
     const range = card.querySelector('input[type="range"]');
@@ -181,6 +220,10 @@ function renderLoras() {
       val.textContent = Number(range.value).toFixed(2);
       scheduleCompose();
     });
+    card.querySelector(".unpin")?.addEventListener("click", () => {
+      delete state.manualScales[m.id];
+      scheduleCompose();
+    });
     root.appendChild(card);
   }
 }
@@ -188,6 +231,37 @@ function renderLoras() {
 function renderTags() {
   const root = $("#tag-list");
   root.innerHTML = state.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+}
+
+function renderConstraintLine() {
+  const el = $("#constraint-line");
+  if (!el) return;
+  if (!state.dropped.length) {
+    el.classList.add("hidden");
+    el.textContent = "";
+    return;
+  }
+  el.classList.remove("hidden");
+  el.textContent = "Adjusted to keep the scene coherent: " + state.dropped.join(" · ");
+}
+
+function renderLoraPicker() {
+  const sel = $("#lora-add");
+  if (!sel) return;
+  const pinned = new Set(state.matched.map((m) => m.id));
+  const current = sel.value;
+  sel.innerHTML = `<option value="">Add from catalog…</option>`;
+  for (const entry of state.catalog) {
+    if (!entry.id || pinned.has(entry.id) || entry.enabled === false) continue;
+    const opt = document.createElement("option");
+    opt.value = entry.id;
+    const miss = entry.available ? "" : " (missing file)";
+    const auto = entry.auto === false ? " · manual" : "";
+    opt.textContent = `${entry.name}${auto}${miss}`;
+    sel.appendChild(opt);
+  }
+  sel.value = "";
+  if (current && [...sel.options].some((o) => o.value === current)) sel.value = current;
 }
 
 function escapeHtml(s) {
@@ -231,17 +305,32 @@ async function runCompose() {
         max_loras: maxLoras,
         manual_loras: manual,
         mode: state.mode,
+        winner: state.winner,
       }),
     });
+    const prevScene = JSON.stringify(state.scene);
     state.prompt = data.prompt;
     state.tags = data.tags || [];
     state.matched = data.loras || [];
+    state.dropped = data.dropped || [];
+    state.blocked = data.blocked || {};
     state.scene = data.scene || state.scene;
+    state.winner = null;
 
     const ta = $("#prompt-out");
     if (document.activeElement !== ta) ta.value = state.prompt;
+    const focused = document.activeElement;
+    const typing =
+      focused &&
+      (focused.tagName === "INPUT" || focused.tagName === "TEXTAREA") &&
+      focused.id !== "prompt-out";
+    if (JSON.stringify(state.scene) !== prevScene && !typing) {
+      renderBuilder();
+    }
     renderLoras();
+    renderLoraPicker();
     renderTags();
+    renderConstraintLine();
   } catch (e) {
     console.error(e);
   }
@@ -351,6 +440,10 @@ async function enterStudio(mode) {
     state.engine = defaults.engine || {};
     state.systemPrompts = defaults.system_prompts || state.systemPrompts;
     state.manualScales = {};
+    state.winner = null;
+    state.blocked = {};
+    state.dropped = [];
+    state.catalog = await api("/api/loras").catch(() => []);
     setEngineForm();
     applyModeChrome();
     renderBuilder();
@@ -376,13 +469,15 @@ function setBusy(busy) {
 }
 
 async function generate() {
+  if (state.mode === "edit" && !state.refImage) {
+    alert("Edit image needs a source photo. Choose an image first.");
+    return;
+  }
+
+  await runCompose();
   const prompt = $("#prompt-out").value.trim();
   if (!prompt) {
     alert("Prompt is empty");
-    return;
-  }
-  if (state.mode === "edit" && !state.refImage) {
-    alert("Edit image needs a source photo. Choose an image first.");
     return;
   }
 
@@ -407,6 +502,7 @@ async function generate() {
     quantize: Number($("#eng-quant").value),
     seed: seedVal === "" ? null : Number(seedVal),
     mode: state.mode,
+    winner: state.winner,
     image_paths: state.refImage ? [state.refImage.filename] : [],
     image_strength:
       state.mode === "gen" && state.refImage ? Number($("#eng-strength")?.value || 0.55) : null,
@@ -546,6 +642,16 @@ async function init() {
   });
   $("#include-triggers").addEventListener("change", scheduleCompose);
   $("#eng-max-loras").addEventListener("change", scheduleCompose);
+  $("#lora-add")?.addEventListener("change", () => {
+    const id = $("#lora-add").value;
+    if (!id) return;
+    if (state.manualScales[id] == null) {
+      const entry = state.catalog.find((l) => l.id === id);
+      state.manualScales[id] = Number(entry?.default_scale ?? 0.8);
+    }
+    $("#lora-add").value = "";
+    scheduleCompose();
+  });
   $("#notes-quick").addEventListener("input", () => {
     syncQuickNotes();
     scheduleCompose();

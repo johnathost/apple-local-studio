@@ -1,9 +1,10 @@
 # Edit-mode fragments. Written as instructions, not a from-scratch scene.
 
 keep.traits:
-  face: "keep her face and identity"
+  face: "keep her exact face and identity"
+  skin: "keep her original skin complexion, undertone, and skin texture"
   hair: "keep her hair"
-  body: "keep her body"
+  body: "keep her original body shape and proportions"
   breasts: "keep her breasts"
   outfit: "keep her original outfit"
   setting: "keep the original setting"
@@ -27,6 +28,12 @@ clothing.state:
   partially: "make her partially clothed"
   dress_hiked: "hike her dress up"
 
+clothing.heels:
+  none: ""
+  black: "put her in black high heels"
+  red: "put her in red high heels"
+  blue: "put her in blue high heels"
+
 position.pose:
   keep: ""
   standing: "change pose to standing"
@@ -37,6 +44,7 @@ position.pose:
   doggy: "change pose to doggystyle"
   all_fours: "change pose to on all fours"
   legs_spread: "change pose to legs spread"
+  kneeling: "change pose to kneeling"
   from_behind_stand: "change pose to standing, taken from behind"
 
 act.primary:
@@ -51,9 +59,16 @@ camera.angle:
   keep: ""
   medium: "medium shot"
   pov: "change camera to pov"
+  pov_45: "change camera to POV from a 45 degree angle so her face, breasts, genitals, asshole and buttocks are all visible"
   from_behind: "change camera to from behind"
   closeup: "change to a close-up"
   ass_focus: "change camera to ass focus"
+
+partners.count:
+  keep: ""
+  solo: "she is alone"
+  one_man: "with one man, the man mostly out of frame"
+  two_men: "threesome with two men"
 
 finish.effects:
   cum_face: "add cum on her face"

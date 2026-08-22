@@ -23,10 +23,23 @@ def _norm_mode(mode: str | None) -> str:
     return "edit" if (mode or "").strip().lower() == "edit" else "gen"
 
 
+@lru_cache(maxsize=1)
+def load_constraints() -> dict[str, Any]:
+    path = CATALOG_DIR / "constraints.yaml"
+    if not path.exists():
+        return {}
+    return _read_yaml(path)
+
+
 @lru_cache(maxsize=2)
 def load_schema(mode: str = "gen") -> dict[str, Any]:
     name = "edit_schema.yaml" if _norm_mode(mode) == "edit" else "schema.yaml"
-    return _read_yaml(CATALOG_DIR / name)
+    data = dict(_read_yaml(CATALOG_DIR / name))
+    extra = load_constraints()
+    data["constraints"] = extra.get("on_select") or {}
+    data["presets"] = extra.get("edit_presets") or {}
+    data["sanitize_order"] = extra.get("sanitize_order") or []
+    return data
 
 
 @lru_cache(maxsize=2)
@@ -61,3 +74,4 @@ def reload_catalogs() -> None:
     load_schema.cache_clear()
     load_fragments.cache_clear()
     load_loras.cache_clear()
+    load_constraints.cache_clear()

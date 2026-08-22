@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from src.catalog_loader import load_fragments
+from src.constraints import preset_fragment
+from src.system_prompts import EDIT_IDENTITY_LOCK
 
 
 def _frag(fragments: dict[str, Any], key: str, value: Any) -> str | list[str]:
@@ -40,45 +42,57 @@ def _join_unique(parts: list[str]) -> str:
     return ", ".join(out)
 
 
+def _tag_value(value: Any) -> bool:
+    return value not in (None, "", "keep", "none")
+
+
 def scene_tags(scene: dict[str, Any]) -> set[str]:
     """Flatten scene into matcher tags like act:vaginal, position:missionary."""
     tags: set[str] = set()
 
     subject = scene.get("subject") or {}
-    if subject.get("type"):
+    if _tag_value(subject.get("type")):
         tags.add(f"subject:{subject['type']}")
 
     body = scene.get("body") or {}
     breasts = body.get("breasts")
-    if breasts:
+    if _tag_value(breasts):
         tags.add(f"body.breasts:{breasts}")
         if breasts == "implants":
             tags.add("body:implants")
-    if body.get("nipples"):
+    if _tag_value(body.get("nipples")):
         tags.add(f"body.nipples:{body['nipples']}")
     if body.get("body_detail"):
         tags.add("body:emphasis")
 
     position = scene.get("position") or {}
-    if position.get("pose"):
+    if _tag_value(position.get("pose")):
         tags.add(f"position:{position['pose']}")
 
     act = scene.get("act") or {}
     for a in act.get("primary") or []:
-        if a and a != "none":
+        if _tag_value(a):
             tags.add(f"act:{a}")
 
     camera = scene.get("camera") or {}
-    if camera.get("angle"):
-        tags.add(f"camera:{camera['angle']}")
+    angle = camera.get("angle")
+    if _tag_value(angle):
+        tags.add(f"camera:{angle}")
+        if angle == "pov_45":
+            tags.add("camera:pov")
 
     partners = scene.get("partners") or {}
-    if partners.get("count"):
+    if _tag_value(partners.get("count")):
         tags.add(f"partners:{partners['count']}")
 
     finish = scene.get("finish") or {}
     for fx in finish.get("effects") or []:
-        tags.add(f"finish:{fx}")
+        if _tag_value(fx):
+            tags.add(f"finish:{fx}")
+
+    clothing = scene.get("clothing") or {}
+    if _tag_value(clothing.get("heels")):
+        tags.add(f"clothing.heels:{clothing['heels']}")
 
     return tags
 
@@ -100,8 +114,15 @@ def compose_edit_prompt(
 
     fr = load_fragments("edit")
     chunks: list[str] = [
-        "Edit this photograph in place. Do not replace the person or invent a new face."
+        "Edit this photograph in place. Do not replace the person or invent a new face.",
+        EDIT_IDENTITY_LOCK,
+        "Keep the original skin complexion; do not repaint her skin.",
     ]
+
+    preset_id = (scene.get("preset") or {}).get("scene")
+    preset_text = preset_fragment(preset_id)
+    if preset_text:
+        chunks.append(preset_text)
 
     keep = scene.get("keep") or {}
     keep_bits = _frag(fr, "keep.traits", keep.get("traits") or [])
@@ -117,6 +138,9 @@ def compose_edit_prompt(
     cloth = _frag(fr, "clothing.state", clothing.get("state"))
     if isinstance(cloth, str) and cloth:
         chunks.append(cloth)
+    heels = _frag(fr, "clothing.heels", clothing.get("heels"))
+    if isinstance(heels, str) and heels:
+        chunks.append(heels)
     cloth_details = (clothing.get("details") or "").strip()
     if cloth_details:
         chunks.append(cloth_details)
@@ -130,6 +154,11 @@ def compose_edit_prompt(
     acts = _frag(fr, "act.primary", act.get("primary") or [])
     if isinstance(acts, list):
         chunks.extend([a for a in acts if a])
+
+    partners = scene.get("partners") or {}
+    pcount = _frag(fr, "partners.count", partners.get("count"))
+    if isinstance(pcount, str) and pcount:
+        chunks.append(pcount)
 
     camera = scene.get("camera") or {}
     angle = _frag(fr, "camera.angle", camera.get("angle"))
@@ -215,6 +244,9 @@ def compose_prompt(
     cloth = _frag(fr, "clothing.state", clothing.get("state"))
     if isinstance(cloth, str) and cloth:
         chunks.append(cloth)
+    heels = _frag(fr, "clothing.heels", clothing.get("heels"))
+    if isinstance(heels, str) and heels:
+        chunks.append(heels)
     cloth_details = (clothing.get("details") or "").strip()
     if cloth_details:
         chunks.append(cloth_details)

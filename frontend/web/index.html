@@ -87,6 +87,7 @@
 
         <label class="field-label">Final prompt <span class="muted">(editable)</span></label>
         <textarea id="prompt-out" rows="10" spellcheck="false"></textarea>
+        <p id="constraint-line" class="constraint-line hidden"></p>
 
         <div class="aspect-row" id="aspect-row">
           <button type="button" class="ghost sm aspect-btn" data-w="832" data-h="1248">Portrait 2:3</button>
@@ -109,6 +110,12 @@
           <h3>Matched LoRAs</h3>
         </div>
         <div id="lora-list" class="lora-list"></div>
+        <div class="lora-add-row">
+          <label class="field-label" for="lora-add">Pin extra LoRA</label>
+          <select id="lora-add">
+            <option value="">Add from catalog…</option>
+          </select>
+        </div>
 
         <div class="panel-head tight">
           <h3>Tags</h3>

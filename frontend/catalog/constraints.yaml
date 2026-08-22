@@ -1,0 +1,207 @@
+# Scene coherence rules.
+# on_select[field][value] is applied when that value is the last write (UI winner)
+# or, with no winner, in sanitize_order so a messy scene still composes cleanly.
+
+sanitize_order:
+  - position.pose
+  - act.primary
+  - camera.angle
+  - partners.count
+
+on_select:
+  position.pose:
+    doggy:
+      - field: act.primary
+        drop: [spreading, vaginal_gape, facehumping, titfuck]
+    all_fours:
+      - field: act.primary
+        drop: [spreading, vaginal_gape, facehumping, titfuck]
+    from_behind_stand:
+      - field: act.primary
+        drop: [spreading, vaginal_gape, facehumping, titfuck]
+    reverse_cowgirl:
+      - field: act.primary
+        drop: [spreading, vaginal_gape, facehumping, titfuck]
+    cowgirl:
+      - field: act.primary
+        drop: [spreading, facehumping, titfuck]
+    kneeling:
+      - field: act.primary
+        drop: [spreading, vaginal_gape]
+    missionary:
+      - field: camera.angle
+        replace_if_in: [from_behind, ass_focus]
+        replace_with: pov
+    legs_spread:
+      - field: camera.angle
+        replace_if_in: [from_behind]
+        replace_with: pov_45
+    lying_back:
+      - field: camera.angle
+        replace_if_in: [from_behind]
+        replace_with: pov_45
+
+  act.primary:
+    spreading:
+      - field: position.pose
+        replace_if_in: [doggy, all_fours, from_behind_stand, reverse_cowgirl, cowgirl, kneeling]
+        replace_with: legs_spread
+    vaginal_gape:
+      - field: position.pose
+        replace_if_in: [doggy, all_fours, from_behind_stand, reverse_cowgirl, cowgirl, kneeling]
+        replace_with: legs_spread
+    vaginal:
+      - field: partners.count
+        replace_if_in: [solo]
+        replace_with: one_man
+      - field: act.primary
+        drop: [masturbation]
+    anal:
+      - field: partners.count
+        replace_if_in: [solo]
+        replace_with: one_man
+      - field: act.primary
+        drop: [masturbation]
+    oral:
+      - field: partners.count
+        replace_if_in: [solo]
+        replace_with: one_man
+      - field: act.primary
+        drop: [masturbation]
+    deepthroat:
+      - field: partners.count
+        replace_if_in: [solo]
+        replace_with: one_man
+      - field: act.primary
+        drop: [masturbation]
+    titfuck:
+      - field: partners.count
+        replace_if_in: [solo]
+        replace_with: one_man
+      - field: position.pose
+        replace_if_in: [doggy, all_fours, missionary, legs_spread, lying_back]
+        replace_with: kneeling
+      - field: act.primary
+        drop: [masturbation, spreading]
+    facehumping:
+      - field: partners.count
+        replace_if_in: [solo, two_men]
+        replace_with: one_man
+      - field: position.pose
+        replace_if_in: [doggy, all_fours, cowgirl, reverse_cowgirl, kneeling, from_behind_stand]
+        replace_with: lying_back
+      - field: act.primary
+        drop: [masturbation, spreading, vaginal, anal]
+    masturbation:
+      - field: partners.count
+        replace_if_in: [one_man, two_men]
+        replace_with: solo
+      - field: act.primary
+        drop: [vaginal, anal, oral, deepthroat, facehumping, titfuck]
+    vaginal_fisting:
+      - field: partners.count
+        replace_if_in: [one_man, two_men]
+        replace_with: solo
+    anal_fisting:
+      - field: partners.count
+        replace_if_in: [one_man, two_men]
+        replace_with: solo
+    dildo:
+      - field: partners.count
+        replace_if_in: [one_man, two_men]
+        replace_with: solo
+      - field: act.primary
+        drop: [vaginal, anal, oral, deepthroat, facehumping, titfuck]
+
+  camera.angle:
+    pov:
+      - field: partners.count
+        replace_if_in: [two_men]
+        replace_with: one_man
+    pov_45:
+      - field: partners.count
+        replace_if_in: [two_men]
+        replace_with: one_man
+      - field: position.pose
+        replace_if_in: [doggy, all_fours, from_behind_stand]
+        replace_with: lying_back
+
+  partners.count:
+    two_men:
+      - field: camera.angle
+        replace_if_in: [pov, pov_45]
+        replace_with: side
+    solo:
+      - field: act.primary
+        drop: [vaginal, anal, oral, deepthroat, facehumping, titfuck]
+
+# Edit-mode one-click scene transforms. UI merges `apply` into the scene;
+# composer appends `fragment` while the preset id is set.
+edit_presets:
+  spread_45:
+    label: Legs open · 45° POV
+    apply:
+      keep:
+        traits: [face, skin, hair, body, setting, lighting]
+      change:
+        targets: [pose, camera, act]
+      position:
+        pose: lying_back
+      act:
+        primary: [spreading]
+      camera:
+        angle: pov_45
+      partners:
+        count: keep
+      clothing:
+        state: keep
+    fragment: >-
+      Transform the scene: she is lying on her back with her legs spread wide,
+      knees bent and open. Camera is POV looking down from about a 45 degree angle
+      so her face, breasts, stomach, genitals, asshole and buttocks are all fully
+      visible in one frame. Do not replace her face, body, or skin complexion.
+
+  pov_sex:
+    label: POV sex · on back
+    apply:
+      keep:
+        traits: [face, skin, hair, body, setting, lighting]
+      change:
+        targets: [pose, camera, act]
+      position:
+        pose: missionary
+      act:
+        primary: [vaginal, spreading]
+      camera:
+        angle: pov
+      partners:
+        count: one_man
+      clothing:
+        state: keep
+    fragment: >-
+      Transform into a POV sex scene: she is lying on her back with her legs
+      spread wide, a man is penetrating her vagina in missionary, first-person
+      view looking at her, the man mostly out of frame. Keep her exact face,
+      body, and skin complexion from the photo.
+
+  pov_blowjob:
+    label: POV blowjob
+    apply:
+      keep:
+        traits: [face, skin, hair, body, setting, lighting]
+      change:
+        targets: [pose, camera, act]
+      position:
+        pose: kneeling
+      act:
+        primary: [oral]
+      camera:
+        angle: pov
+      partners:
+        count: one_man
+      clothing:
+        state: keep
+    fragment: >-
+      Transform into a POV blowjob scene: she is in front of the camera performing
+      oral sex on a penis in first-person view, looking toward the viewer.
+      Keep her exact face, body, and skin complexion from the photo.

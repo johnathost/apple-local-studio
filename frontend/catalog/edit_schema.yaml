@@ -1,15 +1,29 @@
 # Image-edit builder. Instruction-first, keep/change, then optional scene tweaks.
 
 groups:
+  - id: preset
+    label: Transform into
+    fields:
+      - id: scene
+        label: Pre-defined scene
+        type: choice
+        default: none
+        options:
+          - { id: none, label: Custom }
+          - { id: spread_45, label: Legs open · 45° POV }
+          - { id: pov_sex, label: POV sex · on back }
+          - { id: pov_blowjob, label: POV blowjob }
+
   - id: keep
     label: Keep from the photo
     fields:
       - id: traits
         label: Preserve
         type: multi
-        default: [face, hair, body, setting]
+        default: [face, skin, hair, body, setting, lighting]
         options:
           - { id: face, label: Face / identity }
+          - { id: skin, label: Skin complexion }
           - { id: hair, label: Hair }
           - { id: body, label: Body }
           - { id: breasts, label: Breasts }
@@ -55,6 +69,16 @@ groups:
         default: ""
         placeholder: "e.g. keep the black dress, pull it up"
 
+      - id: heels
+        label: High heels
+        type: choice
+        default: none
+        options:
+          - { id: none, label: None }
+          - { id: black, label: Black }
+          - { id: red, label: Red }
+          - { id: blue, label: Blue }
+
   - id: position
     label: Pose
     fields:
@@ -72,6 +96,7 @@ groups:
           - { id: doggy, label: Doggystyle }
           - { id: all_fours, label: All fours }
           - { id: legs_spread, label: Legs spread }
+          - { id: kneeling, label: Kneeling }
           - { id: from_behind_stand, label: Standing from behind }
 
   - id: act
@@ -100,9 +125,23 @@ groups:
           - { id: keep, label: Keep original }
           - { id: medium, label: Medium }
           - { id: pov, label: POV }
+          - { id: pov_45, label: POV 45° }
           - { id: from_behind, label: From behind }
           - { id: closeup, label: Close-up }
           - { id: ass_focus, label: Ass focus }
+
+  - id: partners
+    label: Partners
+    fields:
+      - id: count
+        label: Partners
+        type: choice
+        default: keep
+        options:
+          - { id: keep, label: Keep original }
+          - { id: solo, label: Solo }
+          - { id: one_man, label: One man }
+          - { id: two_men, label: Two men }
 
   - id: finish
     label: Finish

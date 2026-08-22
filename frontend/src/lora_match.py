@@ -73,17 +73,23 @@ def match_loras(
     for entry in catalog:
         if entry.get("enabled") is False:
             continue
+        if entry.get("auto") is False:
+            continue
         file_name = (entry.get("file") or "").strip()
         entry_tags = set(entry.get("tags") or [])
-        if not entry_tags:
+        require_all = set(entry.get("require_all") or [])
+        require_any = set(entry.get("require_any") or [])
+        if not entry_tags and not require_all and not require_any:
             continue
 
-        overlap = entry_tags & tags
-        if not overlap:
+        overlap = (entry_tags | require_all | require_any) & tags
+        if require_all and not require_all <= tags:
+            continue
+        if require_any and not (require_any & tags):
             continue
 
-        # Require at least one "strong" tag (act/position/camera/finish/subject
-        # specialty). Weak tags alone (e.g. partners:solo) must not select a LoRA.
+        # No explicit require_*: keep the old strong-tag gate so a lone
+        # partners:solo (etc.) cannot pull in a pose LoRA.
         strong = {
             t
             for t in overlap
@@ -92,8 +98,11 @@ def match_loras(
             or t.startswith("body.breasts:implants")
             or t.startswith("body.nipples:")
         }
-        if not strong:
-            continue
+        if not require_all and not require_any:
+            if not overlap:
+                continue
+            if not strong:
+                continue
 
         # Conflicts: if any conflict tag is present in the scene, skip.
         conflicts = set(entry.get("conflicts") or [])
@@ -101,8 +110,14 @@ def match_loras(
             continue
 
         priority = int(entry.get("priority") or 0)
-        score = priority + 10 * len(overlap) + 5 * len(strong)
-        reasons = sorted(strong)
+        score = (
+            priority
+            + 20 * len(require_all & tags)
+            + 12 * len(require_any & tags)
+            + 10 * len(entry_tags & tags)
+            + 5 * len(strong)
+        )
+        reasons = sorted((require_all & tags) | strong | (require_any & tags))
 
         present = _on_disk(file_name, names=on_disk, lora_dir=lora_dir)
         group = (entry.get("exclusive_group") or "").strip() or None
@@ -205,6 +220,7 @@ def list_catalog(
                 "available": present,
                 "path": file_name if present else None,
                 "exclusive_group": (entry.get("exclusive_group") or "").strip() or None,
+                "auto": entry.get("auto") is not False,
             }
         )
     return out
