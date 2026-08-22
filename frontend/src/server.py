@@ -81,13 +81,19 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
     triggers: list[str] = []
     if req.include_triggers:
         for m in matched:
-            triggers.extend(m.triggers)
+            if mode == "edit":
+                token = m.prompt_trigger
+                if token:
+                    triggers.append(token)
+            else:
+                triggers.extend(m.triggers)
 
     prompt = compose_prompt(
         scene,
         extra_triggers=triggers if req.include_triggers else None,
         raw_override=req.raw_prompt,
         mode=mode,
+        pose_ref=bool(req.pose_ref) and mode == "edit",
     )
     return ComposeResponse(
         prompt=prompt,
@@ -146,6 +152,7 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             max_loras=req.max_loras,
             include_triggers=req.include_triggers,
             winner=req.winner,
+            pose_ref=bool(req.pose_path),
         )
     )
     prompt = (req.prompt or composed.prompt or "").strip()
@@ -184,6 +191,20 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             raise HTTPException(400, f"Image not found: {name}")
         ref_images.append(name)
 
+    pose_name = Path(req.pose_path).name if req.pose_path else ""
+    if pose_name:
+        if mode != "edit":
+            raise HTTPException(400, "Pose reference is only used in edit mode")
+        path = UPLOADS_DIR / pose_name
+        if not path.is_file():
+            raise HTTPException(400, f"Pose reference not found: {pose_name}")
+        if pose_name not in ref_images:
+            ref_images.append(pose_name)
+
+    image_strength = req.image_strength
+    if image_strength is None and pose_name:
+        image_strength = 0.75
+
     job = jobs.submit(
         {
             "prompt": prompt,
@@ -195,7 +216,7 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             "loras": lora_meta,
             "ref_images": ref_images,
             "mode": mode,
-            "image_strength": req.image_strength,
+            "image_strength": image_strength,
             "guidance": req.guidance if req.guidance is not None else defaults.get("guidance"),
             "scene": composed.scene,
         }

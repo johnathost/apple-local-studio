@@ -20,7 +20,7 @@ groups:
       - id: traits
         label: Preserve
         type: multi
-        default: [face, skin, hair, body, setting, lighting]
+        default: [face, skin, hair]
         options:
           - { id: face, label: Face / identity }
           - { id: skin, label: Skin complexion }

@@ -5,6 +5,7 @@
 sanitize_order:
   - position.pose
   - act.primary
+  - finish.effects
   - camera.angle
   - partners.count
 
@@ -98,6 +99,8 @@ on_select:
         replace_with: solo
       - field: act.primary
         drop: [vaginal, anal, oral, deepthroat, facehumping, titfuck]
+      - field: finish.effects
+        drop: [cum_inside]
     vaginal_fisting:
       - field: partners.count
         replace_if_in: [one_man, two_men]
@@ -113,6 +116,14 @@ on_select:
       - field: act.primary
         drop: [vaginal, anal, oral, deepthroat, facehumping, titfuck]
 
+  finish.effects:
+    cum_inside:
+      - field: act.primary
+        drop: [masturbation]
+      - field: partners.count
+        replace_if_in: [solo]
+        replace_with: one_man
+
   camera.angle:
     pov:
       - field: partners.count
@@ -123,7 +134,7 @@ on_select:
         replace_if_in: [two_men]
         replace_with: one_man
       - field: position.pose
-        replace_if_in: [doggy, all_fours, from_behind_stand]
+        replace_if_in: [doggy, all_fours, from_behind_stand, standing, kneeling, cowgirl, reverse_cowgirl, keep]
         replace_with: lying_back
 
   partners.count:
@@ -142,7 +153,7 @@ edit_presets:
     label: Legs open · 45° POV
     apply:
       keep:
-        traits: [face, skin, hair, body, setting, lighting]
+        traits: [face, skin, hair]
       change:
         targets: [pose, camera, act]
       position:
@@ -152,20 +163,21 @@ edit_presets:
       camera:
         angle: pov_45
       partners:
-        count: keep
+        count: solo
       clothing:
         state: keep
+      strength:
+        amount: strong
     fragment: >-
-      Transform the scene: she is lying on her back with her legs spread wide,
-      knees bent and open. Camera is POV looking down from about a 45 degree angle
-      so her face, breasts, stomach, genitals, asshole and buttocks are all fully
-      visible in one frame. Do not replace her face, body, or skin complexion.
+      New shot: she is lying on her back with her legs spread wide, knees bent
+      and open. POV from a 45 degree angle looking down so her face, breasts,
+      genitals, asshole and buttocks are all fully visible in one frame.
 
   pov_sex:
     label: POV sex · on back
     apply:
       keep:
-        traits: [face, skin, hair, body, setting, lighting]
+        traits: [face, skin, hair]
       change:
         targets: [pose, camera, act]
       position:
@@ -178,17 +190,18 @@ edit_presets:
         count: one_man
       clothing:
         state: keep
+      strength:
+        amount: strong
     fragment: >-
-      Transform into a POV sex scene: she is lying on her back with her legs
-      spread wide, a man is penetrating her vagina in missionary, first-person
-      view looking at her, the man mostly out of frame. Keep her exact face,
-      body, and skin complexion from the photo.
+      New shot: POV sex, she is lying on her back with her legs spread wide,
+      a man is penetrating her vagina in missionary, first-person view looking
+      at her, the man mostly out of frame.
 
   pov_blowjob:
     label: POV blowjob
     apply:
       keep:
-        traits: [face, skin, hair, body, setting, lighting]
+        traits: [face, skin, hair]
       change:
         targets: [pose, camera, act]
       position:
@@ -201,7 +214,8 @@ edit_presets:
         count: one_man
       clothing:
         state: keep
+      strength:
+        amount: strong
     fragment: >-
-      Transform into a POV blowjob scene: she is in front of the camera performing
-      oral sex on a penis in first-person view, looking toward the viewer.
-      Keep her exact face, body, and skin complexion from the photo.
+      New shot: POV blowjob, she is in front of the camera sucking a penis
+      in first-person view, looking toward the viewer.

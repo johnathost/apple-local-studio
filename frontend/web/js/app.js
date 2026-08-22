@@ -12,7 +12,8 @@ const state = {
   tags: [],
   matched: [],
   manualScales: {}, // id -> scale override
-  refImage: null, // { filename, url }
+  refImage: null, // { filename, url } identity / source
+  poseImage: null, // { filename, url } pose/camera plate, edit only
   pollTimer: null,
   mode: "gen", // gen | edit
   systemPrompts: { gen: "", edit: "" },
@@ -245,6 +246,28 @@ function renderConstraintLine() {
   el.textContent = "Adjusted to keep the scene coherent: " + state.dropped.join(" · ");
 }
 
+function syncStrengthChrome() {
+  const wrap = $("#strength-wrap");
+  if (!wrap) return;
+  const poseOn = Boolean(state.poseImage && state.mode === "edit");
+  const genRef = state.mode === "gen" && state.refImage;
+  wrap.classList.toggle("hidden", !(poseOn || genRef));
+  const label = wrap.querySelector("span, label") || wrap.childNodes[0];
+  if (label && label.nodeType === Node.TEXT_NODE) {
+    label.textContent = poseOn ? "Restage " : "Ref strength ";
+  }
+}
+
+function setPoseChrome() {
+  const wrap = $("#pose-wrap");
+  wrap?.classList.toggle("hidden", state.mode !== "edit");
+  const has = Boolean(state.poseImage);
+  const label = $("#pose-label");
+  if (label) label.textContent = has ? state.poseImage.filename : "";
+  $("#btn-clear-pose")?.classList.toggle("hidden", !has || state.mode !== "edit");
+  syncStrengthChrome();
+}
+
 function renderLoraPicker() {
   const sel = $("#lora-add");
   if (!sel) return;
@@ -306,6 +329,7 @@ async function runCompose() {
         manual_loras: manual,
         mode: state.mode,
         winner: state.winner,
+        pose_ref: Boolean(state.poseImage) && state.mode === "edit",
       }),
     });
     const prevScene = JSON.stringify(state.scene);
@@ -331,6 +355,7 @@ async function runCompose() {
     renderLoraPicker();
     renderTags();
     renderConstraintLine();
+    setPoseChrome();
   } catch (e) {
     console.error(e);
   }
@@ -412,7 +437,9 @@ function applyModeChrome() {
       ? "Image edit → keep identity · change only what you ask"
       : "Scene composer → mflux · private local gen";
   }
-  $("#strength-wrap")?.classList.toggle("hidden", edit || !state.refImage);
+  const sl = $("#eng-strength");
+  if (sl && !state.poseImage) sl.value = edit ? "0.75" : "0.55";
+  setPoseChrome();
   $("#aspect-row")?.classList.toggle("hidden", edit);
 }
 
@@ -443,6 +470,9 @@ async function enterStudio(mode) {
     state.winner = null;
     state.blocked = {};
     state.dropped = [];
+    state.poseImage = null;
+    const poseInput = $("#pose-image");
+    if (poseInput) poseInput.value = "";
     state.catalog = await api("/api/loras").catch(() => []);
     setEngineForm();
     applyModeChrome();
@@ -504,13 +534,19 @@ async function generate() {
     mode: state.mode,
     winner: state.winner,
     image_paths: state.refImage ? [state.refImage.filename] : [],
+    pose_path: state.mode === "edit" && state.poseImage ? state.poseImage.filename : null,
     image_strength:
-      state.mode === "gen" && state.refImage ? Number($("#eng-strength")?.value || 0.55) : null,
+      state.mode === "edit" && state.poseImage
+        ? Number($("#eng-strength")?.value || 0.75)
+        : state.mode === "gen" && state.refImage
+          ? Number($("#eng-strength")?.value || 0.55)
+          : null,
   };
 
+  const poseBit = state.poseImage ? ` · pose ${state.poseImage.filename}` : "";
   appendMsg(
     `<div class="prompt">${escapeHtml(prompt)}</div>
-     <div class="muted">${state.mode === "edit" ? "edit" : "generate"} · ${
+     <div class="muted">${state.mode === "edit" ? "edit" : "generate"}${poseBit} · ${
        state.matched
          .filter((m) => m.available)
          .map((m) => escapeHtml(m.name))
@@ -626,7 +662,7 @@ async function init() {
     $("#btn-clear-ref").classList.add("hidden");
     const input = $("#ref-image");
     if (input) input.value = "";
-    $("#strength-wrap")?.classList.add("hidden");
+    syncStrengthChrome();
   });
   $("#btn-reset-scene").addEventListener("click", async () => {
     const defaults = await api(`/api/defaults?mode=${state.mode}`);
@@ -657,7 +693,7 @@ async function init() {
     scheduleCompose();
   });
   $("#eng-strength")?.addEventListener("input", () => {
-    $("#strength-wrap")?.classList.toggle("hidden", state.mode === "edit" || !state.refImage);
+    syncStrengthChrome();
   });
   $("#prompt-out").addEventListener("input", () => {
     state.prompt = $("#prompt-out").value;
@@ -667,21 +703,47 @@ async function init() {
     refreshEngineBadge();
   });
 
-  $("#ref-image").addEventListener("change", async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function uploadToStudio(file) {
     const fd = new FormData();
     fd.append("file", file);
     const res = await fetch("/api/upload", { method: "POST", body: fd });
-    if (!res.ok) {
-      alert("Upload failed");
-      return;
+    if (!res.ok) throw new Error("Upload failed");
+    return res.json();
+  }
+
+  $("#ref-image").addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const data = await uploadToStudio(file);
+      state.refImage = data;
+      $("#ref-label").textContent = data.filename;
+      $("#btn-clear-ref").classList.remove("hidden");
+      syncStrengthChrome();
+    } catch (err) {
+      alert(err.message || "Upload failed");
     }
-    const data = await res.json();
-    state.refImage = data;
-    $("#ref-label").textContent = data.filename;
-    $("#btn-clear-ref").classList.remove("hidden");
-    $("#strength-wrap")?.classList.toggle("hidden", state.mode === "edit");
+  });
+  $("#pose-image")?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const data = await uploadToStudio(file);
+      state.poseImage = data;
+      const sl = $("#eng-strength");
+      if (sl) sl.value = "0.75";
+      setPoseChrome();
+      scheduleCompose();
+    } catch (err) {
+      alert(err.message || "Upload failed");
+    }
+  });
+  $("#btn-clear-pose")?.addEventListener("click", () => {
+    state.poseImage = null;
+    const input = $("#pose-image");
+    if (input) input.value = "";
+    setPoseChrome();
+    scheduleCompose();
   });
 }
 

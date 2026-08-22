@@ -21,6 +21,8 @@ class ComposeRequest(BaseModel):
     mode: str = "gen"
     # Field path the user just changed, e.g. "act.primary". Last-write wins.
     winner: str | None = None
+    # True when the user attached a pose reference photo for this compose.
+    pose_ref: bool = False
 
 
 class ComposeResponse(BaseModel):
@@ -46,6 +48,8 @@ class GenerateRequest(BaseModel):
     quantize: int | None = None
     # Basenames of files already uploaded to the frontend container
     image_paths: list[str] = Field(default_factory=list)
+    # Optional second upload: pose/camera plate (edit restage)
+    pose_path: str | None = None
     mode: str = "gen"
     image_strength: float | None = None
     guidance: float | None = None

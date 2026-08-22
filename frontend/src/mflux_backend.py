@@ -382,13 +382,15 @@ class MfluxBackend:
         if requested == "edit" and not image_paths:
             raise MfluxBackendError("Edit mode requires a source image")
         mode = requested
-        prompt = with_system_prompt(prompt, mode=mode)
+        pose_ref = bool(image_paths and len(image_paths) >= 2)
+        prompt = with_system_prompt(prompt, mode=mode, pose_ref=pose_ref)
         seed = int(seed) if seed is not None else random.randint(0, 2**31 - 1)
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         if image_paths:
-            # Edit and gen-with-ref: never stretch a photo into 16:9.
-            width, height = _snap_edit_size(image_paths[0], width, height)
+            # Restage: snap canvas to the pose plate (last ref). Else keep source aspect.
+            snap_src = image_paths[-1] if pose_ref else image_paths[0]
+            width, height = _snap_edit_size(snap_src, width, height)
 
         with self._lock:
             need_load = (

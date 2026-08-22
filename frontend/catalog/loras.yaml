@@ -264,10 +264,12 @@ loras:
     tags:
       - finish:cum_body
       - finish:cum_inside
+    prompt_trigger: "semen"
     triggers:
       - "semen"
       - "cum"
-    conflicts: []
+    conflicts:
+      - act:masturbation
 
   - id: femboy_tgirl
     name: Femboys Tgirls Futa
@@ -379,6 +381,7 @@ loras:
       - position:legs_spread
       - act:spreading
       - position:lying_back
+    prompt_trigger: "spreading legs"
     triggers:
       - "a woman spreading legs"
     conflicts:
@@ -467,10 +470,12 @@ loras:
     tags:
       - act:masturbation
       - partners:solo
+    prompt_trigger: "MASTURBATE"
     triggers:
       - "MASTURBATE"
     conflicts:
       - act:vaginal
       - act:anal
+      - finish:cum_inside
       - partners:one_man
       - partners:two_men

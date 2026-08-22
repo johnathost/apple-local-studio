@@ -14,6 +14,17 @@ DATA_HOME = Path(os.environ.get("STUDIO_DATA_HOME", "/opt/ivoai"))
 DEFAULT_LORA_DIR = Path(os.environ.get("STUDIO_LORA_DIR", DATA_HOME / "lora"))
 
 
+def _prompt_trigger(entry: dict[str, Any]) -> str:
+    short = (entry.get("prompt_trigger") or "").strip()
+    if short:
+        return short
+    for t in entry.get("triggers") or []:
+        token = str(t).strip()
+        if token and len(token) <= 40:
+            return token
+    return ""
+
+
 @dataclass
 class MatchedLora:
     id: str
@@ -27,6 +38,7 @@ class MatchedLora:
     available: bool
     auto: bool = True
     exclusive_group: str | None = None
+    prompt_trigger: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -41,6 +53,7 @@ class MatchedLora:
             "available": self.available,
             "auto": self.auto,
             "exclusive_group": self.exclusive_group,
+            "prompt_trigger": self.prompt_trigger,
         }
 
 
@@ -135,6 +148,7 @@ def match_loras(
                 available=present,
                 auto=True,
                 exclusive_group=group,
+                prompt_trigger=_prompt_trigger(entry),
             )
         )
 
@@ -171,6 +185,7 @@ def match_loras(
                 available=present,
                 auto=False,
                 exclusive_group=group,
+                prompt_trigger=_prompt_trigger(entry),
             )
 
     # Prefer manual pins first, then highest score; cap stack size.

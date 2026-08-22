@@ -66,6 +66,12 @@
             </label>
             <span id="ref-label" class="muted"></span>
             <button type="button" id="btn-clear-ref" class="ghost sm hidden">Clear</button>
+            <label class="file-btn hidden" id="pose-wrap">
+              Pose reference
+              <input type="file" id="pose-image" accept="image/png,image/jpeg,image/webp" hidden />
+            </label>
+            <span id="pose-label" class="muted"></span>
+            <button type="button" id="btn-clear-pose" class="ghost sm hidden">Clear pose</button>
             <label class="strength-wrap hidden" id="strength-wrap">
               Ref strength
               <input type="range" id="eng-strength" min="0.2" max="0.9" step="0.05" value="0.55" />

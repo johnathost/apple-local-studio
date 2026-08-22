@@ -42,6 +42,74 @@ def _join_unique(parts: list[str]) -> str:
     return ", ".join(out)
 
 
+def _join_edit(parts: list[str]) -> str:
+    """Sentence-style join so edit instructions are not a comma soup."""
+    seen: set[str] = set()
+    sentences: list[str] = []
+    for p in parts:
+        p = (p or "").strip().strip(",").strip()
+        if not p:
+            continue
+        key = p.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        if p[-1] not in ".!?":
+            p += "."
+        if p[0].islower():
+            p = p[0].upper() + p[1:]
+        sentences.append(p)
+    # Drop a chunk that is fully contained in a longer one.
+    kept: list[str] = []
+    lowers = [s.lower() for s in sentences]
+    for s, sl in zip(sentences, lowers):
+        if any(sl != other and sl.rstrip(".!") in other for other in lowers):
+            continue
+        kept.append(s)
+    return " ".join(kept)
+
+
+def _covered(haystack: str, needle: str) -> bool:
+    if not needle:
+        return True
+    h = " ".join(haystack.lower().split())
+    n = " ".join(needle.lower().split()).rstrip(".!")
+    if not n or n in h:
+        return True
+    words = [w for w in n.replace(",", " ").split() if len(w) > 3]
+    if len(words) >= 3 and sum(1 for w in words if w in h) >= max(3, len(words) - 1):
+        return True
+    return False
+
+
+def _filter_edit_triggers(prompt: str, triggers: list[str] | None) -> list[str]:
+    """Keep short unique LoRA tokens. Skip gen-style sentences already covered."""
+    if not triggers:
+        return []
+    out: list[str] = []
+    existing = prompt.lower()
+    skip_prefixes = ("a woman", "the girl", "the image", "the photograph", "image shows")
+    for raw in triggers:
+        t = (raw or "").strip().strip(",")
+        if not t:
+            continue
+        low = t.lower()
+        if t.isupper() and len(t) >= 4:
+            if t not in out:
+                out.append(t)
+            continue
+        if low.startswith(skip_prefixes) or len(t) > 48:
+            continue
+        if low in existing or _covered(existing, t):
+            continue
+        stems = [w.strip(".,") for w in low.split() if len(w) > 4]
+        if stems and all(w[:5] in existing for w in stems):
+            continue
+        if t not in out:
+            out.append(t)
+    return out
+
+
 def _tag_value(value: Any) -> bool:
     return value not in (None, "", "keep", "none")
 
@@ -102,41 +170,63 @@ def compose_edit_prompt(
     *,
     extra_triggers: list[str] | None = None,
     raw_override: str | None = None,
+    pose_ref: bool = False,
 ) -> str:
-    """Instruction-style prompt for Flux2KleinEdit."""
+    """Target-scene edit prompt. Lead with what to restage; identity once."""
     if raw_override and raw_override.strip():
-        base = raw_override.strip()
-        if extra_triggers:
-            triggers = _join_unique(list(extra_triggers))
-            if triggers:
-                return f"{base}, {triggers}"
-        return base
+        return raw_override.strip()
 
     fr = load_fragments("edit")
-    chunks: list[str] = [
-        "Edit this photograph in place. Do not replace the person or invent a new face.",
-        EDIT_IDENTITY_LOCK,
-        "Keep the original skin complexion; do not repaint her skin.",
-    ]
+    pose_id = (scene.get("position") or {}).get("pose")
+    angle_id = (scene.get("camera") or {}).get("angle")
+    acts = [a for a in ((scene.get("act") or {}).get("primary") or []) if _tag_value(a)]
+    pose_changing = _tag_value(pose_id)
+    camera_changing = _tag_value(angle_id)
+    must_restage = pose_changing or camera_changing or pose_ref
+
+    chunks: list[str] = []
+    if pose_ref:
+        chunks.append(
+            "The first image is the person (keep her face, skin, hair). "
+            "The second image is pose and camera only — match that body position and framing. "
+            "Do not copy the second person's identity or the first image's pose"
+        )
+    elif must_restage:
+        chunks.append(
+            "Restage this photo. Do not copy the original pose or camera angle."
+        )
+    chunks.append(EDIT_IDENTITY_LOCK)
 
     preset_id = (scene.get("preset") or {}).get("scene")
     preset_text = preset_fragment(preset_id)
+    skip_pose = False
+    skip_camera = False
+    skip_acts: set[str] = set()
     if preset_text:
         chunks.append(preset_text)
+        skip_pose = True
+        skip_camera = True
+        for act_id in acts:
+            piece = _frag(fr, "act.primary", act_id)
+            if isinstance(piece, str) and piece and _covered(preset_text, piece):
+                skip_acts.add(act_id)
+            elif act_id == "spreading" and "spread" in preset_text.lower():
+                skip_acts.add(act_id)
 
-    keep = scene.get("keep") or {}
-    keep_bits = _frag(fr, "keep.traits", keep.get("traits") or [])
-    if isinstance(keep_bits, list) and keep_bits:
-        chunks.append("Keep: " + _join_unique(keep_bits))
-
-    change = scene.get("change") or {}
-    change_bits = _frag(fr, "change.targets", change.get("targets") or [])
-    if isinstance(change_bits, list) and change_bits:
-        chunks.append("Change: " + _join_unique(change_bits))
+    on_back = pose_id in {"legs_spread", "lying_back", "missionary"}
+    if not preset_text and angle_id == "pov_45" and (on_back or not pose_changing):
+        chunks.append(
+            "New shot: she is lying on her back with her legs spread wide, knees bent and open, "
+            "photographed POV from a 45 degree angle so her face, breasts, genitals, asshole "
+            "and buttocks are all fully visible in one frame"
+        )
+        skip_pose = True
+        skip_camera = True
+        skip_acts.add("spreading")
 
     clothing = scene.get("clothing") or {}
     cloth = _frag(fr, "clothing.state", clothing.get("state"))
-    if isinstance(cloth, str) and cloth:
+    if isinstance(cloth, str) and cloth and not _covered(" ".join(chunks), cloth):
         chunks.append(cloth)
     heels = _frag(fr, "clothing.heels", clothing.get("heels"))
     if isinstance(heels, str) and heels:
@@ -145,53 +235,62 @@ def compose_edit_prompt(
     if cloth_details:
         chunks.append(cloth_details)
 
-    position = scene.get("position") or {}
-    pose = _frag(fr, "position.pose", position.get("pose"))
-    if isinstance(pose, str) and pose:
-        chunks.append(pose)
+    if not skip_pose:
+        pose = _frag(fr, "position.pose", pose_id)
+        if isinstance(pose, str) and pose:
+            chunks.append(pose)
+    if pose_id in {"legs_spread", "missionary", "lying_back"}:
+        skip_acts.add("spreading")
 
-    act = scene.get("act") or {}
-    acts = _frag(fr, "act.primary", act.get("primary") or [])
-    if isinstance(acts, list):
-        chunks.extend([a for a in acts if a])
+    for act_id in acts:
+        if act_id in skip_acts:
+            continue
+        piece = _frag(fr, "act.primary", act_id)
+        if isinstance(piece, str) and piece and not _covered(" ".join(chunks), piece):
+            chunks.append(piece)
 
     partners = scene.get("partners") or {}
     pcount = _frag(fr, "partners.count", partners.get("count"))
-    if isinstance(pcount, str) and pcount:
+    if isinstance(pcount, str) and pcount and not _covered(" ".join(chunks), pcount):
         chunks.append(pcount)
 
-    camera = scene.get("camera") or {}
-    angle = _frag(fr, "camera.angle", camera.get("angle"))
-    if isinstance(angle, str) and angle:
-        chunks.append(angle)
+    if not skip_camera:
+        angle = _frag(fr, "camera.angle", angle_id)
+        if isinstance(angle, str) and angle and not _covered(" ".join(chunks), angle):
+            chunks.append(angle)
 
     finish = scene.get("finish") or {}
     fx = _frag(fr, "finish.effects", finish.get("effects") or [])
     if isinstance(fx, list):
-        chunks.extend(fx)
+        for item in fx:
+            if item and not _covered(" ".join(chunks), item):
+                chunks.append(item)
 
-    strength = scene.get("strength") or {}
-    amt = _frag(fr, "strength.amount", strength.get("amount"))
-    if isinstance(amt, str) and amt:
-        chunks.append(amt)
+    keep = scene.get("keep") or {}
+    keep_ids = [k for k in (keep.get("traits") or []) if _tag_value(k)]
+    skip_keep = {"face", "skin", "hair"}
+    if must_restage:
+        skip_keep.update({"body", "lighting", "setting"})
+    if _tag_value(clothing.get("state")):
+        skip_keep.add("outfit")
+    extra_keep = [k for k in keep_ids if k not in skip_keep]
+    keep_bits = _frag(fr, "keep.traits", extra_keep)
+    if isinstance(keep_bits, list) and keep_bits:
+        chunks.append("Also keep " + _join_unique(keep_bits))
 
     instruction = scene.get("instruction") or {}
     text = (instruction.get("text") or "").strip()
     if text:
-        chunks.append("Request: " + text)
+        chunks.append(text)
 
-    if extra_triggers:
-        chunks.extend(extra_triggers)
+    extras = _filter_edit_triggers(" ".join(chunks), extra_triggers)
+    chunks.extend(extras)
 
-    chunks.append(
-        "Photorealistic photograph, sharp details, natural skin, match the original lighting, "
-        "correct anatomy, unstretched, coherent sex act."
-    )
+    if must_restage:
+        chunks.append("Apply the new pose and camera fully")
+    chunks.append("Photoreal, sharp, natural skin, correct anatomy")
 
-    prompt = _join_unique(chunks)
-    if prompt and not prompt[0].isupper():
-        prompt = prompt[0].upper() + prompt[1:]
-    return prompt
+    return _join_edit(chunks)
 
 
 def compose_prompt(
@@ -200,10 +299,16 @@ def compose_prompt(
     extra_triggers: list[str] | None = None,
     raw_override: str | None = None,
     mode: str = "gen",
+    pose_ref: bool = False,
 ) -> str:
     """Build final prompt. raw_override replaces the assembled body if set."""
     if (mode or "").strip().lower() == "edit":
-        return compose_edit_prompt(scene, extra_triggers=extra_triggers, raw_override=raw_override)
+        return compose_edit_prompt(
+            scene,
+            extra_triggers=extra_triggers,
+            raw_override=raw_override,
+            pose_ref=pose_ref,
+        )
 
     if raw_override and raw_override.strip():
         base = raw_override.strip()

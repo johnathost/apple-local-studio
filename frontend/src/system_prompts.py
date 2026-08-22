@@ -13,12 +13,9 @@ QUALITY_LOCK = (
     "No extra limbs, no fused bodies, no melted or monster features, no duplicate faces."
 )
 
-# Always prepended to edit prompts so identity cannot drift even if keep-chips are cleared.
+# Short identity lock for the user-facing edit prompt. Pose/camera are NOT locked.
 EDIT_IDENTITY_LOCK = (
-    "Keep this exact person from the source photograph: the same face, the same bone structure, "
-    "the same skin complexion, undertone, and skin texture, and the same body shape and proportions. "
-    "Do not replace her, do not age or youthen her, do not change ethnicity, "
-    "do not lighten or darken her skin, do not give her a new body or a new face."
+    "Same woman as the photo: same face, same skin complexion, same hair. Do not swap identity."
 )
 
 SYSTEM_GEN = (
@@ -30,15 +27,21 @@ SYSTEM_GEN = (
 )
 
 SYSTEM_EDIT = (
-    "System: You are editing an existing photograph, not drawing a new one. "
-    "The input image is the source of truth for WHO this person is and how she is framed. "
-    "Do not stretch, squash, or widen the image. Keep the original aspect and proportions. "
-    f"{EDIT_IDENTITY_LOCK} "
-    "You may change pose, clothing, camera, and the sex act only as requested. "
-    "The result must still be clearly the same adult woman in a coherent scene, "
-    "not a distortion or a different person. Photoreal, sharp, natural skin, no plastic look, "
-    "no text, no watermark, no illustration. "
-    "Every person depicted is a consenting adult 18 years or older. "
+    "System: Edit the source photograph of a consenting adult woman. "
+    "Identity is locked: same face, same skin complexion, same hair, same body type. "
+    "Pose, camera, clothing, and the act are NOT locked. "
+    "If a new pose or camera is requested, restage the shot — do not copy the original pose or framing. "
+    "Do not stretch or squash the image. Photoreal, natural skin, no text, no watermark. "
+    f"{QUALITY_LOCK}"
+)
+
+# Used when a pose plate is passed as the second reference image.
+SYSTEM_EDIT_POSE = (
+    "System: Two reference photos. "
+    "Image 1 is the person: keep her face, skin complexion, and hair. "
+    "Image 2 is pose and camera only: match that body position, limb placement, and framing. "
+    "Do not copy image 2's identity. Do not copy image 1's pose or camera angle. "
+    "Photoreal, natural skin, no text, no watermark. "
     f"{QUALITY_LOCK}"
 )
 
@@ -58,8 +61,11 @@ def system_prompt_for(mode: str) -> str:
     return SYSTEM_EDIT if (mode or "").strip().lower() == "edit" else SYSTEM_GEN
 
 
-def with_system_prompt(user_prompt: str, *, mode: str) -> str:
-    system = system_prompt_for(mode)
+def with_system_prompt(user_prompt: str, *, mode: str, pose_ref: bool = False) -> str:
+    if (mode or "").strip().lower() == "edit":
+        system = SYSTEM_EDIT_POSE if pose_ref else SYSTEM_EDIT
+    else:
+        system = SYSTEM_GEN
     user = (user_prompt or "").strip()
     if not user:
         return system
