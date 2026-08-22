@@ -98,6 +98,7 @@ groups:
           - { id: legs_spread, label: Legs spread }
           - { id: kneeling, label: Kneeling }
           - { id: from_behind_stand, label: Standing from behind }
+          - { id: on_side, label: On side / spooning }
 
   - id: act
     label: Act
@@ -113,6 +114,8 @@ groups:
           - { id: oral, label: Oral }
           - { id: spreading, label: Spreading }
           - { id: masturbation, label: Masturbation }
+          - { id: all_holes, label: All holes / gangbang }
+          - { id: dildo_insertion, label: Dildo insertion }
 
   - id: camera
     label: Camera
@@ -129,6 +132,7 @@ groups:
           - { id: from_behind, label: From behind }
           - { id: closeup, label: Close-up }
           - { id: ass_focus, label: Ass focus }
+          - { id: side, label: Side view }
 
   - id: partners
     label: Partners
@@ -142,6 +146,7 @@ groups:
           - { id: solo, label: Solo }
           - { id: one_man, label: One man }
           - { id: two_men, label: Two men }
+          - { id: three_men, label: Three men }
 
   - id: finish
     label: Finish

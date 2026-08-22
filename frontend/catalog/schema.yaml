@@ -136,6 +136,7 @@ groups:
           - { id: sitting_lap, label: Sitting on lap }
           - { id: kneeling, label: Kneeling }
           - { id: from_behind_stand, label: Standing from behind }
+          - { id: on_side, label: On side / spooning }
 
   - id: act
     label: Act
@@ -159,7 +160,9 @@ groups:
           - { id: anal_gape, label: Anal gape }
           - { id: prolapse, label: Anal prolapse }
           - { id: dildo, label: Dildo riding }
+          - { id: dildo_insertion, label: Dildo insertion }
           - { id: spreading, label: Spreading / exposing }
+          - { id: all_holes, label: All holes / gangbang }
 
   - id: camera
     label: Camera
@@ -200,6 +203,7 @@ groups:
           - { id: solo, label: Solo }
           - { id: one_man, label: One man }
           - { id: two_men, label: Two men }
+          - { id: three_men, label: Three men }
 
       - id: visibility
         label: Partner visibility

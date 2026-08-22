@@ -73,6 +73,7 @@ position.pose:
   sitting_lap: "sitting on a man's lap"
   kneeling: "kneeling"
   from_behind_stand: "standing while bent forward, taken from behind"
+  on_side: "lying on her side, spooning"
 
 act.primary:
   none: ""
@@ -89,7 +90,9 @@ act.primary:
   anal_gape: "anal gape, she has a gaping ass, huge gape"
   prolapse: "AN4LPR0L4PS3, she has a prolapsed anus, anal prolapse, rosebud"
   dildo: "riding a dildo"
+  dildo_insertion: "inserting a dildo into her pussy, legs spread"
   spreading: "spreading herself open, genital area fully exposed"
+  all_holes: "all holes filled, oral and vaginal and anal sex at once with three men"
 
 camera.angle:
   medium: "medium shot"
@@ -112,6 +115,7 @@ partners.count:
   solo: "solo, alone"
   one_man: "with one man"
   two_men: "threesome with two men"
+  three_men: "gangbang with three men"
 
 partners.visibility:
   none: ""

@@ -177,6 +177,7 @@ loras:
     conflicts:
       - partners:one_man
       - partners:two_men
+      - partners:three_men
 
   - id: cowgirl_anal
     name: Cowgirl Anal
@@ -207,7 +208,9 @@ loras:
       - position:missionary
       - position:doggy
       - position:all_fours
+      - position:on_side
       - partners:two_men
+      - partners:three_men
 
   - id: sloppy_deepthroat
     name: Extreme Sloppy Deepthroat
@@ -368,12 +371,14 @@ loras:
     conflicts:
       - partners:one_man
       - partners:two_men
+      - partners:three_men
 
   - id: legs_spreading
     name: Nude Legs Spreading
     file: spread_legs_beta1.safetensors
     default_scale: 0.8
     priority: 70
+    exclusive_group: spreading
     require_any:
       - position:legs_spread
       - act:spreading
@@ -459,6 +464,7 @@ loras:
     conflicts:
       - partners:one_man
       - partners:two_men
+      - partners:three_men
 
   - id: masturbation
     name: SexGod Female Masturbation
@@ -476,6 +482,167 @@ loras:
     conflicts:
       - act:vaginal
       - act:anal
+      - act:all_holes
       - finish:cum_inside
       - partners:one_man
       - partners:two_men
+      - partners:three_men
+
+  - id: pov_blowjob_krea
+    name: POV Blowjob Krea
+    file: pov_blowjob_krea2_v1.safetensors
+    default_scale: 1.0
+    priority: 93
+    exclusive_group: oral
+    require_all:
+      - act:oral
+      - camera:pov
+    tags:
+      - act:oral
+      - camera:pov
+    prompt_trigger: "blowjob"
+    triggers:
+      - "performing oral sex, blowjob"
+      - "holding base of penis with her right hand"
+      - "high-angle, close-up"
+    conflicts:
+      - act:anal
+      - act:vaginal
+      - act:all_holes
+      - position:doggy
+      - partners:two_men
+      - partners:three_men
+
+  - id: all_holes_gangbang
+    name: All Holes / Gangbang Cowgirl
+    file: FK_allholes.safetensors
+    default_scale: 0.85
+    priority: 105
+    exclusive_group: pose
+    require_all:
+      - partners:three_men
+    require_any:
+      - act:all_holes
+      - act:anal
+      - act:vaginal
+      - act:oral
+    tags:
+      - partners:three_men
+      - act:all_holes
+      - act:anal
+      - act:vaginal
+      - act:oral
+      - position:cowgirl
+      - camera:from_behind
+      - camera:ass_focus
+    prompt_trigger: "all holes filled"
+    triggers:
+      - "all three men are penetrating the girl"
+      - "oral, anal and vaginal sex"
+      - "the girl is turned with her ass to the camera"
+    conflicts:
+      - partners:solo
+      - partners:one_man
+      - position:missionary
+      - act:masturbation
+
+  - id: sexgod_cowgirl
+    name: SexGod Cowgirl
+    file: SEXGOD_Cowgirl_Klein9b_v1.safetensors
+    default_scale: 0.85
+    priority: 95
+    exclusive_group: pose
+    require_any:
+      - position:cowgirl
+      - position:reverse_cowgirl
+    tags:
+      - position:cowgirl
+      - position:reverse_cowgirl
+      - act:vaginal
+    prompt_trigger: "c0wgirl"
+    triggers:
+      - "c0wgirl"
+      - "rev_c0wgirl"
+    conflicts:
+      - act:anal
+      - act:all_holes
+      - position:doggy
+      - position:missionary
+      - position:on_side
+      - partners:two_men
+      - partners:three_men
+
+  - id: side_anal
+    name: Side Anal / Spooning
+    file: FK_analonside.safetensors
+    default_scale: 0.85
+    priority: 100
+    exclusive_group: pose
+    require_all:
+      - act:anal
+      - position:on_side
+    tags:
+      - act:anal
+      - position:on_side
+      - camera:side
+    triggers:
+      - "the girl is lying on her side"
+      - "the man penetrates her anus"
+      - "she is exposing her vagina and anus"
+    conflicts:
+      - act:vaginal
+      - act:all_holes
+      - position:missionary
+      - position:doggy
+      - position:cowgirl
+      - partners:two_men
+      - partners:three_men
+
+  - id: spreading_legs_pussy
+    name: Spreading Legs Pussy
+    file: nude_woman_v1.safetensors
+    default_scale: 0.8
+    priority: 75
+    exclusive_group: spreading
+    require_any:
+      - act:spreading
+      - position:legs_spread
+      - camera:genital_focus
+    tags:
+      - act:spreading
+      - position:legs_spread
+      - camera:genital_focus
+    prompt_trigger: "pussy"
+    triggers:
+      - "pussy"
+    conflicts:
+      - position:doggy
+      - position:all_fours
+      - position:cowgirl
+      - position:on_side
+      - act:all_holes
+
+  - id: dildo_insertion
+    name: Dildo Insertion
+    file: FK_dildoinsertion.safetensors
+    default_scale: 0.7
+    priority: 85
+    exclusive_group: pose
+    require_all:
+      - act:dildo_insertion
+    tags:
+      - act:dildo_insertion
+      - act:spreading
+      - partners:solo
+    triggers:
+      - "she is inserting a dildo into her pussy"
+      - "her legs are spread apart"
+    conflicts:
+      - partners:one_man
+      - partners:two_men
+      - partners:three_men
+      - act:vaginal
+      - act:anal
+      - act:all_holes
+      - act:dildo
+

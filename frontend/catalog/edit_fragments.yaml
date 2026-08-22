@@ -47,6 +47,7 @@ position.pose:
   legs_spread: "she is lying on her back with her legs spread wide, knees bent and open"
   kneeling: "she is kneeling"
   from_behind_stand: "she is standing bent forward, taken from behind"
+  on_side: "she is lying on her side in a spooning pose"
 
 act.primary:
   none: ""
@@ -55,6 +56,8 @@ act.primary:
   oral: "oral sex, she is sucking a penis"
   spreading: "she is spreading herself open so her genitals are fully visible"
   masturbation: "she is masturbating with her hand"
+  all_holes: "all holes filled, three men, oral and vaginal and anal at once"
+  dildo_insertion: "she is inserting a dildo into her pussy, legs spread"
 
 camera.angle:
   keep: ""
@@ -64,12 +67,14 @@ camera.angle:
   from_behind: "viewed from behind"
   closeup: "close-up"
   ass_focus: "camera focused on her ass"
+  side: "side view"
 
 partners.count:
   keep: ""
   solo: "she is alone, no partner in frame"
   one_man: "one man, mostly out of frame"
   two_men: "two men"
+  three_men: "three men, gangbang"
 
 finish.effects:
   cum_face: "cum on her face"

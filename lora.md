@@ -271,3 +271,76 @@ Trigger Words:
 ```text
 MASTURBATE
 ```
+
+#### POV Blowjob
+
+- URL: https://civitai.red/models/2514609/pov-blowjob
+- Filename: ``pov_blowjob_krea2_v1.safetensors``
+- Strength: 1
+
+Trigger Words:
+```text
+Basic Prompt: Highly explicit, high-angle, close-up photo of a nude woman. She is performing oral sex, blowjob on a man whose erect penis is in her mouth. She is holding base of penis with her right hand. Man's nude lower torso and legs are partially visible.
+```
+
+#### All holes filled / Gangbang Cowgirl style (klein 9b)
+
+- URL: https://civitai.red/models/2584578/all-holes-filled-gangbang-cowgirl-style-klein-9b
+- Filename: ``FK_allholes.safetensors``
+
+Trigger Words:
+```text
+the image shows one slender skinny girl and three men. all three men are penetrating the girl in some way. oral, anal and vaginal sex. the girl is turned with her ass to the camera in an half-side view on her body. her face is partially  visible from side.  the first man is lying on his back and the girl is straddling on him. he is covered by the girls upper body. the first man is penetrating the girls vagina, his testicles are visible and his penis visible penetrates her vagina. the face of the first man is not visible. the second man is standing behind the girl, his upper body and face is out of frame and not visible. the penis of the second man is clearly penetrating the girls anus, while the first man is penetrating her vagina. the third man is standing next to the girl. the man holds the penis of the third man in her mouth, performing oral sex on him. a photograph of a sexual scene. a woman is on all fours. she is performing oral sex on a man with a dark-skinned erect penis on the right. another man with a dark-skinned erect penis is behind her, penetrating her anus from behind. the men's bodies are partially visible, with one man's hand on her right buttock.
+```
+
+#### SexGod CowGirl Sex Style Klein 9b
+
+- URL: https://civitai.red/models/2628000/sexgod-cowgirl-sex-style-klein-9b
+- Filename: ``SEXGOD_Cowgirl_Klein9b_v1.safetensors``
+
+Trigger Words:
+```text
+rev_c0wgirl
+c0wgirl
+```
+
+#### Side anal / Spooning / Anal sex on side (Klein 9b)
+
+- URL: https://civitai.red/models/2617836/side-anal-spooning-anal-sex-on-side-klein-9b
+- Filename: ``FK_analonside.safetensors``
+- Strength:
+	- For legs closed: 0.8
+	- For one leg up: 0.9
+
+Trigger Words:
+```text
+image shows one girl and one man. the girl is lying on her side with her legs closed. she is exposing her vagina and anus. the man penetrates her anus with his large penis. focus is on the penetration of her anus and her thighs and ass., a photograph of a sexual scene. a woman lies on a white bed, a nude man with an erect penis is positioned to the left, his penis entering her anus. the woman's right hand is on her right thigh, and her left hand is on the bed. the man has a giant penis. he is black. the man s upper body is out of frame and his face not visible.
+
+image shows one girl and one man. the girl is lying on her side with her legs closed. she is exposing her vagina and anus. the man penetrates her anus with his large penis. focus is on the penetration of her anus and her thighs and ass., A photograph of a sexual scene. A woman is lying on a white bed with her legs spread and bent at the knees. She has small breasts and is looking directly at the camera with a slightly open mouth. A nude Black man with dark skin and a muscular build is standing in front of her, penetrating her anus with his erect, uncircumcised penis.  the man s upper body is out of frame and his face not visible.
+
+image shows one girl and one man. the girl is lying on her side and has one leg lifted up. her vagina and anus is visible. she is exposing her vagina and anus. the man penetrates her anus with his large penis. focus is on the penetration of her anus and her thighs and ass., a photograph of a sexual scene. a woman lies on a white bed, a nude man with an erect penis is positioned to the left, his penis entering her anus. the woman's right hand is on her right thigh, and her left hand is on the bed. the man has a giant penis. he is black. the man s upper body is out of frame and his face not visible. close-up shot,
+```
+
+#### Spreading legs PUSSY
+
+- URL: https://civitai.red/models/2374533/spreading-legs-pussy
+- Filename: ``nude_woman_v1.safetensors``
+- Strength: 0.8
+
+Trigger Words:
+```text
+pussy
+```
+
+#### Dildo insertion (klein 9b)
+
+- URL: https://civitai.red/models/2564447/dildo-insertion-klein-9b
+- Filename: ``FK_dildoinsertion.safetensors``
+- Strength: 0.6-0.8
+
+Trigger Words:
+```text
+the image shows one girl spreading her legs. she is inserting a dildo into her pussy. her pussy is visible and her legs apart. a photograph of a woman. her legs are spread apart, and she is inserting a large dildo into her shaved vulva with her hand.
+
+she is sitting on a bed / bench / chair..... she is moaning and looking at viewer.
+```
