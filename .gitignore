@@ -9,3 +9,4 @@ install.log
 install.lock.d/
 *.log
 *.pid
+Issues.md
