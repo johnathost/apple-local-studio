@@ -337,23 +337,18 @@ def compose_undress_prompt(
         return raw_override.strip()
 
     fr = load_fragments("undress")
-    chunks: list[str] = [
-        "Undress this photograph in place. Do not restage, do not change pose or camera.",
-        "Keep her exact face, skin complexion, hair, makeup, tattoos, and body. "
-        "Do not change ethnicity, lighting, or the background.",
-    ]
     clothing = scene.get("clothing") or {}
-    cloth = _frag(fr, "clothing.state", clothing.get("state") or "nude")
-    if isinstance(cloth, str) and cloth:
-        chunks.append(cloth)
-    else:
-        chunks.append("she is nude")
+    state = clothing.get("state") or "nude"
+    cloth = _frag(fr, "clothing.state", state)
+    if not (isinstance(cloth, str) and cloth):
+        cloth = "she is nude, no clothes"
+    chunks: list[str] = [
+        f"{cloth}. Keep the same person, face, hair, skin, tattoos, pose, camera, and background.",
+        "Do not change body shape or proportions.",
+    ]
     heels = _frag(fr, "clothing.heels", clothing.get("heels"))
     if isinstance(heels, str) and heels:
         chunks.append(heels)
-    extras = _filter_edit_triggers(" ".join(chunks), extra_triggers)
-    chunks.extend(extras)
-    chunks.append("Photoreal, sharp, natural skin, same pose as the source")
     return _join_edit(chunks)
 
 

@@ -79,6 +79,8 @@ def match_loras(
     """
     lora_dir = lora_dir or DEFAULT_LORA_DIR
     max_loras = max_loras if max_loras is not None else int(engine_defaults().get("max_loras", 2))
+    if int(max_loras) <= 0 and not manual:
+        return []
     tags = scene_tags(scene)
     catalog = load_loras()
 

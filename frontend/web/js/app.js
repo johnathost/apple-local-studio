@@ -366,7 +366,8 @@ async function runCompose() {
   syncQuickNotes();
 
   const includeTriggers = $("#include-triggers").checked;
-  const maxLoras = Number($("#eng-max-loras").value || state.engine.max_loras || 2);
+  const maxLorasRaw = Number($("#eng-max-loras").value);
+  const maxLoras = Number.isFinite(maxLorasRaw) ? maxLorasRaw : Number(state.engine.max_loras ?? 2);
   const manual = Object.entries(state.manualScales).map(([id, scale]) => ({ id, scale }));
 
   try {
@@ -499,7 +500,7 @@ function applyModeChrome() {
           : "Scene composer → mflux · private local gen";
   }
   const sl = $("#eng-strength");
-  if (sl && !state.poseImage) sl.value = kind === "pose" ? "0.75" : kind === "undress" ? "0.45" : "0.55";
+  if (sl && !state.poseImage) sl.value = kind === "pose" ? "0.75" : "0.55";
   setPoseChrome();
   $("#aspect-row")?.classList.toggle("hidden", edit);
   $("#btn-edit-kinds")?.classList.toggle("hidden", !edit || !kind);
@@ -649,12 +650,16 @@ async function generate() {
     scene: state.scene,
     prompt,
     include_triggers: $("#include-triggers").checked,
-    max_loras: Number($("#eng-max-loras").value || 2),
+    max_loras: Number.isFinite(Number($("#eng-max-loras").value))
+      ? Number($("#eng-max-loras").value)
+      : 2,
     manual_loras: manual,
     width: Number($("#eng-width").value),
     height: Number($("#eng-height").value),
     steps: Number($("#eng-steps").value),
-    guidance: Number($("#eng-guidance")?.value || (state.mode === "edit" ? 2.0 : 1.4)),
+    guidance: Number(
+      $("#eng-guidance")?.value || (state.editKind === "undress" ? 1.0 : state.mode === "edit" ? 2.0 : 1.4)
+    ),
     quantize: Number($("#eng-quant").value),
     seed: seedVal === "" ? null : Number(seedVal),
     mode: catalogMode(),
@@ -664,9 +669,7 @@ async function generate() {
     image_strength:
       state.editKind === "pose" && state.poseImage
         ? Number($("#eng-strength")?.value || 0.75)
-        : state.editKind === "undress"
-          ? Number($("#eng-strength")?.value || 0.45)
-          : state.mode === "gen" && state.refImage
+        : state.mode === "gen" && state.refImage
             ? Number($("#eng-strength")?.value || 0.55)
             : null,
   };

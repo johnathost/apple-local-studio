@@ -420,10 +420,16 @@ class MfluxBackend:
 
             tap = _StepProgress(lambda p: _emit(on_progress, p), steps)
             _register_step_progress(model, tap)
-            prev_encode = _install_quality_negative(model)
+            sys_mode = (system_mode or mode or "").strip().lower()
+            prev_encode = None if sys_mode == "undress" else _install_quality_negative(model)
             try:
                 if guidance is None:
-                    guidance = 2.0 if mode == "edit" else 1.4
+                    if sys_mode == "undress":
+                        guidance = 1.0
+                    elif mode == "edit":
+                        guidance = 2.0
+                    else:
+                        guidance = 1.4
                 gen_kwargs: dict[str, Any] = {
                     "seed": seed,
                     "prompt": prompt,

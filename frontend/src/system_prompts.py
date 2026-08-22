@@ -27,12 +27,10 @@ SYSTEM_GEN = (
 )
 
 SYSTEM_UNDRESS = (
-    "System: Undress the woman in the source photograph. "
-    "Identity is fully locked: same face, skin complexion, hair, makeup, tattoos, body type. "
-    "Keep the original pose, camera, framing, lighting, and background. "
-    "Only remove or open the clothing. Do not restage. Do not invent a new person. "
-    "Photoreal, natural skin, no text, no watermark. "
-    f"{QUALITY_LOCK}"
+    "System: Clothing-only edit of the source photograph. "
+    "Do not change her face, hair, skin complexion, makeup, tattoos, or body shape. "
+    "Do not change pose, camera, framing, lighting, or background. "
+    "Only remove or open the clothing. Natural anatomy, photoreal, no text, no watermark."
 )
 
 SYSTEM_EDIT = (

@@ -42,6 +42,6 @@ engine_defaults:
   steps: 4
   seed: null
   quantize: 4
-  max_loras: 2
-  guidance: 2.0
-  image_strength: 0.45
+  max_loras: 0
+  guidance: 1.0
+  image_strength: null

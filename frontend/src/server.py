@@ -83,16 +83,21 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
 
     scene, dropped = sanitize_scene(scene, winner=winner, mode=mode)
 
+    # Undress is a clothing-only Klein edit. Pose/body LoRAs melt identity.
+    max_loras = req.max_loras
+    if mode == "undress" and max_loras is None:
+        max_loras = int(engine_defaults(mode).get("max_loras", 0))
+
     matched = match_loras(
         scene,
         on_disk=set(engine.list_lora_files()),
-        max_loras=req.max_loras,
+        max_loras=max_loras,
         manual=[m.model_dump() for m in req.manual_loras],
     )
     triggers: list[str] = []
-    if req.include_triggers:
+    if req.include_triggers and mode != "undress":
         for m in matched:
-            if mode in {"pose", "undress"}:
+            if mode == "pose":
                 token = m.prompt_trigger
                 if token:
                     triggers.append(token)
@@ -220,7 +225,10 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             ref_images.append(pose_name)
 
     image_strength = req.image_strength
-    if image_strength is None and pose_name:
+    if cat == "undress":
+        # Native Klein edit (reference image + instruction). Extra denoise melts the person.
+        image_strength = None
+    elif image_strength is None and pose_name:
         image_strength = 0.75
     elif image_strength is None:
         image_strength = defaults.get("image_strength")
