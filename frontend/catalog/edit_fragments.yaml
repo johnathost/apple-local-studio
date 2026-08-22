@@ -1,0 +1,68 @@
+# Edit-mode fragments. Written as instructions, not a from-scratch scene.
+
+keep.traits:
+  face: "keep her face and identity"
+  hair: "keep her hair"
+  body: "keep her body"
+  breasts: "keep her breasts"
+  outfit: "keep her original outfit"
+  setting: "keep the original setting"
+  lighting: "keep the original lighting"
+  expression: "keep her expression"
+
+change.targets:
+  clothing: "change the clothing"
+  pose: "change the pose"
+  camera: "change the camera angle"
+  act: "change the sexual act"
+  fluids: "change fluids / finish"
+  expression: "change her expression"
+  body: "adjust body details"
+  setting: "change the setting"
+
+clothing.state:
+  keep: ""
+  nude: "make her nude"
+  lingerie: "put her in lingerie"
+  partially: "make her partially clothed"
+  dress_hiked: "hike her dress up"
+
+position.pose:
+  keep: ""
+  standing: "change pose to standing"
+  lying_back: "change pose to lying on her back"
+  missionary: "change pose to missionary"
+  cowgirl: "change pose to cowgirl"
+  reverse_cowgirl: "change pose to reverse cowgirl"
+  doggy: "change pose to doggystyle"
+  all_fours: "change pose to on all fours"
+  legs_spread: "change pose to legs spread"
+  from_behind_stand: "change pose to standing, taken from behind"
+
+act.primary:
+  none: ""
+  vaginal: "edit to vaginal sex, vaginal penetration"
+  anal: "edit to anal sex, anal penetration"
+  oral: "edit to oral sex"
+  spreading: "edit to her spreading herself"
+  masturbation: "edit to masturbation"
+
+camera.angle:
+  keep: ""
+  medium: "medium shot"
+  pov: "change camera to pov"
+  from_behind: "change camera to from behind"
+  closeup: "change to a close-up"
+  ass_focus: "change camera to ass focus"
+
+finish.effects:
+  cum_face: "add cum on her face"
+  cum_body: "add cum on her body"
+  cum_inside: "add a creampie"
+  sloppy: "make it sloppy and messy"
+  wet: "make her look very wet"
+
+strength.amount:
+  subtle: "subtle edit, stay close to the original photo"
+  medium: "medium-strength edit"
+  strong: "strong edit, clearly apply every requested change"

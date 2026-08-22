@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Local Apple Studio</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">LAS</span>
+        <div>
+          <h1>Local Apple Studio</h1>
+          <p class="sub">Scene composer → mflux · private local gen</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button type="button" id="btn-home" class="ghost hidden">← Modes</button>
+        <span id="engine-badge" class="badge">engine…</span>
+        <button type="button" id="btn-unload" class="ghost" title="Unload model from memory">Unload</button>
+      </div>
+    </header>
+
+    <section id="home" class="home">
+      <p class="home-kicker">What do you want to do?</p>
+      <div class="home-cards" id="home-cards">
+        <button type="button" class="home-card" id="enter-gen" data-enter="gen">
+          <span class="home-card-kicker">New scene</span>
+          <span class="home-card-label">Generate</span>
+          <span class="home-card-copy">Build a scene from scratch. You can still drop in an optional reference photo.</span>
+        </button>
+        <button type="button" class="home-card" id="enter-edit" data-enter="edit">
+          <span class="home-card-kicker">Existing photo</span>
+          <span class="home-card-label">Edit image</span>
+          <span class="home-card-copy">Change a photo you already have. Keep the person, apply only the edits you ask for.</span>
+        </button>
+      </div>
+    </section>
+
+    <main id="studio" class="layout hidden">
+      <!-- Scene builder -->
+      <aside class="panel builder">
+        <div class="panel-head">
+          <h2 id="builder-title">Scene</h2>
+          <button type="button" id="btn-reset-scene" class="ghost sm">Reset</button>
+        </div>
+        <div id="builder-root" class="builder-scroll"></div>
+      </aside>
+
+      <!-- Chat / history -->
+      <section class="panel chat">
+        <div class="panel-head">
+          <h2>Results</h2>
+          <button type="button" id="btn-clear-chat" class="ghost sm">Clear</button>
+        </div>
+        <div id="chat-thread" class="chat-thread"></div>
+        <div class="composer-bar">
+          <p id="system-line" class="system-line"></p>
+          <textarea id="notes-quick" rows="2" placeholder="Optional free-text notes / override lines…"></textarea>
+          <div class="composer-row">
+            <label class="file-btn" id="ref-wrap">
+              Optional reference
+              <input type="file" id="ref-image" accept="image/png,image/jpeg,image/webp" hidden />
+            </label>
+            <span id="ref-label" class="muted"></span>
+            <button type="button" id="btn-clear-ref" class="ghost sm hidden">Clear</button>
+            <label class="strength-wrap hidden" id="strength-wrap">
+              Ref strength
+              <input type="range" id="eng-strength" min="0.2" max="0.9" step="0.05" value="0.55" />
+            </label>
+            <button type="button" id="btn-generate" class="primary">Generate</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Prompt + LoRA preview -->
+      <aside class="panel preview">
+        <div class="panel-head">
+          <h2>Prompt &amp; LoRAs</h2>
+          <label class="toggle">
+            <input type="checkbox" id="include-triggers" checked />
+            triggers
+          </label>
+        </div>
+
+        <label class="field-label">Final prompt <span class="muted">(editable)</span></label>
+        <textarea id="prompt-out" rows="10" spellcheck="false"></textarea>
+
+        <div class="aspect-row" id="aspect-row">
+          <button type="button" class="ghost sm aspect-btn" data-w="832" data-h="1248">Portrait 2:3</button>
+          <button type="button" class="ghost sm aspect-btn" data-w="768" data-h="1024">Portrait 3:4</button>
+          <button type="button" class="ghost sm aspect-btn" data-w="1024" data-h="1024">Square</button>
+          <button type="button" class="ghost sm aspect-btn" data-w="1248" data-h="832">Landscape 3:2</button>
+          <button type="button" class="ghost sm aspect-btn" data-w="1280" data-h="720">Wide 16:9</button>
+        </div>
+        <div class="engine-grid">
+          <label>W <input type="number" id="eng-width" min="256" max="2048" step="16" /></label>
+          <label>H <input type="number" id="eng-height" min="256" max="2048" step="16" /></label>
+          <label>Steps <input type="number" id="eng-steps" min="1" max="50" /></label>
+          <label>Guidance <input type="number" id="eng-guidance" min="1" max="6" step="0.1" /></label>
+          <label>Seed <input type="number" id="eng-seed" placeholder="random" /></label>
+          <label>Quant <input type="number" id="eng-quant" min="3" max="8" /></label>
+          <label>Max LoRAs <input type="number" id="eng-max-loras" min="0" max="4" /></label>
+        </div>
+
+        <div class="panel-head tight">
+          <h3>Matched LoRAs</h3>
+        </div>
+        <div id="lora-list" class="lora-list"></div>
+
+        <div class="panel-head tight">
+          <h3>Tags</h3>
+        </div>
+        <div id="tag-list" class="tag-list"></div>
+
+        <div id="job-status" class="job-status hidden"></div>
+      </aside>
+    </main>
+  </div>
+  <script src="/js/app.js" type="module"></script>
+</body>
+</html>

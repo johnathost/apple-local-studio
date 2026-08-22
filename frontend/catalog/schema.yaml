@@ -1,0 +1,258 @@
+# Scene builder UI definition for Local Apple Studio.
+# Each group becomes a panel; options drive prompt fragments + LoRA tags.
+
+groups:
+  - id: subject
+    label: Subject
+    fields:
+      - id: type
+        label: Body type
+        type: choice
+        default: woman
+        options:
+          - { id: woman, label: Woman }
+          - { id: futa, label: Futanari }
+          - { id: femboy, label: Femboy / T-girl }
+
+      - id: age_look
+        label: Age look
+        type: choice
+        default: adult
+        options:
+          - { id: adult, label: Adult }
+          - { id: mature, label: Mature }
+          - { id: young_adult, label: Young adult }
+
+  - id: body
+    label: Body
+    fields:
+      - id: breasts
+        label: Breasts
+        type: choice
+        default: medium
+        options:
+          - { id: flat, label: Flat }
+          - { id: small, label: Small }
+          - { id: medium, label: Medium }
+          - { id: large, label: Large }
+          - { id: huge, label: Huge }
+          - { id: implants, label: Implants }
+
+      - id: ass
+        label: Ass
+        type: choice
+        default: medium
+        options:
+          - { id: small, label: Small }
+          - { id: medium, label: Medium }
+          - { id: large, label: Large }
+          - { id: huge, label: Huge }
+
+      - id: hips
+        label: Hips
+        type: choice
+        default: medium
+        options:
+          - { id: slim, label: Slim }
+          - { id: medium, label: Medium }
+          - { id: wide, label: Wide }
+
+      - id: nipples
+        label: Nipples
+        type: choice
+        default: natural
+        options:
+          - { id: natural, label: Natural }
+          - { id: puffy, label: Puffy }
+          - { id: erect, label: Erect / detailed }
+
+      - id: pubic_hair
+        label: Pubic hair
+        type: choice
+        default: trimmed
+        options:
+          - { id: shaved, label: Shaved }
+          - { id: trimmed, label: Trimmed }
+          - { id: hairy, label: Hairy }
+
+      - id: body_detail
+        label: Body emphasis
+        type: multi
+        default: []
+        options:
+          - { id: athletic, label: Athletic }
+          - { id: curvy, label: Curvy }
+          - { id: slim, label: Slim }
+          - { id: thick, label: Thick }
+          - { id: wet_skin, label: Wet skin }
+          - { id: sweat, label: Sweaty }
+
+  - id: clothing
+    label: Clothing
+    fields:
+      - id: state
+        label: Outfit
+        type: choice
+        default: nude
+        options:
+          - { id: nude, label: Nude }
+          - { id: lingerie, label: Lingerie }
+          - { id: partially, label: Partially clothed }
+          - { id: dress_hiked, label: Dress hiked up }
+          - { id: keep_outfit, label: Keep outfit (edit) }
+
+      - id: details
+        label: Clothing details
+        type: text
+        default: ""
+        placeholder: "e.g. black lace bra, thigh highs"
+
+  - id: position
+    label: Position
+    fields:
+      - id: pose
+        label: Pose
+        type: choice
+        default: standing
+        options:
+          - { id: standing, label: Standing }
+          - { id: lying_back, label: Lying on back }
+          - { id: missionary, label: Missionary }
+          - { id: cowgirl, label: Cowgirl }
+          - { id: reverse_cowgirl, label: Reverse cowgirl }
+          - { id: doggy, label: Doggystyle }
+          - { id: all_fours, label: All fours }
+          - { id: legs_spread, label: Legs spread }
+          - { id: sitting_lap, label: Sitting on lap }
+          - { id: kneeling, label: Kneeling }
+          - { id: from_behind_stand, label: Standing from behind }
+
+  - id: act
+    label: Act
+    fields:
+      - id: primary
+        label: Primary act
+        type: multi
+        default: []
+        options:
+          - { id: none, label: Pose only / none }
+          - { id: vaginal, label: Vaginal sex }
+          - { id: anal, label: Anal sex }
+          - { id: oral, label: Oral / blowjob }
+          - { id: deepthroat, label: Deepthroat }
+          - { id: facehumping, label: Facehumping / facefuck }
+          - { id: titfuck, label: Titfuck }
+          - { id: masturbation, label: Masturbation }
+          - { id: vaginal_fisting, label: Vaginal fisting }
+          - { id: anal_fisting, label: Anal fisting }
+          - { id: vaginal_gape, label: Vaginal gape }
+          - { id: anal_gape, label: Anal gape }
+          - { id: prolapse, label: Anal prolapse }
+          - { id: dildo, label: Dildo riding }
+          - { id: spreading, label: Spreading / exposing }
+
+  - id: camera
+    label: Camera
+    fields:
+      - id: angle
+        label: Angle
+        type: choice
+        default: medium
+        options:
+          - { id: medium, label: Medium shot }
+          - { id: pov, label: POV }
+          - { id: from_behind, label: From behind }
+          - { id: side, label: Side view }
+          - { id: closeup, label: Close-up }
+          - { id: ass_focus, label: Ass focus }
+          - { id: face_focus, label: Face focus }
+          - { id: genital_focus, label: Genital focus }
+
+      - id: framing
+        label: Framing
+        type: choice
+        default: full_body
+        options:
+          - { id: full_body, label: Full body }
+          - { id: portrait, label: Portrait }
+          - { id: waist_up, label: Waist up }
+          - { id: lower_body, label: Lower body }
+
+  - id: partners
+    label: Partners
+    fields:
+      - id: count
+        label: Partners
+        type: choice
+        default: solo
+        options:
+          - { id: solo, label: Solo }
+          - { id: one_man, label: One man }
+          - { id: two_men, label: Two men }
+
+      - id: visibility
+        label: Partner visibility
+        type: choice
+        default: out_of_frame
+        options:
+          - { id: none, label: None }
+          - { id: out_of_frame, label: Mostly out of frame }
+          - { id: partial, label: Partial body }
+          - { id: full, label: Fully visible }
+
+  - id: finish
+    label: Finish / fluids
+    fields:
+      - id: effects
+        label: Effects
+        type: multi
+        default: []
+        options:
+          - { id: cum_face, label: Cum on face }
+          - { id: cum_body, label: Cum on body }
+          - { id: cum_inside, label: Creampie / inside }
+          - { id: sloppy, label: Sloppy / saliva / messy }
+          - { id: wet, label: Very wet / lubricated }
+
+  - id: setting
+    label: Setting
+    fields:
+      - id: place
+        label: Location
+        type: choice
+        default: bed
+        options:
+          - { id: bed, label: Bed }
+          - { id: couch, label: Couch }
+          - { id: ottoman, label: Ottoman / bench }
+          - { id: floor, label: Floor }
+          - { id: bathroom, label: Bathroom }
+          - { id: outdoor, label: Outdoor }
+          - { id: studio, label: Studio / plain }
+
+  - id: style
+    label: Style
+    fields:
+      - id: look
+        label: Look
+        type: choice
+        default: photoreal
+        options:
+          - { id: photoreal, label: Photorealistic }
+          - { id: explicit_photo, label: Explicit photo }
+          - { id: cinematic, label: Cinematic }
+
+      - id: notes
+        label: Extra notes
+        type: text
+        default: ""
+        placeholder: "hair color, expression, keep face, etc."
+
+engine_defaults:
+  width: 832
+  height: 1248
+  steps: 4
+  seed: null
+  quantize: 4
+  max_loras: 2
+  guidance: 1.4

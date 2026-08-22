@@ -1,0 +1,37 @@
+;; Local Apple Studio - Seatbelt profile for the ivoai mflux backend.
+;; Applied via /usr/bin/sandbox-exec -f this-file.
+;;
+;; Placeholders rewritten by launcher.sh sync_backend_code:
+;;   __DATA_HOME__     e.g. /opt/ivoai
+;;   __BACKEND_PORT__  e.g. 8090
+;;
+;; Keep this file ASCII-only. Non-ASCII comments have made sandbox-exec
+;; abort with SIGABRT (exit 134) and no stderr.
+;;
+;; Strategy: allow default (Metal / dyld / Python need a lot of system
+;; surface), then deny the two things that matter:
+;;   - read of /Users and /Volumes (login-user files)
+;;   - outbound network (no Hugging Face)
+;; Bind/inbound on localhost:port stay allowed via (allow default).
+
+(version 1)
+(allow default)
+
+;; Login user's home and mounted disks stay out of reach.
+(deny file-read*
+    (subpath "/Users")
+    (subpath "/Volumes")
+    (subpath "/home"))
+(deny file-write*
+    (subpath "/Users")
+    (subpath "/Volumes")
+    (subpath "/home"))
+
+;; No outbound connects. Local listener is still allowed.
+(deny network-outbound)
+
+;; Make the listen port explicit (host must be localhost or *).
+(allow network-bind
+    (local ip "localhost:__BACKEND_PORT__"))
+(allow network-inbound
+    (local ip "localhost:__BACKEND_PORT__"))

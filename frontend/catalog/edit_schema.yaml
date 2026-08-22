@@ -1,0 +1,150 @@
+# Image-edit builder. Instruction-first, keep/change, then optional scene tweaks.
+
+groups:
+  - id: keep
+    label: Keep from the photo
+    fields:
+      - id: traits
+        label: Preserve
+        type: multi
+        default: [face, hair, body, setting]
+        options:
+          - { id: face, label: Face / identity }
+          - { id: hair, label: Hair }
+          - { id: body, label: Body }
+          - { id: breasts, label: Breasts }
+          - { id: outfit, label: Outfit }
+          - { id: setting, label: Setting }
+          - { id: lighting, label: Lighting }
+          - { id: expression, label: Expression }
+
+  - id: change
+    label: Change
+    fields:
+      - id: targets
+        label: Edit targets
+        type: multi
+        default: []
+        options:
+          - { id: clothing, label: Clothing }
+          - { id: pose, label: Pose }
+          - { id: camera, label: Camera }
+          - { id: act, label: Act }
+          - { id: fluids, label: Fluids / finish }
+          - { id: expression, label: Expression }
+          - { id: body, label: Body details }
+          - { id: setting, label: Setting }
+
+  - id: clothing
+    label: Clothing
+    fields:
+      - id: state
+        label: Outfit after edit
+        type: choice
+        default: keep
+        options:
+          - { id: keep, label: Keep original }
+          - { id: nude, label: Nude }
+          - { id: lingerie, label: Lingerie }
+          - { id: partially, label: Partially clothed }
+          - { id: dress_hiked, label: Dress hiked up }
+
+      - id: details
+        label: Clothing notes
+        type: text
+        default: ""
+        placeholder: "e.g. keep the black dress, pull it up"
+
+  - id: position
+    label: Pose
+    fields:
+      - id: pose
+        label: New pose
+        type: choice
+        default: keep
+        options:
+          - { id: keep, label: Keep original }
+          - { id: standing, label: Standing }
+          - { id: lying_back, label: Lying on back }
+          - { id: missionary, label: Missionary }
+          - { id: cowgirl, label: Cowgirl }
+          - { id: reverse_cowgirl, label: Reverse cowgirl }
+          - { id: doggy, label: Doggystyle }
+          - { id: all_fours, label: All fours }
+          - { id: legs_spread, label: Legs spread }
+          - { id: from_behind_stand, label: Standing from behind }
+
+  - id: act
+    label: Act
+    fields:
+      - id: primary
+        label: Act to apply
+        type: multi
+        default: []
+        options:
+          - { id: none, label: None / keep }
+          - { id: vaginal, label: Vaginal sex }
+          - { id: anal, label: Anal sex }
+          - { id: oral, label: Oral }
+          - { id: spreading, label: Spreading }
+          - { id: masturbation, label: Masturbation }
+
+  - id: camera
+    label: Camera
+    fields:
+      - id: angle
+        label: Angle
+        type: choice
+        default: keep
+        options:
+          - { id: keep, label: Keep original }
+          - { id: medium, label: Medium }
+          - { id: pov, label: POV }
+          - { id: from_behind, label: From behind }
+          - { id: closeup, label: Close-up }
+          - { id: ass_focus, label: Ass focus }
+
+  - id: finish
+    label: Finish
+    fields:
+      - id: effects
+        label: Effects
+        type: multi
+        default: []
+        options:
+          - { id: cum_face, label: Cum on face }
+          - { id: cum_body, label: Cum on body }
+          - { id: cum_inside, label: Creampie }
+          - { id: sloppy, label: Sloppy / messy }
+          - { id: wet, label: Very wet }
+
+  - id: strength
+    label: Edit strength
+    fields:
+      - id: amount
+        label: How far to push the edit
+        type: choice
+        default: medium
+        options:
+          - { id: subtle, label: Subtle }
+          - { id: medium, label: Medium }
+          - { id: strong, label: Strong }
+
+  - id: instruction
+    label: Edit request
+    fields:
+      - id: text
+        label: What to change
+        type: text
+        default: ""
+        placeholder: "e.g. keep her face, change to doggy, anal, from behind"
+
+engine_defaults:
+  width: 1024
+  height: 576
+  steps: 4
+  seed: null
+  quantize: 4
+  max_loras: 2
+  guidance: 2.0
+  image_strength: 0.55

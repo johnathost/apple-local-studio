@@ -1,0 +1,380 @@
+# LoRA catalog for auto-matching.
+# Source of filenames + triggers: /lora.md
+# Matching uses tags + priority; conflicts drop weaker options.
+# exclusive_group: only the highest-scoring member of a group is stacked.
+
+loras:
+  - id: huge_gape_vaginal
+    name: Huge Gape - Vaginal
+    file: HugeGape_Vagina_Light_v2.safetensors
+    default_scale: 0.85
+    priority: 90
+    tags:
+      - act:vaginal_gape
+      - act:spreading
+    triggers:
+      - "she has a gaping pussy"
+      - "she is gaping her pussy"
+      - "she is spreading her pussy"
+    conflicts: []
+
+  - id: missionary_pov
+    name: Missionary POV Vaginal
+    file: FK_missionary.safetensors
+    default_scale: 0.85
+    priority: 100
+    tags:
+      - position:missionary
+      - act:vaginal
+      - camera:pov
+    triggers:
+      - "missionary, vaginal sex, vaginal penetration, pov"
+      - "girl in the image is lying on her back, spreading her legs"
+      - "a man is penetrating her pussy"
+      - "she has vaginal sex with the man in missionary position"
+      - "she is looking at the camera"
+      - "the man is out of frame"
+    conflicts:
+      - position:doggy
+      - position:cowgirl
+      - position:reverse_cowgirl
+      - act:anal
+
+  - id: cum_on_face
+    name: Cum On Face
+    file: cum_on_face_v2.safetensors
+    default_scale: 0.8
+    priority: 50
+    exclusive_group: cum
+    tags:
+      - finish:cum_face
+    triggers:
+      - "cum on her face"
+      - "semen on her face"
+    conflicts: []
+
+  - id: huge_gape_anal
+    name: Huge Gape - Anal
+    file: HugeGape_Anal_V3_AIO.safetensors
+    default_scale: 0.85
+    priority: 90
+    tags:
+      - act:anal_gape
+    triggers:
+      - "anal gape"
+      - "she has a gaping ass"
+      - "huge gape"
+    conflicts: []
+
+  - id: pov_anal
+    name: POV Anal
+    file: klein-pov-anal-11epoc-k3nk.safetensors
+    default_scale: 0.85
+    priority: 95
+    tags:
+      - act:anal
+      - camera:pov
+      - position:reverse_cowgirl
+      - camera:from_behind
+    triggers:
+      - "a woman riding a man's penis while facing away from the camera"
+      - "The woman's large, round buttocks are prominently displayed"
+    conflicts:
+      - position:missionary
+      - act:vaginal
+      - partners:two_men
+      - position:doggy
+
+  - id: spitroast_anal
+    name: Doggystyle Anal Spitroast
+    file: FK_spitroastanal.safetensors
+    default_scale: 0.85
+    priority: 100
+    tags:
+      - position:doggy
+      - position:all_fours
+      - act:anal
+      - act:oral
+      - partners:two_men
+      - camera:ass_focus
+    triggers:
+      - "doggystyle spitroast sex"
+      - "threesome sex with one woman and two men"
+      - "the girl is positioned on all fours and performs oral sex on one of the men"
+      - "the other man is penetrating her anus from behind"
+      - "anal sex, oral sex and deepthroat"
+    conflicts:
+      - partners:solo
+      - position:missionary
+
+  - id: prolapse_anal
+    name: Prolapse - Anal
+    file: MrWeaz_ProlapseAnus_v2.safetensors
+    default_scale: 0.8
+    priority: 95
+    tags:
+      - act:prolapse
+    triggers:
+      - "AN4LPR0L4PS3"
+      - "she has a prolapsed anus"
+      - "anal prolapse, rosebud"
+    conflicts: []
+
+  - id: self_fisting_anal
+    name: Self Fisting - Anal
+    file: SelfFisting_Anal_v1.safetensors
+    default_scale: 0.85
+    priority: 95
+    tags:
+      - act:anal_fisting
+      - partners:solo
+    triggers:
+      - "self anal fisting"
+      - "she is self fisting her ass"
+      - "she has her hand in her ass"
+      - "she is fisting her own ass"
+    conflicts:
+      - partners:one_man
+      - partners:two_men
+
+  - id: cowgirl_anal
+    name: Cowgirl Anal
+    file: FK_bbcanalcowgirl_epoch_20.safetensors
+    default_scale: 0.85
+    priority: 100
+    tags:
+      - position:cowgirl
+      - position:reverse_cowgirl
+      - position:sitting_lap
+      - act:anal
+      - camera:from_behind
+      - camera:ass_focus
+    triggers:
+      - "she is sitting on the mans lap"
+      - "her ass is turned to the viewer"
+      - "she is looking back at the camera"
+      - "the penis of the man is penetrating her anus"
+    conflicts:
+      - act:vaginal
+      - position:missionary
+      - position:doggy
+      - position:all_fours
+      - partners:two_men
+
+  - id: sloppy_deepthroat
+    name: Extreme Sloppy Deepthroat
+    file: FK_sloppydeepthroat_epoch_10.safetensors
+    default_scale: 0.85
+    priority: 95
+    tags:
+      - act:deepthroat
+      - act:oral
+      - finish:sloppy
+    triggers:
+      - "d33p"
+      - "deepthroating and sucking a big penis"
+      - "saliva is drooling from her mouth"
+      - "cum strings and saliva strings"
+      - "spit bubbles"
+    conflicts: []
+
+  - id: facehumping
+    name: Mounted / Lying Facehumping
+    file: FK_facehumping.safetensors
+    default_scale: 0.85
+    priority: 95
+    exclusive_group: oral
+    tags:
+      - act:facehumping
+    triggers:
+      - "the girl lying on her back and a naked man straddling on her face"
+      - "his testicles are covering the girls face"
+      - "implied fellatio"
+      - "the image is shot from below"
+    conflicts:
+      - partners:solo
+      - partners:two_men
+      - position:doggy
+      - position:cowgirl
+      - act:anal
+      - act:vaginal
+
+  - id: cum_anywhere
+    name: Cum Anywhere Concept
+    file: Cum_on_Face.safetensors
+    default_scale: 0.8
+    priority: 45
+    exclusive_group: cum
+    tags:
+      - finish:cum_body
+      - finish:cum_inside
+    triggers:
+      - "semen"
+      - "cum"
+    conflicts: []
+
+  - id: femboy_tgirl
+    name: Femboys Tgirls Futa
+    file: femboy_lora_v5_LoKr16_000030000.safetensors
+    default_scale: 0.8
+    priority: 60
+    exclusive_group: identity
+    tags:
+      - subject:femboy
+      - subject:futa
+    triggers:
+      - "femboy"
+      - "tgirl"
+    conflicts: []
+
+  - id: futanari_penis
+    name: Futanari Penis
+    file: Flux2_Klein_9B_Futanari_Penis_(Degenerator123).safetensors
+    default_scale: 0.8
+    priority: 65
+    exclusive_group: identity
+    tags:
+      - subject:futa
+    triggers:
+      - "woman with a penis"
+    conflicts: []
+
+  - id: nipple_diffusion
+    name: NippleDiffusion
+    file: nipplediffusion-f2-klein-9b_v3.safetensors
+    default_scale: 0.7
+    priority: 30
+    tags:
+      - body.nipples:erect
+      - body.nipples:puffy
+    triggers:
+      - "naked breasts"
+      - "nude tits"
+    conflicts: []
+
+  - id: pov_blowjob
+    name: POV Blowjob
+    file: POV_blowjobV1_A.safetensors
+    default_scale: 0.85
+    priority: 90
+    exclusive_group: oral
+    tags:
+      - act:oral
+      - camera:pov
+    triggers:
+      - "doing a blowjob"
+      - "pov from man view"
+    conflicts:
+      - act:anal
+      - act:vaginal
+      - position:doggy
+
+  - id: the_body
+    name: The Body
+    file: The_Body_Version_A_Flux2.k.9B_r16_AdamW8Bit_Weighted_768_woman_000005000.safetensors
+    default_scale: 0.7
+    priority: 25
+    tags:
+      - body:emphasis
+    triggers:
+      - "woman"
+    conflicts: []
+
+  - id: dildo_riding
+    name: Dildo Riding
+    file: Dildo riding.safetensors
+    default_scale: 0.8
+    priority: 80
+    tags:
+      - act:dildo
+      - partners:solo
+    triggers: []
+    conflicts:
+      - partners:one_man
+      - partners:two_men
+
+  - id: legs_spreading
+    name: Nude Legs Spreading
+    file: spread_legs_beta1.safetensors
+    default_scale: 0.8
+    priority: 70
+    tags:
+      - position:legs_spread
+      - act:spreading
+    triggers:
+      - "a woman spreading legs"
+    conflicts: []
+
+  - id: breast_implants
+    name: Breast Implants
+    file: Breast_Implanter_v5.0_exp.safetensors
+    default_scale: 0.75
+    priority: 40
+    tags:
+      - body:implants
+      - body.breasts:implants
+    triggers:
+      - "breast implants"
+      - "round augmented breasts"
+    conflicts: []
+
+  - id: tittyfuck
+    name: TittyFuck
+    file: klein-tittyfuck-11epoc-k3nk.safetensors
+    default_scale: 0.85
+    priority: 90
+    tags:
+      - act:titfuck
+    triggers:
+      - "a woman kneels with her hands squeezing her large breasts"
+      - "she rests her breasts on a man's crotch"
+      - "his penis is seen disappearing in her cleavage"
+    conflicts:
+      - act:anal
+      - act:vaginal
+      - position:doggy
+
+  - id: trans_femboy
+    name: Trans Femboy
+    file: femboy_krea2.safetensors
+    default_scale: 0.8
+    priority: 55
+    exclusive_group: identity
+    tags:
+      - subject:femboy
+    triggers:
+      - "androgynous femboy"
+    conflicts: []
+
+  - id: self_fisting_vaginal
+    name: Self Fisting - Vaginal
+    file: SelfFisting_Vaginal_v1.safetensors
+    default_scale: 0.85
+    priority: 90
+    tags:
+      - act:vaginal_fisting
+      - partners:solo
+    triggers:
+      - "she is self fisting her vagina"
+      - "she is fisting her own vagina"
+      - "she has her hand in her vagina"
+      - "self fisting"
+    conflicts:
+      - partners:one_man
+      - partners:two_men
+
+  - id: masturbation
+    name: SexGod Female Masturbation
+    file: SEXGOD_FemaleMasturbation_Klein9b_v1.safetensors
+    default_scale: 0.8
+    priority: 80
+    tags:
+      - act:masturbation
+      - partners:solo
+    triggers:
+      - "MASTURBATE"
+    conflicts:
+      - act:vaginal
+      - act:anal
+      - partners:one_man
+      - partners:two_men

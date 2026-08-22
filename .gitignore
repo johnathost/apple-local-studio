@@ -1,0 +1,11 @@
+.venv/
+.venv-host/
+venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+.vscode/
+install.log
+install.lock.d/
+*.log
+*.pid
