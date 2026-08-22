@@ -279,7 +279,13 @@ def compose_edit_prompt(
 
     partners = scene.get("partners") or {}
     pcount = _frag(fr, "partners.count", partners.get("count"))
-    if isinstance(pcount, str) and pcount and not _covered(" ".join(chunks), pcount):
+    so_far = " ".join(chunks).lower()
+    if (
+        isinstance(pcount, str)
+        and pcount
+        and not _covered(so_far, pcount)
+        and not ("alone" in so_far and "alone" in pcount.lower())
+    ):
         chunks.append(pcount)
 
     if not skip_camera:
@@ -320,8 +326,19 @@ def compose_edit_prompt(
     extras = _filter_edit_triggers(" ".join(chunks), extra_triggers)
     chunks.extend(extras)
 
-    if must_restage:
-        chunks.append("Apply the new pose and camera fully")
+    feats_sel = {
+        str(x) for x in ((scene.get("features") or {}).get("extras") or []) if _tag_value(x)
+    }
+    if feats_sel & {"prolapse", "anal_gape"}:
+        chunks.append(
+            "The anus must be in frame. Do not attach a prolapse to her navel or belly"
+        )
+    if preset_id == "lie_spread" or (pose_id == "legs_spread" and must_restage):
+        chunks.append(
+            "Camera at her feet, between the thighs, crotch in the foreground, "
+            "head farther away. Not a top-down shot of her face"
+        )
+
     chunks.append("Photoreal, sharp, natural skin, correct anatomy")
 
     return _join_edit(chunks)

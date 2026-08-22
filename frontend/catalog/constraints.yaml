@@ -187,8 +187,9 @@ edit_presets:
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: she is standing, facing the camera, full body, weight on one hip,
-      arms relaxed. She is alone.
+      New shot: full-body photograph, camera at chest height in front of her.
+      She is standing, facing the camera, both legs visible, feet on the floor.
+      Not a close-up of the head. She is alone.
 
   stand_back:
     label: Standing · from behind
@@ -199,8 +200,9 @@ edit_presets:
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: she is standing with her back to the camera, viewed from behind,
-      full body, looking over her shoulder. She is alone.
+      New shot: full-body photograph from behind, camera at hip height.
+      She is standing with her back to the camera, buttocks and legs visible,
+      looking over her shoulder. She is alone.
 
   sit:
     label: Sitting
@@ -211,8 +213,9 @@ edit_presets:
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: she is sitting on a bed or chair, knees together, torso upright,
-      looking at the camera. She is alone.
+      New shot: camera in front of her at torso height. She is sitting on a bed
+      or chair, knees together, whole body in frame from head to feet.
+      She is alone.
 
   sit_spread:
     label: Sitting · legs open
@@ -223,8 +226,9 @@ edit_presets:
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: she is sitting facing the camera with her legs spread open,
-      knees apart, genital area visible. She is alone.
+      New shot: camera in front of her at crotch height, not a face close-up.
+      She is sitting facing the lens with knees pulled wide apart, thighs in a V.
+      Her pussy is clearly visible between her legs. She is alone.
 
   lie_back:
     label: Lying on back
@@ -235,8 +239,9 @@ edit_presets:
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: she is lying on her back on a bed, legs together and relaxed,
-      looking toward the camera. She is alone.
+      New shot: she is lying on her back on a bed, legs together, photographed
+      from the side or three-quarter view so the whole body is visible.
+      Not a shot from directly above her head. She is alone.
 
   lie_spread:
     label: Lying on back · legs open
@@ -247,9 +252,12 @@ edit_presets:
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: she is lying on her back with her legs spread wide, knees bent
-      and open. Camera looks down so her face, breasts, and genitals are visible.
-      She is alone.
+      New shot: the camera is BETWEEN her open thighs at the FOOT of the bed,
+      looking toward her face. She is on her back. Knees pulled back toward
+      her chest, thighs in a wide V aimed at the lens, hips closest to camera.
+      Pussy and anus are in the foreground; belly, breasts, and face recede
+      toward the top of the frame. Do not place the camera above her head.
+      Do not hide her crotch behind her thighs. She is alone.
 
   lie_side:
     label: Lying on side
@@ -260,8 +268,9 @@ edit_presets:
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: she is lying on her side on a bed, hips stacked, one arm under
-      her head, body in profile. She is alone.
+      New shot: camera at the side of the bed, full body in profile.
+      She is lying on her side, hips stacked, knees slightly bent.
+      She is alone.
 
   all_fours:
     label: On all fours
@@ -272,8 +281,9 @@ edit_presets:
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: she is on all fours, back arched, viewed from behind and slightly
-      to the side so her hips and buttocks are prominent. She is alone.
+      New shot: camera behind her at hip height. She is on hands and knees,
+      back arched, ass toward the lens. Pussy and anus visible between her
+      buttocks. She is alone.
 
   kneel:
     label: Kneeling
@@ -284,8 +294,8 @@ edit_presets:
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: she is kneeling on the floor or bed, sitting back on her heels
-      or upright on her knees, facing the camera. She is alone.
+      New shot: camera in front at chest height. She is kneeling, whole body
+      in frame from head to knees, facing the lens. She is alone.
 
   bent_over:
     label: Bent over
@@ -296,5 +306,6 @@ edit_presets:
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: she is standing bent forward at the waist, hands on a bed or
-      her knees, viewed from behind. She is alone.
+      New shot: camera behind her at hip height. She is standing bent forward
+      at the waist, hands on the bed or her knees, ass toward the lens.
+      Pussy and anus visible. She is alone.
