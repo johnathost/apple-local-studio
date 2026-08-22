@@ -114,6 +114,22 @@ def _tag_value(value: Any) -> bool:
     return value not in (None, "", "keep", "none")
 
 
+FEATURE_TAGS: dict[str, list[str]] = {
+    "spreading": ["act:spreading"],
+    "vaginal_gape": ["act:vaginal_gape"],
+    "anal_gape": ["act:anal_gape"],
+    "prolapse": ["act:prolapse"],
+    "masturbation": ["act:masturbation"],
+    "creampie": ["finish:cum_inside"],
+    "cum_face": ["finish:cum_face"],
+    "cum_body": ["finish:cum_body"],
+    "wet": ["finish:wet"],
+    "sloppy": ["finish:sloppy"],
+    "anal": ["act:anal"],
+    "deepthroat": ["act:deepthroat"],
+}
+
+
 def scene_tags(scene: dict[str, Any]) -> set[str]:
     """Flatten scene into matcher tags like act:vaginal, position:missionary."""
     tags: set[str] = set()
@@ -162,6 +178,18 @@ def scene_tags(scene: dict[str, Any]) -> set[str]:
     if _tag_value(clothing.get("heels")):
         tags.add(f"clothing.heels:{clothing['heels']}")
 
+    for feat in (scene.get("features") or {}).get("extras") or []:
+        if not _tag_value(feat):
+            continue
+        for tag in FEATURE_TAGS.get(str(feat), []):
+            tags.add(tag)
+
+    if (scene.get("clothing") or {}).get("state") in {"nude", "lingerie", "partially", "dress_hiked"}:
+        if not _tag_value((scene.get("pose") or {}).get("scene")) and not _tag_value(
+            (scene.get("position") or {}).get("pose")
+        ):
+            tags.add("edit:undress")
+
     return tags
 
 
@@ -197,7 +225,7 @@ def compose_edit_prompt(
         )
     chunks.append(EDIT_IDENTITY_LOCK)
 
-    preset_id = (scene.get("preset") or {}).get("scene")
+    preset_id = (scene.get("pose") or {}).get("scene") or (scene.get("preset") or {}).get("scene")
     preset_text = preset_fragment(preset_id)
     skip_pose = False
     skip_camera = False
@@ -266,6 +294,12 @@ def compose_edit_prompt(
             if item and not _covered(" ".join(chunks), item):
                 chunks.append(item)
 
+    feats = _frag(fr, "features.extras", (scene.get("features") or {}).get("extras") or [])
+    if isinstance(feats, list):
+        for item in feats:
+            if item and not _covered(" ".join(chunks), item):
+                chunks.append(item)
+
     keep = scene.get("keep") or {}
     keep_ids = [k for k in (keep.get("traits") or []) if _tag_value(k)]
     skip_keep = {"face", "skin", "hair"}
@@ -293,6 +327,36 @@ def compose_edit_prompt(
     return _join_edit(chunks)
 
 
+def compose_undress_prompt(
+    scene: dict[str, Any],
+    *,
+    extra_triggers: list[str] | None = None,
+    raw_override: str | None = None,
+) -> str:
+    if raw_override and raw_override.strip():
+        return raw_override.strip()
+
+    fr = load_fragments("undress")
+    chunks: list[str] = [
+        "Undress this photograph in place. Do not restage, do not change pose or camera.",
+        "Keep her exact face, skin complexion, hair, makeup, tattoos, and body. "
+        "Do not change ethnicity, lighting, or the background.",
+    ]
+    clothing = scene.get("clothing") or {}
+    cloth = _frag(fr, "clothing.state", clothing.get("state") or "nude")
+    if isinstance(cloth, str) and cloth:
+        chunks.append(cloth)
+    else:
+        chunks.append("she is nude")
+    heels = _frag(fr, "clothing.heels", clothing.get("heels"))
+    if isinstance(heels, str) and heels:
+        chunks.append(heels)
+    extras = _filter_edit_triggers(" ".join(chunks), extra_triggers)
+    chunks.extend(extras)
+    chunks.append("Photoreal, sharp, natural skin, same pose as the source")
+    return _join_edit(chunks)
+
+
 def compose_prompt(
     scene: dict[str, Any],
     *,
@@ -302,7 +366,12 @@ def compose_prompt(
     pose_ref: bool = False,
 ) -> str:
     """Build final prompt. raw_override replaces the assembled body if set."""
-    if (mode or "").strip().lower() == "edit":
+    kind = (mode or "").strip().lower()
+    if kind == "undress":
+        return compose_undress_prompt(
+            scene, extra_triggers=extra_triggers, raw_override=raw_override
+        )
+    if kind in {"edit", "pose"}:
         return compose_edit_prompt(
             scene,
             extra_triggers=extra_triggers,

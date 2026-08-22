@@ -20,7 +20,21 @@ def _read_yaml(path: Path) -> Any:
 
 
 def _norm_mode(mode: str | None) -> str:
-    return "edit" if (mode or "").strip().lower() == "edit" else "gen"
+    m = (mode or "").strip().lower()
+    if m in {"undress", "pose"}:
+        return m
+    if m == "edit":
+        return "pose"
+    return "gen"
+
+
+def catalog_mode(mode: str | None) -> str:
+    return _norm_mode(mode)
+
+
+def engine_mode(mode: str | None) -> str:
+    """mflux path: undress/pose are image edits."""
+    return "edit" if _norm_mode(mode) in {"undress", "pose"} else "gen"
 
 
 @lru_cache(maxsize=1)
@@ -31,9 +45,14 @@ def load_constraints() -> dict[str, Any]:
     return _read_yaml(path)
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=4)
 def load_schema(mode: str = "gen") -> dict[str, Any]:
-    name = "edit_schema.yaml" if _norm_mode(mode) == "edit" else "schema.yaml"
+    kind = _norm_mode(mode)
+    name = {
+        "undress": "undress_schema.yaml",
+        "pose": "pose_schema.yaml",
+        "gen": "schema.yaml",
+    }[kind]
     data = dict(_read_yaml(CATALOG_DIR / name))
     extra = load_constraints()
     data["constraints"] = extra.get("on_select") or {}
@@ -42,9 +61,10 @@ def load_schema(mode: str = "gen") -> dict[str, Any]:
     return data
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=4)
 def load_fragments(mode: str = "gen") -> dict[str, Any]:
-    name = "edit_fragments.yaml" if _norm_mode(mode) == "edit" else "fragments.yaml"
+    kind = _norm_mode(mode)
+    name = "fragments.yaml" if kind == "gen" else "edit_fragments.yaml"
     return _read_yaml(CATALOG_DIR / name)
 
 

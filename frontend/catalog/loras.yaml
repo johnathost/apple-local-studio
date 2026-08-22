@@ -309,14 +309,14 @@ loras:
     name: NippleDiffusion
     file: nipplediffusion-f2-klein-9b_v3.safetensors
     default_scale: 0.7
-    priority: 30
-    auto: false
-    require_any:
-      - body.nipples:erect
-      - body.nipples:puffy
+    priority: 80
+    require_all:
+      - edit:undress
     tags:
+      - edit:undress
       - body.nipples:erect
       - body.nipples:puffy
+    prompt_trigger: "naked breasts"
     triggers:
       - "naked breasts"
       - "nude tits"
@@ -345,12 +345,12 @@ loras:
   - id: the_body
     name: The Body
     file: The_Body_Version_A_Flux2.k.9B_r16_AdamW8Bit_Weighted_768_woman_000005000.safetensors
-    default_scale: 0.7
-    priority: 25
-    auto: false
+    default_scale: 0.65
+    priority: 40
     require_all:
-      - body:emphasis
+      - edit:undress
     tags:
+      - edit:undress
       - body:emphasis
     triggers:
       - "woman"

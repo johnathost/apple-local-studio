@@ -26,6 +26,15 @@ SYSTEM_GEN = (
     f"{QUALITY_LOCK}"
 )
 
+SYSTEM_UNDRESS = (
+    "System: Undress the woman in the source photograph. "
+    "Identity is fully locked: same face, skin complexion, hair, makeup, tattoos, body type. "
+    "Keep the original pose, camera, framing, lighting, and background. "
+    "Only remove or open the clothing. Do not restage. Do not invent a new person. "
+    "Photoreal, natural skin, no text, no watermark. "
+    f"{QUALITY_LOCK}"
+)
+
 SYSTEM_EDIT = (
     "System: Edit the source photograph of a consenting adult woman. "
     "Identity is locked: same face, same skin complexion, same hair, same body type. "
@@ -58,17 +67,25 @@ QUALITY_NEGATIVE = (
 
 
 def system_prompt_for(mode: str) -> str:
-    return SYSTEM_EDIT if (mode or "").strip().lower() == "edit" else SYSTEM_GEN
+    m = (mode or "").strip().lower()
+    if m == "undress":
+        return SYSTEM_UNDRESS
+    if m in {"edit", "pose"}:
+        return SYSTEM_EDIT
+    return SYSTEM_GEN
 
 
 def with_system_prompt(user_prompt: str, *, mode: str, pose_ref: bool = False) -> str:
-    if (mode or "").strip().lower() == "edit":
+    m = (mode or "").strip().lower()
+    if m == "undress":
+        system = SYSTEM_UNDRESS
+    elif m in {"edit", "pose"}:
         system = SYSTEM_EDIT_POSE if pose_ref else SYSTEM_EDIT
     else:
         system = SYSTEM_GEN
     user = (user_prompt or "").strip()
     if not user:
         return system
-    if (mode or "").strip().lower() == "edit":
+    if m in {"edit", "pose", "undress"}:
         return f"{system}\n\nEdit request:\n{user}"
     return f"{system}\n\nUser: {user}"

@@ -16,7 +16,8 @@ const state = {
   poseImage: null, // { filename, url } pose/camera plate, edit only
   pollTimer: null,
   mode: "gen", // gen | edit
-  systemPrompts: { gen: "", edit: "" },
+  editKind: null, // null | undress | pose
+  systemPrompts: { gen: "", edit: "", undress: "", pose: "" },
   winner: null,
   blocked: {},
   dropped: [],
@@ -59,12 +60,46 @@ function getSceneValue(groupId, fieldId) {
   return state.scene?.[groupId]?.[fieldId];
 }
 
+function catalogMode() {
+  if (state.editKind === "undress" || state.editKind === "pose") return state.editKind;
+  return state.mode;
+}
+
+function optionAllowed(opt) {
+  if (!opt?.poses || !opt.poses.length) return true;
+  return opt.poses.includes(getSceneValue("pose", "scene"));
+}
+
+function prunePoseFeatures() {
+  const extras = getSceneValue("features", "extras");
+  if (!Array.isArray(extras) || !extras.length) return;
+  const allowed = new Set();
+  for (const group of state.schema?.groups || []) {
+    for (const field of group.fields || []) {
+      if (group.id !== "features") continue;
+      for (const opt of field.options || []) {
+        if (optionAllowed(opt)) allowed.add(opt.id);
+      }
+    }
+  }
+  const next = extras.filter((id) => allowed.has(id));
+  if (next.length !== extras.length) {
+    if (!state.scene.features) state.scene.features = {};
+    state.scene.features.extras = next;
+  }
+}
+
 function setSceneValue(groupId, fieldId, value) {
   if (!state.scene[groupId]) state.scene[groupId] = {};
   state.scene[groupId][fieldId] = value;
   state.winner = `${groupId}.${fieldId}`;
+  if (groupId === "pose" && fieldId === "scene") {
+    prunePoseFeatures();
+    renderBuilder();
+  }
   if (
     groupId !== "preset" &&
+    groupId !== "pose" &&
     ["position", "act", "camera", "partners"].includes(groupId) &&
     state.scene.preset?.scene &&
     state.scene.preset.scene !== "none"
@@ -94,10 +129,22 @@ function renderBuilder() {
   const root = $("#builder-root");
   const keptOpen = new Set(openGroupIds());
   root.innerHTML = "";
-  const defaultOpen = new Set(["preset", "subject", "keep", "body", "position", "act", "camera"]);
+  const defaultOpen = new Set([
+    "pose",
+    "features",
+    "clothing",
+    "preset",
+    "subject",
+    "keep",
+    "body",
+    "position",
+    "act",
+    "camera",
+  ]);
   for (const group of state.schema.groups || []) {
     const details = document.createElement("details");
-    details.className = "group" + (group.id === "preset" ? " preset-group" : "");
+    details.className =
+      "group" + (group.id === "preset" || group.id === "pose" ? " preset-group" : "");
     details.dataset.group = group.id;
     details.open = keptOpen.size ? keptOpen.has(group.id) : defaultOpen.has(group.id);
     const summary = document.createElement("summary");
@@ -118,6 +165,7 @@ function renderBuilder() {
         const chips = document.createElement("div");
         chips.className = "chips";
         for (const opt of field.options || []) {
+          if (!optionAllowed(opt)) continue;
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "chip";
@@ -143,6 +191,7 @@ function renderBuilder() {
         chips.className = "chips";
         const selected = new Set(getSceneValue(group.id, field.id) || []);
         for (const opt of field.options || []) {
+          if (!optionAllowed(opt)) continue;
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "chip multi";
@@ -249,7 +298,7 @@ function renderConstraintLine() {
 function syncStrengthChrome() {
   const wrap = $("#strength-wrap");
   if (!wrap) return;
-  const poseOn = Boolean(state.poseImage && state.mode === "edit");
+  const poseOn = Boolean(state.poseImage && state.editKind === "pose");
   const genRef = state.mode === "gen" && state.refImage;
   wrap.classList.toggle("hidden", !(poseOn || genRef));
   const label = wrap.querySelector("span, label") || wrap.childNodes[0];
@@ -260,11 +309,12 @@ function syncStrengthChrome() {
 
 function setPoseChrome() {
   const wrap = $("#pose-wrap");
-  wrap?.classList.toggle("hidden", state.mode !== "edit");
+  const poseMode = state.editKind === "pose";
+  wrap?.classList.toggle("hidden", !poseMode);
   const has = Boolean(state.poseImage);
   const label = $("#pose-label");
   if (label) label.textContent = has ? state.poseImage.filename : "";
-  $("#btn-clear-pose")?.classList.toggle("hidden", !has || state.mode !== "edit");
+  $("#btn-clear-pose")?.classList.toggle("hidden", !has || !poseMode);
   syncStrengthChrome();
 }
 
@@ -327,9 +377,9 @@ async function runCompose() {
         include_triggers: includeTriggers,
         max_loras: maxLoras,
         manual_loras: manual,
-        mode: state.mode,
+        mode: catalogMode(),
         winner: state.winner,
-        pose_ref: Boolean(state.poseImage) && state.mode === "edit",
+        pose_ref: Boolean(state.poseImage) && state.editKind === "pose",
       }),
     });
     const prevScene = JSON.stringify(state.scene);
@@ -411,8 +461,11 @@ function showJobStatus(job) {
 
 function applyModeChrome() {
   const edit = state.mode === "edit";
+  const kind = state.editKind;
   const run = $("#btn-generate");
-  if (run) run.textContent = edit ? "Apply edit" : "Generate";
+  if (run) {
+    run.textContent = kind === "undress" ? "Undress" : kind === "pose" ? "Apply pose" : "Generate";
+  }
   const wrap = $("#ref-wrap");
   if (wrap) {
     wrap.classList.toggle("required", edit);
@@ -422,31 +475,85 @@ function applyModeChrome() {
     }
   }
   const sys = $("#system-line");
-  if (sys) sys.textContent = state.systemPrompts[state.mode] || "";
+  if (sys) sys.textContent = state.systemPrompts[kind || state.mode] || "";
   const title = $("#builder-title");
-  if (title) title.textContent = edit ? "Edit" : "Scene";
+  if (title) {
+    title.textContent = kind === "undress" ? "Undress" : kind === "pose" ? "Pose" : edit ? "Edit" : "Scene";
+  }
   const notes = $("#notes-quick");
   if (notes) {
-    notes.placeholder = edit
-      ? "Describe the edit in your own words…"
-      : "Optional free-text notes / override lines…";
+    notes.placeholder =
+      kind === "undress"
+        ? "Optional notes (outfit details, jewelry to keep)…"
+        : kind === "pose"
+          ? "Optional notes for the new pose…"
+          : "Optional free-text notes / override lines…";
   }
   const sub = document.querySelector(".sub");
   if (sub) {
-    sub.textContent = edit
-      ? "Image edit → keep identity · change only what you ask"
-      : "Scene composer → mflux · private local gen";
+    sub.textContent =
+      kind === "undress"
+        ? "Undress → same person, same pose"
+        : kind === "pose"
+          ? "Pose edit → restage, keep identity"
+          : "Scene composer → mflux · private local gen";
   }
   const sl = $("#eng-strength");
-  if (sl && !state.poseImage) sl.value = edit ? "0.75" : "0.55";
+  if (sl && !state.poseImage) sl.value = kind === "pose" ? "0.75" : kind === "undress" ? "0.45" : "0.55";
   setPoseChrome();
   $("#aspect-row")?.classList.toggle("hidden", edit);
+  $("#btn-edit-kinds")?.classList.toggle("hidden", !edit || !kind);
+  $("#btn-reset-scene")?.classList.toggle("hidden", edit && !kind);
 }
 
 function showHome() {
   $("#home")?.classList.remove("hidden");
   $("#studio")?.classList.add("hidden");
   $("#btn-home")?.classList.add("hidden");
+  state.editKind = null;
+  $("#edit-picker")?.classList.add("hidden");
+  $("#builder-root")?.classList.remove("hidden");
+}
+
+function showEditPicker() {
+  state.editKind = null;
+  $("#edit-picker")?.classList.remove("hidden");
+  $("#builder-root")?.classList.add("hidden");
+  $("#btn-edit-kinds")?.classList.add("hidden");
+  $("#btn-reset-scene")?.classList.add("hidden");
+  const title = $("#builder-title");
+  if (title) title.textContent = "Edit";
+  setPoseChrome();
+}
+
+async function enterEditKind(kind) {
+  const next = kind === "undress" ? "undress" : "pose";
+  state.editKind = next;
+  state.mode = "edit";
+  const [schema, defaults] = await Promise.all([
+    api(`/api/schema?mode=${next}`),
+    api(`/api/defaults?mode=${next}`),
+  ]);
+  if (!schema || !schema.groups) {
+    throw new Error("Schema did not load. Rebuild the frontend image.");
+  }
+  state.schema = schema;
+  state.scene = defaults.scene || {};
+  state.engine = defaults.engine || {};
+  state.systemPrompts = { ...state.systemPrompts, ...(defaults.system_prompts || {}) };
+  state.manualScales = {};
+  state.winner = null;
+  if (next !== "pose") {
+    state.poseImage = null;
+    const poseInput = $("#pose-image");
+    if (poseInput) poseInput.value = "";
+  }
+  setEngineForm();
+  $("#edit-picker")?.classList.add("hidden");
+  $("#builder-root")?.classList.remove("hidden");
+  applyModeChrome();
+  renderBuilder();
+  await runCompose();
 }
 
 async function enterStudio(mode) {
@@ -455,17 +562,8 @@ async function enterStudio(mode) {
   card?.classList.add("busy");
   try {
     state.mode = next;
-    const [schema, defaults] = await Promise.all([
-      api(`/api/schema?mode=${state.mode}`),
-      api(`/api/defaults?mode=${state.mode}`),
-    ]);
-    if (!schema || !schema.groups) {
-      throw new Error("Schema did not load. Rebuild the frontend image.");
-    }
-    state.schema = schema;
-    state.scene = defaults.scene || {};
-    state.engine = defaults.engine || {};
-    state.systemPrompts = defaults.system_prompts || state.systemPrompts;
+    state.editKind = null;
+    state.catalog = await api("/api/loras").catch(() => []);
     state.manualScales = {};
     state.winner = null;
     state.blocked = {};
@@ -473,16 +571,40 @@ async function enterStudio(mode) {
     state.poseImage = null;
     const poseInput = $("#pose-image");
     if (poseInput) poseInput.value = "";
-    state.catalog = await api("/api/loras").catch(() => []);
-    setEngineForm();
-    applyModeChrome();
-    renderBuilder();
+    if (next === "edit") {
+      state.schema = { groups: [] };
+      state.scene = {};
+      const defaults = await api("/api/defaults?mode=pose").catch(() => ({}));
+      state.engine = defaults.engine || {};
+      state.systemPrompts = { ...state.systemPrompts, ...(defaults.system_prompts || {}) };
+      setEngineForm();
+      applyModeChrome();
+      showEditPicker();
+      $("#builder-root").innerHTML = "";
+    } else {
+      const [schema, defaults] = await Promise.all([
+        api(`/api/schema?mode=${state.mode}`),
+        api(`/api/defaults?mode=${state.mode}`),
+      ]);
+      if (!schema || !schema.groups) {
+        throw new Error("Schema did not load. Rebuild the frontend image.");
+      }
+      state.schema = schema;
+      state.scene = defaults.scene || {};
+      state.engine = defaults.engine || {};
+      state.systemPrompts = { ...state.systemPrompts, ...(defaults.system_prompts || {}) };
+      $("#edit-picker")?.classList.add("hidden");
+      $("#builder-root")?.classList.remove("hidden");
+      setEngineForm();
+      applyModeChrome();
+      renderBuilder();
+    }
     $("#home")?.classList.add("hidden");
     $("#studio")?.classList.remove("hidden");
     $("#btn-home")?.classList.remove("hidden");
     const notes = $("#notes-quick");
     if (notes) notes.value = "";
-    await runCompose();
+    if (next !== "edit") await runCompose();
   } catch (e) {
     console.error(e);
     alert(`Could not open ${next}: ${e.message || e}`);
@@ -499,6 +621,10 @@ function setBusy(busy) {
 }
 
 async function generate() {
+  if (state.mode === "edit" && !state.editKind) {
+    alert("Pick Undress or Pose edit on the left first.");
+    return;
+  }
   if (state.mode === "edit" && !state.refImage) {
     alert("Edit image needs a source photo. Choose an image first.");
     return;
@@ -531,22 +657,24 @@ async function generate() {
     guidance: Number($("#eng-guidance")?.value || (state.mode === "edit" ? 2.0 : 1.4)),
     quantize: Number($("#eng-quant").value),
     seed: seedVal === "" ? null : Number(seedVal),
-    mode: state.mode,
+    mode: catalogMode(),
     winner: state.winner,
     image_paths: state.refImage ? [state.refImage.filename] : [],
-    pose_path: state.mode === "edit" && state.poseImage ? state.poseImage.filename : null,
+    pose_path: state.editKind === "pose" && state.poseImage ? state.poseImage.filename : null,
     image_strength:
-      state.mode === "edit" && state.poseImage
+      state.editKind === "pose" && state.poseImage
         ? Number($("#eng-strength")?.value || 0.75)
-        : state.mode === "gen" && state.refImage
-          ? Number($("#eng-strength")?.value || 0.55)
-          : null,
+        : state.editKind === "undress"
+          ? Number($("#eng-strength")?.value || 0.45)
+          : state.mode === "gen" && state.refImage
+            ? Number($("#eng-strength")?.value || 0.55)
+            : null,
   };
 
   const poseBit = state.poseImage ? ` · pose ${state.poseImage.filename}` : "";
   appendMsg(
     `<div class="prompt">${escapeHtml(prompt)}</div>
-     <div class="muted">${state.mode === "edit" ? "edit" : "generate"}${poseBit} · ${
+     <div class="muted">${state.editKind || (state.mode === "edit" ? "edit" : "generate")}${poseBit} · ${
        state.matched
          .filter((m) => m.available)
          .map((m) => escapeHtml(m.name))
@@ -665,12 +793,24 @@ async function init() {
     syncStrengthChrome();
   });
   $("#btn-reset-scene").addEventListener("click", async () => {
-    const defaults = await api(`/api/defaults?mode=${state.mode}`);
+    const defaults = await api(`/api/defaults?mode=${catalogMode()}`);
     state.scene = defaults.scene || {};
     state.manualScales = {};
     $("#notes-quick").value = "";
     renderBuilder();
     await runCompose();
+  });
+  $("#btn-edit-kinds")?.addEventListener("click", () => {
+    showEditPicker();
+    applyModeChrome();
+  });
+  $("#edit-picker")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-edit-kind]");
+    if (!btn) return;
+    enterEditKind(btn.dataset.editKind).catch((err) => {
+      console.error(err);
+      alert(`Could not open ${btn.dataset.editKind}: ${err.message || err}`);
+    });
   });
   $("#btn-clear-chat").addEventListener("click", () => {
     $("#chat-thread").innerHTML = "";

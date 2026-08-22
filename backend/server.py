@@ -99,6 +99,7 @@ class GenerateRequest(BaseModel):
     guidance: float | None = None
     loras: list[LoraItem] = Field(default_factory=list)
     ref_images: list[RefImage] = Field(default_factory=list)
+    system_mode: str | None = None
 
 
 def _lora_files() -> list[str]:
@@ -195,6 +196,7 @@ def _generate_events(req: GenerateRequest) -> Iterator[str]:
                 mode=req.mode,
                 image_strength=req.image_strength,
                 guidance=req.guidance,
+                system_mode=req.system_mode,
             )
             final_name = f"{stamp}-{result['seed']}.png"
             final_path = Path(result.get("path") or pending)

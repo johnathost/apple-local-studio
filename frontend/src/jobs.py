@@ -114,6 +114,7 @@ class JobQueue:
                 mode=str(req.get("mode") or "gen"),
                 image_strength=req.get("image_strength"),
                 guidance=req.get("guidance"),
+                system_mode=req.get("system_mode"),
             )
             job.progress = 1.0
             job.status = JobStatus.done

@@ -44,7 +44,23 @@
       <aside class="panel builder">
         <div class="panel-head">
           <h2 id="builder-title">Scene</h2>
-          <button type="button" id="btn-reset-scene" class="ghost sm">Reset</button>
+          <div class="panel-head-actions">
+            <button type="button" id="btn-edit-kinds" class="ghost sm hidden">← Edit modes</button>
+            <button type="button" id="btn-reset-scene" class="ghost sm">Reset</button>
+          </div>
+        </div>
+        <div id="edit-picker" class="edit-picker hidden">
+          <p class="edit-picker-kicker">What kind of edit?</p>
+          <button type="button" class="edit-pick" data-edit-kind="undress">
+            <span class="home-card-kicker">Same pose</span>
+            <span class="home-card-label">Undress</span>
+            <span class="home-card-copy">Strip clothes. Keep face, skin, hair, makeup, tattoos, and the original camera.</span>
+          </button>
+          <button type="button" class="edit-pick" data-edit-kind="pose">
+            <span class="home-card-kicker">Restage</span>
+            <span class="home-card-label">Pose edit</span>
+            <span class="home-card-copy">Move her into a preset pose. Optional extras like creampie or prolapse.</span>
+          </button>
         </div>
         <div id="builder-root" class="builder-scroll"></div>
       </aside>

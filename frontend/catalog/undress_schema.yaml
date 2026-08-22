@@ -1,0 +1,47 @@
+# Undress edit: same person, same pose/camera, remove clothes.
+
+groups:
+  - id: clothing
+    label: Result
+    fields:
+      - id: state
+        label: Outfit
+        type: choice
+        default: nude
+        options:
+          - { id: nude, label: Nude }
+          - { id: lingerie, label: Lingerie }
+          - { id: partially, label: Partially clothed }
+          - { id: dress_hiked, label: Dress hiked up }
+
+      - id: heels
+        label: High heels
+        type: choice
+        default: none
+        options:
+          - { id: none, label: None }
+          - { id: black, label: Black }
+          - { id: red, label: Red }
+          - { id: blue, label: Blue }
+
+  - id: strength
+    label: How far
+    fields:
+      - id: amount
+        label: Strength
+        type: choice
+        default: medium
+        options:
+          - { id: subtle, label: Subtle }
+          - { id: medium, label: Medium }
+          - { id: strong, label: Strong }
+
+engine_defaults:
+  width: 1024
+  height: 576
+  steps: 4
+  seed: null
+  quantize: 4
+  max_loras: 2
+  guidance: 2.0
+  image_strength: 0.45

@@ -367,6 +367,7 @@ class MfluxBackend:
         mode: str | None = None,
         image_strength: float | None = None,
         guidance: float | None = None,
+        system_mode: str | None = None,
     ) -> dict[str, Any]:
         """Run generation and save PNG to out_path. Returns {seed, path}."""
         from src.system_prompts import with_system_prompt
@@ -383,7 +384,9 @@ class MfluxBackend:
             raise MfluxBackendError("Edit mode requires a source image")
         mode = requested
         pose_ref = bool(image_paths and len(image_paths) >= 2)
-        prompt = with_system_prompt(prompt, mode=mode, pose_ref=pose_ref)
+        prompt = with_system_prompt(
+            prompt, mode=system_mode or mode, pose_ref=pose_ref and (system_mode or mode) != "undress"
+        )
         seed = int(seed) if seed is not None else random.randint(0, 2**31 - 1)
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)

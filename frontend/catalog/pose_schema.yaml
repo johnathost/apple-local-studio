@@ -1,0 +1,69 @@
+# Pose restage: pick a pose, then optional features for that pose.
+
+groups:
+  - id: pose
+    label: Pose
+    fields:
+      - id: scene
+        label: Pose
+        type: choice
+        default: spread_45
+        options:
+          - { id: spread_45, label: Legs open · 45° POV }
+          - { id: pov_sex, label: POV sex · on back }
+          - { id: pov_blowjob, label: POV blowjob }
+
+  - id: features
+    label: Pose features
+    fields:
+      - id: extras
+        label: Features
+        type: multi
+        default: []
+        options:
+          - { id: spreading, label: Spreading / exposing, poses: [spread_45] }
+          - { id: vaginal_gape, label: Vaginal gape, poses: [spread_45] }
+          - { id: anal_gape, label: Anal gape, poses: [spread_45] }
+          - { id: prolapse, label: Anal prolapse, poses: [spread_45] }
+          - { id: masturbation, label: Masturbation, poses: [spread_45] }
+          - { id: creampie, label: Creampie, poses: [spread_45, pov_sex] }
+          - { id: cum_face, label: Cum on face, poses: [spread_45, pov_sex, pov_blowjob] }
+          - { id: cum_body, label: Cum on body, poses: [spread_45, pov_sex, pov_blowjob] }
+          - { id: wet, label: Very wet, poses: [spread_45, pov_sex] }
+          - { id: sloppy, label: Sloppy / messy, poses: [pov_sex, pov_blowjob] }
+          - { id: anal, label: Anal instead, poses: [pov_sex] }
+          - { id: deepthroat, label: Deepthroat, poses: [pov_blowjob] }
+
+  - id: clothing
+    label: Clothing
+    fields:
+      - id: state
+        label: Outfit
+        type: choice
+        default: keep
+        options:
+          - { id: keep, label: Keep original }
+          - { id: nude, label: Nude }
+          - { id: lingerie, label: Lingerie }
+          - { id: partially, label: Partially clothed }
+          - { id: dress_hiked, label: Dress hiked up }
+
+      - id: heels
+        label: High heels
+        type: choice
+        default: none
+        options:
+          - { id: none, label: None }
+          - { id: black, label: Black }
+          - { id: red, label: Red }
+          - { id: blue, label: Blue }
+
+engine_defaults:
+  width: 1024
+  height: 576
+  steps: 4
+  seed: null
+  quantize: 4
+  max_loras: 2
+  guidance: 2.0
+  image_strength: 0.75

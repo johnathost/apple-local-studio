@@ -55,6 +55,7 @@ class ImageEngine(Protocol):
         mode: str = "gen",
         image_strength: float | None = None,
         guidance: float | None = None,
+        system_mode: str | None = None,
     ) -> Path: ...
 
 
@@ -103,6 +104,7 @@ class LocalMfluxEngine:
         mode: str = "gen",
         image_strength: float | None = None,
         guidance: float | None = None,
+        system_mode: str | None = None,
     ) -> Path:
         from src.mflux_backend import MfluxBackendError, backend
 
@@ -150,6 +152,7 @@ class LocalMfluxEngine:
                 mode=mode,
                 image_strength=image_strength,
                 guidance=guidance,
+                system_mode=system_mode,
             )
         except MfluxBackendError as e:
             raise EngineError(str(e)) from e
@@ -248,6 +251,7 @@ class RemoteHttpEngine:
         mode: str = "gen",
         image_strength: float | None = None,
         guidance: float | None = None,
+        system_mode: str | None = None,
     ) -> Path:
         import base64
 
@@ -273,6 +277,7 @@ class RemoteHttpEngine:
             "mode": mode,
             "image_strength": image_strength,
             "guidance": guidance,
+            "system_mode": system_mode,
             "loras": [
                 {"file": Path(x["file"]).name, "scale": float(x.get("scale") or 0.8)}
                 for x in (loras or [])

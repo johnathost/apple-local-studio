@@ -12,10 +12,17 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from src.catalog_loader import default_scene, engine_defaults, load_schema, reload_catalogs
+from src.catalog_loader import (
+    catalog_mode,
+    default_scene,
+    engine_defaults,
+    engine_mode,
+    load_schema,
+    reload_catalogs,
+)
 from src.composer import compose_prompt, scene_tags
 from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
-from src.system_prompts import SYSTEM_EDIT, SYSTEM_GEN
+from src.system_prompts import SYSTEM_EDIT, SYSTEM_GEN, SYSTEM_UNDRESS
 from src.engine import engine
 from src.imageutil import MAX_IMAGE_BYTES, sniffed_image_suffix
 from src.jobs import Job, jobs
@@ -52,9 +59,10 @@ def _job_response(job: Job) -> JobResponse:
 
 
 def _compose(req: ComposeRequest) -> ComposeResponse:
-    mode = (req.mode or "gen").strip().lower()
-    if mode not in {"gen", "edit"}:
-        mode = "gen"
+    raw_mode = (req.mode or "gen").strip().lower()
+    if raw_mode not in {"gen", "edit", "undress", "pose"}:
+        raw_mode = "gen"
+    mode = catalog_mode(raw_mode)
     scene = {**default_scene(mode), **(req.scene or {})}
     # deep-merge top-level groups if partial
     base = default_scene(mode)
@@ -66,9 +74,12 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
     scene = base
 
     winner = (req.winner or "").strip() or None
-    if mode == "edit" and winner == "preset.scene":
-        preset_id = (scene.get("preset") or {}).get("scene")
-        scene = apply_edit_preset(scene, preset_id)
+    if mode == "pose":
+        preset_id = (scene.get("pose") or {}).get("scene") or (scene.get("preset") or {}).get(
+            "scene"
+        )
+        if preset_id:
+            scene = apply_edit_preset(scene, preset_id)
 
     scene, dropped = sanitize_scene(scene, winner=winner, mode=mode)
 
@@ -81,7 +92,7 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
     triggers: list[str] = []
     if req.include_triggers:
         for m in matched:
-            if mode == "edit":
+            if mode in {"pose", "undress"}:
                 token = m.prompt_trigger
                 if token:
                     triggers.append(token)
@@ -93,7 +104,7 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
         extra_triggers=triggers if req.include_triggers else None,
         raw_override=req.raw_prompt,
         mode=mode,
-        pose_ref=bool(req.pose_ref) and mode == "edit",
+        pose_ref=bool(req.pose_ref) and mode == "pose",
     )
     return ComposeResponse(
         prompt=prompt,
@@ -126,7 +137,12 @@ def api_defaults(mode: str = "gen") -> dict[str, Any]:
     return {
         "scene": default_scene(mode),
         "engine": engine_defaults(mode),
-        "system_prompts": {"gen": SYSTEM_GEN, "edit": SYSTEM_EDIT},
+        "system_prompts": {
+            "gen": SYSTEM_GEN,
+            "edit": SYSTEM_EDIT,
+            "pose": SYSTEM_EDIT,
+            "undress": SYSTEM_UNDRESS,
+        },
         "mode": "edit" if (mode or "").strip().lower() == "edit" else "gen",
     }
 
@@ -159,10 +175,12 @@ def api_generate(req: GenerateRequest) -> JobResponse:
     if not prompt:
         raise HTTPException(400, "Prompt is empty")
 
-    mode = (req.mode or "gen").strip().lower()
-    if mode not in {"gen", "edit"}:
-        raise HTTPException(400, "mode must be gen or edit")
-    defaults = engine_defaults(mode)
+    req_mode = (req.mode or "gen").strip().lower()
+    if req_mode not in {"gen", "edit", "undress", "pose"}:
+        raise HTTPException(400, "mode must be gen, undress, or pose")
+    cat = catalog_mode(req_mode)
+    eng = engine_mode(req_mode)
+    defaults = engine_defaults(cat)
 
     # Basename-only LoRA list (shared mounts / remote backend)
     lora_meta: list[dict[str, Any]] = []
@@ -182,7 +200,7 @@ def api_generate(req: GenerateRequest) -> JobResponse:
         )
 
     ref_images: list[str] = []
-    if mode == "edit" and not req.image_paths:
+    if eng == "edit" and not req.image_paths:
         raise HTTPException(400, "Edit mode requires a source image")
     for p in req.image_paths or []:
         name = Path(p).name
@@ -193,8 +211,8 @@ def api_generate(req: GenerateRequest) -> JobResponse:
 
     pose_name = Path(req.pose_path).name if req.pose_path else ""
     if pose_name:
-        if mode != "edit":
-            raise HTTPException(400, "Pose reference is only used in edit mode")
+        if cat != "pose":
+            raise HTTPException(400, "Pose reference is only used in pose edit")
         path = UPLOADS_DIR / pose_name
         if not path.is_file():
             raise HTTPException(400, f"Pose reference not found: {pose_name}")
@@ -204,6 +222,8 @@ def api_generate(req: GenerateRequest) -> JobResponse:
     image_strength = req.image_strength
     if image_strength is None and pose_name:
         image_strength = 0.75
+    elif image_strength is None:
+        image_strength = defaults.get("image_strength")
 
     job = jobs.submit(
         {
@@ -215,7 +235,8 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             "quantize": req.quantize or defaults.get("quantize", 8),
             "loras": lora_meta,
             "ref_images": ref_images,
-            "mode": mode,
+            "mode": eng,
+            "system_mode": cat if cat in {"undress", "pose"} else eng,
             "image_strength": image_strength,
             "guidance": req.guidance if req.guidance is not None else defaults.get("guidance"),
             "scene": composed.scene,
