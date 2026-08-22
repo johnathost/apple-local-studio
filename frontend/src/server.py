@@ -225,11 +225,9 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             ref_images.append(pose_name)
 
     image_strength = req.image_strength
-    if cat == "undress":
-        # Native Klein edit (reference image + instruction). Extra denoise melts the person.
+    if cat in {"undress", "pose"}:
+        # Klein Edit must run all distilled steps. Strength 0.75 skips to step 4.
         image_strength = None
-    elif image_strength is None and pose_name:
-        image_strength = 0.75
     elif image_strength is None:
         image_strength = defaults.get("image_strength")
 

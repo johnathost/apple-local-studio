@@ -440,8 +440,9 @@ class MfluxBackend:
                 gen_kwargs["height"] = height
                 if mode == "edit":
                     gen_kwargs["image_paths"] = image_paths
-                    if image_strength is not None:
-                        gen_kwargs["image_strength"] = float(image_strength)
+                    # Flux2KleinEdit is instruction + refs, not SD img2img.
+                    # Passing image_strength ~0.75 on 4 distilled steps starts
+                    # at the last step → mosaic / garbage and progress "4/4".
                 elif image_paths:
                     gen_kwargs["image_path"] = image_paths[0]
                     gen_kwargs["image_strength"] = (

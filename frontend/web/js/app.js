@@ -298,12 +298,11 @@ function renderConstraintLine() {
 function syncStrengthChrome() {
   const wrap = $("#strength-wrap");
   if (!wrap) return;
-  const poseOn = Boolean(state.poseImage && state.editKind === "pose");
   const genRef = state.mode === "gen" && state.refImage;
-  wrap.classList.toggle("hidden", !(poseOn || genRef));
+  wrap.classList.toggle("hidden", !genRef);
   const label = wrap.querySelector("span, label") || wrap.childNodes[0];
   if (label && label.nodeType === Node.TEXT_NODE) {
-    label.textContent = poseOn ? "Restage " : "Ref strength ";
+    label.textContent = "Ref strength ";
   }
 }
 
@@ -500,7 +499,7 @@ function applyModeChrome() {
           : "Scene composer → mflux · private local gen";
   }
   const sl = $("#eng-strength");
-  if (sl && !state.poseImage) sl.value = kind === "pose" ? "0.75" : "0.55";
+  if (sl && state.mode === "gen") sl.value = "0.55";
   setPoseChrome();
   $("#aspect-row")?.classList.toggle("hidden", edit);
   $("#btn-edit-kinds")?.classList.toggle("hidden", !edit || !kind);
@@ -667,11 +666,9 @@ async function generate() {
     image_paths: state.refImage ? [state.refImage.filename] : [],
     pose_path: state.editKind === "pose" && state.poseImage ? state.poseImage.filename : null,
     image_strength:
-      state.editKind === "pose" && state.poseImage
-        ? Number($("#eng-strength")?.value || 0.75)
-        : state.mode === "gen" && state.refImage
-            ? Number($("#eng-strength")?.value || 0.55)
-            : null,
+      state.mode === "gen" && state.refImage
+        ? Number($("#eng-strength")?.value || 0.55)
+        : null,
   };
 
   const poseBit = state.poseImage ? ` · pose ${state.poseImage.filename}` : "";
@@ -873,8 +870,6 @@ async function init() {
     try {
       const data = await uploadToStudio(file);
       state.poseImage = data;
-      const sl = $("#eng-strength");
-      if (sl) sl.value = "0.75";
       setPoseChrome();
       scheduleCompose();
     } catch (err) {
