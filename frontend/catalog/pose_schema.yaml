@@ -1,4 +1,4 @@
-# Pose restage: pick a pose, then optional features for that pose.
+# Pose restage: 10 solo poses, then optional features for the selected pose.
 
 groups:
   - id: pose
@@ -7,11 +7,18 @@ groups:
       - id: scene
         label: Pose
         type: choice
-        default: spread_45
+        default: stand_front
         options:
-          - { id: spread_45, label: Legs open · 45° POV }
-          - { id: pov_sex, label: POV sex · on back }
-          - { id: pov_blowjob, label: POV blowjob }
+          - { id: stand_front, label: Standing · front }
+          - { id: stand_back, label: Standing · from behind }
+          - { id: sit, label: Sitting }
+          - { id: sit_spread, label: Sitting · legs open }
+          - { id: lie_back, label: Lying on back }
+          - { id: lie_spread, label: Lying on back · legs open }
+          - { id: lie_side, label: Lying on side }
+          - { id: all_fours, label: On all fours }
+          - { id: kneel, label: Kneeling }
+          - { id: bent_over, label: Bent over }
 
   - id: features
     label: Pose features
@@ -21,18 +28,15 @@ groups:
         type: multi
         default: []
         options:
-          - { id: spreading, label: Spreading / exposing, poses: [spread_45] }
-          - { id: vaginal_gape, label: Vaginal gape, poses: [spread_45] }
-          - { id: anal_gape, label: Anal gape, poses: [spread_45] }
-          - { id: prolapse, label: Anal prolapse, poses: [spread_45] }
-          - { id: masturbation, label: Masturbation, poses: [spread_45] }
-          - { id: creampie, label: Creampie, poses: [spread_45, pov_sex] }
-          - { id: cum_face, label: Cum on face, poses: [spread_45, pov_sex, pov_blowjob] }
-          - { id: cum_body, label: Cum on body, poses: [spread_45, pov_sex, pov_blowjob] }
-          - { id: wet, label: Very wet, poses: [spread_45, pov_sex] }
-          - { id: sloppy, label: Sloppy / messy, poses: [pov_sex, pov_blowjob] }
-          - { id: anal, label: Anal instead, poses: [pov_sex] }
-          - { id: deepthroat, label: Deepthroat, poses: [pov_blowjob] }
+          - { id: spreading, label: Spreading / exposing, poses: [sit_spread, lie_spread] }
+          - { id: vaginal_gape, label: Vaginal gape, poses: [sit_spread, lie_spread] }
+          - { id: anal_gape, label: Anal gape, poses: [all_fours, bent_over, lie_spread] }
+          - { id: prolapse, label: Anal prolapse, poses: [all_fours, bent_over, lie_spread] }
+          - { id: masturbation, label: Masturbation, poses: [sit, sit_spread, lie_back, lie_spread, kneel, lie_side] }
+          - { id: creampie, label: Creampie, poses: [sit_spread, lie_spread, all_fours, bent_over] }
+          - { id: cum_face, label: Cum on face, poses: [kneel, lie_back, lie_spread] }
+          - { id: cum_body, label: Cum on body, poses: [stand_front, sit, sit_spread, lie_back, lie_spread, kneel] }
+          - { id: wet, label: Very wet, poses: [sit_spread, lie_spread, all_fours, bent_over] }
 
   - id: clothing
     label: Clothing
@@ -66,4 +70,4 @@ engine_defaults:
   quantize: 4
   max_loras: 2
   guidance: 2.0
-  image_strength: 0.75
+  image_strength: null

@@ -176,76 +176,125 @@ on_select:
       - field: act.primary
         drop: [vaginal, anal, oral, deepthroat, facehumping, titfuck, all_holes]
 
-# Edit-mode one-click scene transforms. UI merges `apply` into the scene;
-# composer appends `fragment` while the preset id is set.
+# Solo pose plates. UI merges `apply` into the scene; composer appends `fragment`.
 edit_presets:
-  spread_45:
-    label: Legs open · 45° POV
+  stand_front:
+    label: Standing · front
     apply:
-      keep:
-        traits: [face, skin, hair]
-      change:
-        targets: [pose, camera, act]
-      position:
-        pose: lying_back
-      act:
-        primary: [spreading]
-      camera:
-        angle: pov_45
-      partners:
-        count: solo
-      clothing:
-        state: keep
-      strength:
-        amount: strong
+      position: { pose: standing }
+      act: { primary: [] }
+      camera: { angle: medium }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      New shot: she is standing, facing the camera, full body, weight on one hip,
+      arms relaxed. She is alone.
+
+  stand_back:
+    label: Standing · from behind
+    apply:
+      position: { pose: from_behind_stand }
+      act: { primary: [] }
+      camera: { angle: from_behind }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      New shot: she is standing with her back to the camera, viewed from behind,
+      full body, looking over her shoulder. She is alone.
+
+  sit:
+    label: Sitting
+    apply:
+      position: { pose: sitting }
+      act: { primary: [] }
+      camera: { angle: medium }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      New shot: she is sitting on a bed or chair, knees together, torso upright,
+      looking at the camera. She is alone.
+
+  sit_spread:
+    label: Sitting · legs open
+    apply:
+      position: { pose: sitting }
+      act: { primary: [spreading] }
+      camera: { angle: medium }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      New shot: she is sitting facing the camera with her legs spread open,
+      knees apart, genital area visible. She is alone.
+
+  lie_back:
+    label: Lying on back
+    apply:
+      position: { pose: lying_back }
+      act: { primary: [] }
+      camera: { angle: medium }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      New shot: she is lying on her back on a bed, legs together and relaxed,
+      looking toward the camera. She is alone.
+
+  lie_spread:
+    label: Lying on back · legs open
+    apply:
+      position: { pose: legs_spread }
+      act: { primary: [spreading] }
+      camera: { angle: pov_45 }
+      partners: { count: solo }
+      clothing: { state: keep }
     fragment: >-
       New shot: she is lying on her back with her legs spread wide, knees bent
-      and open. POV from a 45 degree angle looking down so her face, breasts,
-      genitals, asshole and buttocks are all fully visible in one frame.
+      and open. Camera looks down so her face, breasts, and genitals are visible.
+      She is alone.
 
-  pov_sex:
-    label: POV sex · on back
+  lie_side:
+    label: Lying on side
     apply:
-      keep:
-        traits: [face, skin, hair]
-      change:
-        targets: [pose, camera, act]
-      position:
-        pose: missionary
-      act:
-        primary: [vaginal, spreading]
-      camera:
-        angle: pov
-      partners:
-        count: one_man
-      clothing:
-        state: keep
-      strength:
-        amount: strong
+      position: { pose: on_side }
+      act: { primary: [] }
+      camera: { angle: side }
+      partners: { count: solo }
+      clothing: { state: keep }
     fragment: >-
-      New shot: POV sex, she is lying on her back with her legs spread wide,
-      a man is penetrating her vagina in missionary, first-person view looking
-      at her, the man mostly out of frame.
+      New shot: she is lying on her side on a bed, hips stacked, one arm under
+      her head, body in profile. She is alone.
 
-  pov_blowjob:
-    label: POV blowjob
+  all_fours:
+    label: On all fours
     apply:
-      keep:
-        traits: [face, skin, hair]
-      change:
-        targets: [pose, camera, act]
-      position:
-        pose: kneeling
-      act:
-        primary: [oral]
-      camera:
-        angle: pov
-      partners:
-        count: one_man
-      clothing:
-        state: keep
-      strength:
-        amount: strong
+      position: { pose: all_fours }
+      act: { primary: [] }
+      camera: { angle: from_behind }
+      partners: { count: solo }
+      clothing: { state: keep }
     fragment: >-
-      New shot: POV blowjob, she is in front of the camera sucking a penis
-      in first-person view, looking toward the viewer.
+      New shot: she is on all fours, back arched, viewed from behind and slightly
+      to the side so her hips and buttocks are prominent. She is alone.
+
+  kneel:
+    label: Kneeling
+    apply:
+      position: { pose: kneeling }
+      act: { primary: [] }
+      camera: { angle: medium }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      New shot: she is kneeling on the floor or bed, sitting back on her heels
+      or upright on her knees, facing the camera. She is alone.
+
+  bent_over:
+    label: Bent over
+    apply:
+      position: { pose: from_behind_stand }
+      act: { primary: [] }
+      camera: { angle: from_behind }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      New shot: she is standing bent forward at the waist, hands on a bed or
+      her knees, viewed from behind. She is alone.

@@ -74,6 +74,7 @@ position.pose:
   kneeling: "kneeling"
   from_behind_stand: "standing while bent forward, taken from behind"
   on_side: "lying on her side, spooning"
+  sitting: "sitting"
 
 act.primary:
   none: ""

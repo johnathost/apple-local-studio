@@ -47,7 +47,8 @@ position.pose:
   legs_spread: "she is lying on her back with her legs spread wide, knees bent and open"
   kneeling: "she is kneeling"
   from_behind_stand: "she is standing bent forward, taken from behind"
-  on_side: "she is lying on her side in a spooning pose"
+  on_side: "she is lying on her side"
+  sitting: "she is sitting"
 
 act.primary:
   none: ""
