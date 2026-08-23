@@ -557,6 +557,15 @@ textarea { line-height: 1.4; }
   font-size: 0.75rem;
   color: var(--muted);
 }
+.recipe-step {
+  margin-bottom: 12px;
+}
+.recipe-step img {
+  max-width: 100%;
+  border-radius: 8px;
+  display: block;
+  margin: 6px 0;
+}
 .composer-row {
   display: flex;
   align-items: center;

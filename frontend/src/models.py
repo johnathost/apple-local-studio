@@ -60,6 +60,21 @@ class PromoteRequest(BaseModel):
     name: str
 
 
+class RecipeRequest(BaseModel):
+    identity: str
+    undress: bool = False
+    scene_id: str | None = None
+    extras: list[str] = Field(default_factory=list)
+    width: int | None = None
+    height: int | None = None
+    steps: int | None = None
+    seed: int | None = None
+    quantize: int | None = None
+    guidance: float | None = None
+    max_loras: int | None = None
+    notes: str | None = None
+
+
 class JobResponse(BaseModel):
     id: str
     status: str

@@ -24,6 +24,7 @@ from src.catalog_loader import (
     scenes_public,
 )
 from src.composer import compose_prompt, retarget_pose_for_extras, scene_tags, wants_genital_override
+from src.recipe import plan_recipe
 from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
 from src.system_prompts import SYSTEM_EDIT, SYSTEM_EDIT_POSE, SYSTEM_GEN, SYSTEM_UNDRESS
 from src.engine import engine
@@ -36,6 +37,7 @@ from src.models import (
     GenerateRequest,
     JobResponse,
     PromoteRequest,
+    RecipeRequest,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -194,6 +196,47 @@ def api_loras() -> list[dict[str, Any]]:
 @app.post("/api/compose", response_model=ComposeResponse)
 def api_compose(req: ComposeRequest) -> ComposeResponse:
     return _compose(req)
+
+
+@app.post("/api/recipe/plan")
+def api_recipe_plan(req: RecipeRequest) -> dict[str, Any]:
+    try:
+        steps = plan_recipe(
+            undress=req.undress, scene_id=req.scene_id, extras=req.extras
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    return {"steps": steps, "count": len(steps)}
+
+
+@app.post("/api/recipe", response_model=JobResponse)
+def api_recipe(req: RecipeRequest) -> JobResponse:
+    identity = Path(req.identity).name
+    path = UPLOADS_DIR / identity
+    if not path.is_file():
+        raise HTTPException(400, f"Identity image not found: {identity}")
+    try:
+        plan = plan_recipe(
+            undress=req.undress, scene_id=req.scene_id, extras=req.extras
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    job = jobs.submit(
+        {
+            "kind": "recipe",
+            "identity": identity,
+            "plan": plan,
+            "width": req.width,
+            "height": req.height,
+            "steps": req.steps,
+            "seed": req.seed,
+            "quantize": req.quantize,
+            "guidance": req.guidance,
+            "max_loras": req.max_loras,
+            "notes": req.notes,
+        }
+    )
+    return _job_response(job)
 
 
 @app.post("/api/generate", response_model=JobResponse)

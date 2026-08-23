@@ -27,7 +27,17 @@ const state = {
   scenes: { extras: [], scenes: [] },
   studioSimple: true,
   showPrompt: false,
+  undressFirst: false,
 };
+
+const GENITAL_EXTRAS = new Set([
+  "creampie",
+  "vaginal_gape",
+  "anal_gape",
+  "prolapse",
+  "prolapse_creampie",
+  "prolapse_fucking",
+]);
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -128,7 +138,7 @@ function pruneStudioExtra() {
   const extras = getSceneValue("features", "extras");
   if (!Array.isArray(extras) || !extras.length) return;
   const allowed = new Set(scene?.compatible_extras || []);
-  const next = extras.filter((id) => allowed.has(id)).slice(0, 1);
+  const next = extras.filter((id) => allowed.has(id));
   if (next.length !== extras.length) {
     if (!state.scene.features) state.scene.features = {};
     state.scene.features.extras = next;
@@ -136,24 +146,35 @@ function pruneStudioExtra() {
 }
 
 function directorText() {
-  const extra = (getSceneValue("features", "extras") || [])[0];
+  const extras = getSceneValue("features", "extras") || [];
+  const extra = extras[0];
   const scene = currentStudioScene();
   const face = state.refImage ? "your photo" : "need a photo";
   let crotch = "this plate";
-  let extraBit = "none";
-  if (extra === "vaginal_gape") {
-    crotch = "gape LoRA (pose from plate)";
-    extraBit = "vaginal gape";
-  } else if (extra === "creampie") {
-    extraBit = "creampie (text on plate)";
-  } else if (String(extra || "").startsWith("prolapse")) {
-    crotch = "this prolapse plate";
-    extraBit = extraLabel(extra);
-  } else if (extra) {
-    extraBit = extraLabel(extra);
-  }
+  if (extras.some((e) => String(e).startsWith("prolapse"))) crotch = "prolapse plate";
+  else if (extras.includes("vaginal_gape")) crotch = "gape LoRA (pose from plate)";
+  const extraBit = extras.length ? extras.map(extraLabel).join(", ") : "none";
   const name = scene?.label || getSceneValue("pose", "scene") || "—";
-  return `Face = ${face} · Scene = ${name} · Crotch = ${crotch} · Extra = ${extraBit}`;
+  const plan = studioPlan().join(" → ") || "—";
+  return `Face = ${face} · Scene = ${name} · Crotch = ${crotch} · Extra = ${extraBit} · ${plan}`;
+}
+
+function studioPlan() {
+  const extras = [...(getSceneValue("features", "extras") || [])];
+  const genital = extras.filter((e) => GENITAL_EXTRAS.has(e));
+  const rest = extras.filter((e) => !GENITAL_EXTRAS.has(e));
+  const steps = [];
+  if (state.undressFirst) steps.push("Undress");
+  const scene = currentStudioScene();
+  if (scene || genital.length) {
+    let label = scene?.label || "Pose";
+    if (genital[0]) label += " · " + extraLabel(genital[0]);
+    steps.push(label);
+    for (const e of genital.slice(1).concat(rest)) steps.push(extraLabel(e));
+  } else {
+    for (const e of extras) steps.push(extraLabel(e));
+  }
+  return steps.slice(0, 4);
 }
 
 function renderSceneStudio() {
@@ -164,7 +185,8 @@ function renderSceneStudio() {
   }
   root.classList.remove("hidden");
   pruneStudioExtra();
-  const extra = (getSceneValue("features", "extras") || [])[0] || "";
+  const selectedExtras = getSceneValue("features", "extras") || [];
+  const extra = selectedExtras[0] || "";
   const scene = currentStudioScene();
   const allowed = new Set(scene?.compatible_extras || []);
   const chips = (state.scenes.extras || []).filter((e) => allowed.has(e.id));
@@ -233,9 +255,18 @@ function renderSceneStudio() {
     root.appendChild(section);
   }
 
+  const undressRow = document.createElement("label");
+  undressRow.className = "toggle";
+  undressRow.innerHTML = `<input type="checkbox" id="studio-undress" ${state.undressFirst ? "checked" : ""} /> Undress first`;
+  undressRow.querySelector("input").addEventListener("change", (e) => {
+    state.undressFirst = e.target.checked;
+    renderSceneStudio();
+  });
+  root.appendChild(undressRow);
+
   const ek = document.createElement("p");
   ek.className = "studio-kicker";
-  ek.textContent = "One extra (optional)";
+  ek.textContent = "Extras (one Klein step each; first genital extra rides with the pose)";
   root.appendChild(ek);
   const extras = document.createElement("div");
   extras.className = "studio-extras";
@@ -245,17 +276,28 @@ function renderSceneStudio() {
     for (const opt of chips) {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "chip" + (opt.id === extra ? " active" : "");
+      btn.className = "chip" + (selectedExtras.includes(opt.id) ? " active" : "");
       btn.textContent = opt.label;
       btn.addEventListener("click", () => {
-        const next = extra === opt.id ? [] : [opt.id];
-        setSceneValue("features", "extras", next);
+        const cur = [...(getSceneValue("features", "extras") || [])];
+        const i = cur.indexOf(opt.id);
+        if (i >= 0) cur.splice(i, 1);
+        else cur.push(opt.id);
+        setSceneValue("features", "extras", cur);
         renderSceneStudio();
       });
       extras.appendChild(btn);
     }
   }
   root.appendChild(extras);
+  const plan = studioPlan();
+  const planEl = document.createElement("p");
+  planEl.className = "director-line";
+  planEl.textContent =
+    plan.length === 0
+      ? "Pick a scene or undress."
+      : `This will run ${plan.length} step${plan.length === 1 ? "" : "s"}: ${plan.join(" → ")}`;
+  root.appendChild(planEl);
 }
 
 function prunePoseFeatures() {
@@ -717,10 +759,12 @@ async function retryLast() {
   }
   setBusy(true);
   appendMsg(`<div class="muted">Retry last step</div>`, "user");
+  const path = state.lastGenerate._recipe ? "/api/recipe" : "/api/generate";
   try {
-    const job = await api("/api/generate", {
+    const { _recipe, ...payload } = state.lastGenerate;
+    const job = await api(path, {
       method: "POST",
-      body: JSON.stringify(state.lastGenerate),
+      body: JSON.stringify(payload),
     });
     showJobStatus(job);
     pollJob(job.id);
@@ -927,6 +971,52 @@ function setBusy(busy) {
   $("#mode-edit") && ($("#mode-edit").disabled = busy);
 }
 
+async function generateRecipe() {
+  if (!state.refImage) {
+    alert("Need a source photo.");
+    return;
+  }
+  const extras = getSceneValue("features", "extras") || [];
+  const sceneId = getSceneValue("pose", "scene") || null;
+  if (!state.undressFirst && !sceneId && !extras.length) {
+    alert("Pick a scene, undress first, or an extra.");
+    return;
+  }
+  const plan = studioPlan();
+  const body = {
+    identity: state.refImage.filename,
+    undress: !!state.undressFirst,
+    scene_id: sceneId,
+    extras,
+    width: Number($("#eng-width").value) || 1024,
+    height: Number($("#eng-height").value) || 576,
+    steps: Number($("#eng-steps").value) || 4,
+    guidance: Number($("#eng-guidance")?.value || 2.0),
+    quantize: Number($("#eng-quant").value) || 4,
+    seed: $("#eng-seed").value === "" ? null : Number($("#eng-seed").value),
+    max_loras: Number($("#eng-max-loras").value) || 2,
+    notes: $("#notes-quick")?.value || null,
+    _recipe: true,
+  };
+  state.lastGenerate = body;
+  setBusy(true);
+  appendMsg(
+    `<div class="prompt">${escapeHtml(plan.join(" → "))}</div>
+     <div class="muted">recipe · ${plan.length} step${plan.length === 1 ? "" : "s"}</div>`,
+    "user"
+  );
+  try {
+    const { _recipe, ...payload } = body;
+    const job = await api("/api/recipe", { method: "POST", body: JSON.stringify(payload) });
+    showJobStatus(job);
+    pollJob(job.id);
+  } catch (e) {
+    showJobStatus({ status: "error", message: "Failed", error: String(e.message || e) });
+    appendMsg(`<div class="system">Error: ${escapeHtml(e.message || e)}</div>`, "system");
+    setBusy(false);
+  }
+}
+
 async function generate() {
   if (state.mode === "edit" && !state.editKind) {
     alert("Pick Undress or Pose edit on the left first.");
@@ -934,6 +1024,10 @@ async function generate() {
   }
   if (state.mode === "edit" && !state.refImage) {
     alert("Edit image needs a source photo. Choose an image first.");
+    return;
+  }
+  if (state.editKind === "pose" && state.studioSimple) {
+    await generateRecipe();
     return;
   }
 
@@ -1016,12 +1110,29 @@ function pollJob(id) {
         const file = job.result?.image_file || "";
         state.lastResult = { image_file: file, image_url: url };
         const loras = (job.result?.loras || []).map((l) => l.name).join(", ");
+        const stepImgs = (job.result?.steps || [])
+          .map(
+            (s) => `
+            <div class="recipe-step">
+              <div class="muted">${escapeHtml(s.label || "")}</div>
+              ${s.image_url ? `<img src="${s.image_url}" alt="" />` : ""}
+              ${
+                s.image_file
+                  ? `<button type="button" class="ghost sm" data-continue="${escapeHtml(s.image_file)}">Continue from this</button>`
+                  : ""
+              }
+            </div>`
+          )
+          .join("");
         appendMsg(
-          `${url ? `<img src="${url}" alt="result" />` : ""}
+          `${
+            stepImgs ||
+            (url ? `<img src="${url}" alt="result" />` : "")
+          }
            <div class="actions">
-             <a class="file-btn" href="${url}" download>Download</a>
+             ${url ? `<a class="file-btn" href="${url}" download>Download</a>` : ""}
              ${
-               file
+               file && !stepImgs
                  ? `<button type="button" class="ghost sm" data-continue="${escapeHtml(file)}">Continue from this</button>`
                  : ""
              }
