@@ -154,9 +154,51 @@ def bundled_pose_ref(pose_id: str | None) -> bool:
     return pose_plate_bytes(pose_id) is not None
 
 
+@lru_cache(maxsize=1)
+def load_scenes() -> dict[str, Any]:
+    path = CATALOG_DIR / "scenes.yaml"
+    if not path.exists():
+        return {"extras": [], "scenes": []}
+    return _read_yaml(path) or {"extras": [], "scenes": []}
+
+
+def scenes_public() -> dict[str, Any]:
+    """Scenes with plate thumb URLs (no base64)."""
+    plates: dict[str, dict[str, Any]] = {}
+    for cat in pose_categories_public():
+        for p in cat.get("poses") or []:
+            plates[str(p.get("id"))] = {
+                **p,
+                "category": cat.get("id"),
+                "category_label": cat.get("label"),
+            }
+    extras = list(load_scenes().get("extras") or [])
+    scenes: list[dict[str, Any]] = []
+    for raw in load_scenes().get("scenes") or []:
+        if not isinstance(raw, dict):
+            continue
+        plate_id = str(raw.get("plate") or raw.get("id") or "")
+        if not plate_id:
+            continue
+        meta = plates.get(plate_id) or {}
+        scenes.append(
+            {
+                "id": str(raw.get("id") or plate_id),
+                "label": raw.get("label") or meta.get("title") or plate_id,
+                "plate": plate_id,
+                "category": raw.get("category") or meta.get("category"),
+                "category_label": raw.get("category_label") or meta.get("category_label"),
+                "image_url": meta.get("image_url") or f"/api/pose-plates/{plate_id}",
+                "compatible_extras": [str(x) for x in (raw.get("compatible_extras") or [])],
+            }
+        )
+    return {"extras": extras, "scenes": scenes}
+
+
 def reload_catalogs() -> None:
     load_schema.cache_clear()
     load_fragments.cache_clear()
     load_loras.cache_clear()
     load_constraints.cache_clear()
     load_pose_plates.cache_clear()
+    load_scenes.cache_clear()

@@ -144,6 +144,46 @@ button.home-card:focus-visible {
   gap: 12px;
   padding: 12px;
 }
+.layout.simple-studio {
+  grid-template-columns: minmax(300px, 1.1fr) minmax(360px, 1.4fr) 0fr;
+}
+.layout.simple-studio .preview { display: none; }
+.layout.simple-studio.show-prompt {
+  grid-template-columns: minmax(260px, 1fr) minmax(340px, 1.2fr) minmax(280px, 1fr);
+}
+.layout.simple-studio.show-prompt .preview { display: flex; }
+
+.scene-studio {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 12px 16px;
+  overflow: auto;
+}
+.scene-studio.hidden { display: none !important; }
+.director-line {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+.director-line span { color: var(--muted); }
+.studio-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.studio-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 
 .panel {
   background: var(--bg-panel);

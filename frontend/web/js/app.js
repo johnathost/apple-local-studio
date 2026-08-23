@@ -24,6 +24,9 @@ const state = {
   undoStack: [], // previous refImage snapshots
   lastGenerate: null, // last POST /api/generate body
   lastResult: null, // { image_file, image_url }
+  scenes: { extras: [], scenes: [] },
+  studioSimple: true,
+  showPrompt: false,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -110,6 +113,151 @@ function optionAllowed(opt) {
   return opt.poses.includes(getSceneValue("pose", "scene"));
 }
 
+function currentStudioScene() {
+  const id = getSceneValue("pose", "scene");
+  return (state.scenes.scenes || []).find((s) => s.id === id || s.plate === id) || null;
+}
+
+function extraLabel(id) {
+  const hit = (state.scenes.extras || []).find((e) => e.id === id);
+  return hit?.label || id;
+}
+
+function pruneStudioExtra() {
+  const scene = currentStudioScene();
+  const extras = getSceneValue("features", "extras");
+  if (!Array.isArray(extras) || !extras.length) return;
+  const allowed = new Set(scene?.compatible_extras || []);
+  const next = extras.filter((id) => allowed.has(id)).slice(0, 1);
+  if (next.length !== extras.length) {
+    if (!state.scene.features) state.scene.features = {};
+    state.scene.features.extras = next;
+  }
+}
+
+function directorText() {
+  const extra = (getSceneValue("features", "extras") || [])[0];
+  const scene = currentStudioScene();
+  const face = state.refImage ? "your photo" : "need a photo";
+  let crotch = "this plate";
+  let extraBit = "none";
+  if (extra === "vaginal_gape") {
+    crotch = "gape LoRA (pose from plate)";
+    extraBit = "vaginal gape";
+  } else if (extra === "creampie") {
+    extraBit = "creampie (text on plate)";
+  } else if (String(extra || "").startsWith("prolapse")) {
+    crotch = "this prolapse plate";
+    extraBit = extraLabel(extra);
+  } else if (extra) {
+    extraBit = extraLabel(extra);
+  }
+  const name = scene?.label || getSceneValue("pose", "scene") || "—";
+  return `Face = ${face} · Scene = ${name} · Crotch = ${crotch} · Extra = ${extraBit}`;
+}
+
+function renderSceneStudio() {
+  const root = $("#scene-studio");
+  if (!root || state.editKind !== "pose" || !state.studioSimple) {
+    root?.classList.add("hidden");
+    return;
+  }
+  root.classList.remove("hidden");
+  pruneStudioExtra();
+  const extra = (getSceneValue("features", "extras") || [])[0] || "";
+  const scene = currentStudioScene();
+  const allowed = new Set(scene?.compatible_extras || []);
+  const chips = (state.scenes.extras || []).filter((e) => allowed.has(e.id));
+
+  const cats = [];
+  const seen = new Set();
+  for (const s of state.scenes.scenes || []) {
+    const key = s.category || "scenes";
+    if (!seen.has(key)) {
+      seen.add(key);
+      cats.push({
+        id: key,
+        label: s.category_label || key,
+        scenes: (state.scenes.scenes || []).filter((x) => (x.category || "scenes") === key),
+      });
+    }
+  }
+
+  root.innerHTML = "";
+  const dir = document.createElement("p");
+  dir.className = "director-line";
+  dir.innerHTML = directorText()
+    .split(" · ")
+    .map((bit) => {
+      const i = bit.indexOf("=");
+      if (i < 0) return escapeHtml(bit);
+      return `<span>${escapeHtml(bit.slice(0, i + 1))}</span>${escapeHtml(bit.slice(i + 1))}`;
+    })
+    .join(" · ");
+  root.appendChild(dir);
+
+  const sk = document.createElement("p");
+  sk.className = "studio-kicker";
+  sk.textContent = "Scene";
+  root.appendChild(sk);
+
+  const current = getSceneValue("pose", "scene");
+  for (const cat of cats) {
+    const section = document.createElement("div");
+    section.className = "pose-cat";
+    const heading = document.createElement("div");
+    heading.className = "pose-cat-label";
+    heading.textContent = cat.label;
+    section.appendChild(heading);
+    const list = document.createElement("div");
+    list.className = "pose-cat-list";
+    for (const s of cat.scenes) {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "pose-row" + (s.plate === current || s.id === current ? " active" : "");
+      const title = document.createElement("span");
+      title.className = "pose-row-title";
+      title.textContent = s.label;
+      const img = document.createElement("img");
+      img.className = "pose-row-thumb";
+      img.src = s.image_url;
+      img.alt = s.label;
+      row.appendChild(title);
+      row.appendChild(img);
+      row.addEventListener("click", () => {
+        setSceneValue("pose", "scene", s.plate);
+      });
+      list.appendChild(row);
+    }
+    section.appendChild(list);
+    root.appendChild(section);
+  }
+
+  const ek = document.createElement("p");
+  ek.className = "studio-kicker";
+  ek.textContent = "One extra (optional)";
+  root.appendChild(ek);
+  const extras = document.createElement("div");
+  extras.className = "studio-extras";
+  if (!chips.length) {
+    extras.innerHTML = `<span class="muted">No extras for this scene.</span>`;
+  } else {
+    for (const opt of chips) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chip" + (opt.id === extra ? " active" : "");
+      btn.textContent = opt.label;
+      btn.addEventListener("click", () => {
+        const next = extra === opt.id ? [] : [opt.id];
+        setSceneValue("features", "extras", next);
+        renderSceneStudio();
+      });
+      extras.appendChild(btn);
+    }
+  }
+  root.appendChild(extras);
+}
+
 function prunePoseFeatures() {
   const extras = getSceneValue("features", "extras");
   if (!Array.isArray(extras) || !extras.length) return;
@@ -135,7 +283,9 @@ function setSceneValue(groupId, fieldId, value) {
   state.winner = `${groupId}.${fieldId}`;
   if (groupId === "pose" && fieldId === "scene") {
     prunePoseFeatures();
+    pruneStudioExtra();
     renderBuilder();
+    renderSceneStudio();
   }
   if (
     groupId !== "preset" &&
@@ -510,6 +660,7 @@ function setRefImage(data) {
   $("#btn-clear-ref")?.classList.toggle("hidden", !data);
   syncStrengthChrome();
   updateSessionLine();
+  renderSceneStudio();
 }
 
 function clearRefImage() {
@@ -520,6 +671,7 @@ function clearRefImage() {
   if (input) input.value = "";
   syncStrengthChrome();
   updateSessionLine();
+  renderSceneStudio();
 }
 
 function updateSessionLine() {
@@ -584,7 +736,14 @@ function applyModeChrome() {
   const kind = state.editKind;
   const run = $("#btn-generate");
   if (run) {
-    run.textContent = kind === "undress" ? "Undress" : kind === "pose" ? "Apply pose" : "Generate";
+    run.textContent =
+      kind === "undress"
+        ? "Undress"
+        : kind === "pose" && state.studioSimple
+          ? "Make scene"
+          : kind === "pose"
+            ? "Apply pose"
+            : "Generate";
   }
   const wrap = $("#ref-wrap");
   if (wrap) {
@@ -598,7 +757,16 @@ function applyModeChrome() {
   if (sys) sys.textContent = state.systemPrompts[kind || state.mode] || "";
   const title = $("#builder-title");
   if (title) {
-    title.textContent = kind === "undress" ? "Undress" : kind === "pose" ? "Pose" : edit ? "Edit" : "Scene";
+    title.textContent =
+      kind === "undress"
+        ? "Undress"
+        : kind === "pose" && state.studioSimple
+          ? "Studio"
+          : kind === "pose"
+            ? "Pose"
+            : edit
+              ? "Edit"
+              : "Scene";
   }
   const notes = $("#notes-quick");
   if (notes) {
@@ -615,7 +783,7 @@ function applyModeChrome() {
       kind === "undress"
         ? "Undress → same person, same pose"
         : kind === "pose"
-          ? "Pose edit → restage, keep identity"
+          ? "Your photo + a scene. One extra. Face from you, crotch from the plate."
           : "Scene composer → mflux · private local gen";
   }
   const sl = $("#eng-strength");
@@ -624,14 +792,27 @@ function applyModeChrome() {
   $("#aspect-row")?.classList.toggle("hidden", edit);
   $("#btn-edit-kinds")?.classList.toggle("hidden", !edit || !kind);
   $("#btn-reset-scene")?.classList.toggle("hidden", edit && !kind);
+  const poseSimple = kind === "pose" && state.studioSimple;
+  $("#btn-studio-advanced")?.classList.toggle("hidden", kind !== "pose");
+  const adv = $("#btn-studio-advanced");
+  if (adv) adv.textContent = state.studioSimple ? "Advanced" : "Simple";
+  $("#btn-toggle-prompt")?.classList.toggle("hidden", !poseSimple);
+  $("#scene-studio")?.classList.toggle("hidden", !poseSimple);
+  $("#builder-root")?.classList.toggle("hidden", poseSimple || (edit && !kind));
+  const layout = $("#studio");
+  layout?.classList.toggle("simple-studio", poseSimple);
+  layout?.classList.toggle("show-prompt", poseSimple && state.showPrompt);
+  if (poseSimple) renderSceneStudio();
 }
 
 function showHome() {
   $("#home")?.classList.remove("hidden");
   $("#studio")?.classList.add("hidden");
+  $("#studio")?.classList.remove("simple-studio", "show-prompt");
   $("#btn-home")?.classList.add("hidden");
   state.editKind = null;
   $("#edit-picker")?.classList.add("hidden");
+  $("#scene-studio")?.classList.add("hidden");
   $("#builder-root")?.classList.remove("hidden");
 }
 
@@ -663,6 +844,11 @@ async function enterEditKind(kind) {
   state.systemPrompts = { ...state.systemPrompts, ...(defaults.system_prompts || {}) };
   state.manualScales = {};
   state.winner = null;
+  state.studioSimple = next === "pose";
+  state.showPrompt = false;
+  if (next === "pose") {
+    state.scenes = await api("/api/scenes").catch(() => ({ extras: [], scenes: [] }));
+  }
   if (next !== "pose") {
     state.poseImage = null;
     const poseInput = $("#pose-image");
@@ -673,6 +859,7 @@ async function enterEditKind(kind) {
   $("#builder-root")?.classList.remove("hidden");
   applyModeChrome();
   renderBuilder();
+  renderSceneStudio();
   await runCompose();
 }
 
@@ -934,7 +1121,19 @@ async function init() {
     state.manualScales = {};
     $("#notes-quick").value = "";
     renderBuilder();
+    renderSceneStudio();
     await runCompose();
+  });
+  $("#btn-studio-advanced")?.addEventListener("click", () => {
+    if (state.editKind !== "pose") return;
+    state.studioSimple = !state.studioSimple;
+    applyModeChrome();
+    renderBuilder();
+    renderSceneStudio();
+  });
+  $("#btn-toggle-prompt")?.addEventListener("click", () => {
+    state.showPrompt = !state.showPrompt;
+    applyModeChrome();
   });
   $("#btn-edit-kinds")?.addEventListener("click", () => {
     showEditPicker();

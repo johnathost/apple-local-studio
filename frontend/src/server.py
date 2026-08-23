@@ -21,6 +21,7 @@ from src.catalog_loader import (
     load_schema,
     pose_plate_bytes,
     reload_catalogs,
+    scenes_public,
 )
 from src.composer import compose_prompt, retarget_pose_for_extras, scene_tags, wants_genital_override
 from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
@@ -153,6 +154,11 @@ def health() -> dict[str, Any]:
 @app.get("/api/schema")
 def api_schema(mode: str = "gen") -> dict[str, Any]:
     return load_schema(mode)
+
+
+@app.get("/api/scenes")
+def api_scenes() -> dict[str, Any]:
+    return scenes_public()
 
 
 @app.get("/api/pose-plates/{pose_id}")
