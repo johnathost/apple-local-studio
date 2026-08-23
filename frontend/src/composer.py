@@ -119,6 +119,8 @@ FEATURE_TAGS: dict[str, list[str]] = {
     "vaginal_gape": ["act:vaginal_gape"],
     "anal_gape": ["act:anal_gape"],
     "prolapse": ["act:prolapse"],
+    "prolapse_creampie": ["act:prolapse", "act:prolapse_creampie", "finish:cum_inside"],
+    "prolapse_fucking": ["act:prolapse", "act:prolapse_fucking", "act:anal"],
     "masturbation": ["act:masturbation"],
     "creampie": ["finish:cum_inside"],
     "cum_face": ["finish:cum_face"],
@@ -203,7 +205,16 @@ def _selected_ids(scene: dict[str, Any], group: str, key: str) -> set[str]:
 
 
 _FLUID_IDS = {"creampie", "cum_face", "cum_body", "cum_inside"}
-_PENIS_ACTS = {"vaginal", "anal", "oral", "deepthroat", "all_holes", "titfuck"}
+_PENIS_ACTS = {
+    "vaginal",
+    "anal",
+    "oral",
+    "deepthroat",
+    "all_holes",
+    "titfuck",
+    "prolapse_fucking",
+}
+_PROLAPSE_IDS = {"prolapse", "prolapse_creampie", "prolapse_fucking"}
 
 
 def _penetration_bits(scene: dict[str, Any]) -> list[str]:
@@ -211,9 +222,19 @@ def _penetration_bits(scene: dict[str, Any]) -> list[str]:
     acts = _selected_ids(scene, "act", "primary")
     extras = _selected_ids(scene, "features", "extras")
     partners = (scene.get("partners") or {}).get("count")
-    wants_penis = bool(acts & _PENIS_ACTS) or partners in {"one_man", "two_men", "three_men"}
+    wants_penis = (
+        bool(acts & _PENIS_ACTS)
+        or bool(extras & _PENIS_ACTS)
+        or partners in {"one_man", "two_men", "three_men"}
+    )
     if not wants_penis:
         return []
+    if "prolapse_fucking" in acts or "prolapse_fucking" in extras:
+        return [
+            "A realistic erect penis is penetrating through the center of the prolapsed "
+            "rosebud into the anus, shaft and glans visible, pink everted mucosa ringing "
+            "the shaft, male hips and thighs attached"
+        ]
     if "anal" in acts or "anal" in extras:
         return [
             "A realistic erect penis is in the shot, shaft and glans visible, "
@@ -243,8 +264,20 @@ def _fluid_bits(scene: dict[str, Any]) -> list[str]:
     finish = _selected_ids(scene, "finish", "effects")
     acts = _selected_ids(scene, "act", "primary")
     out: list[str] = []
-    if "creampie" in extras or "cum_inside" in finish:
-        if acts & {"anal", "anal_gape"} or extras & {"anal_gape", "anal", "prolapse"}:
+    prolapse_on = bool(acts & _PROLAPSE_IDS or extras & _PROLAPSE_IDS)
+    cream_on = (
+        "creampie" in extras
+        or "cum_inside" in finish
+        or "prolapse_creampie" in extras
+        or "prolapse_creampie" in acts
+    )
+    if cream_on and prolapse_on:
+        out.append(
+            "Thick opaque pearly-white semen leaking from the open center of the rosebud "
+            "and coating the everted pink mucosa, creamy white cum, not yellow, not urine"
+        )
+    elif cream_on:
+        if acts & {"anal", "anal_gape"} or extras & {"anal_gape", "anal"}:
             out.append(
                 "Thick opaque pearly-white semen leaking from the open anus, creamy white cum "
                 "pooling on the rim, not yellow, not golden, not urine"
@@ -328,6 +361,8 @@ def compose_edit_prompt(
                 t in low_preset for t in ("dilated", "anal canal", "sphincter")
             ):
                 skip_acts.add(act_id)
+            elif act_id in _PROLAPSE_IDS and "rosebud" in low_preset and "everted" in low_preset:
+                skip_acts.add(act_id)
 
     on_back = pose_id in {"legs_spread", "lying_back", "missionary"}
     if not preset_text and angle_id == "pov_45" and (on_back or not pose_changing):
@@ -357,6 +392,13 @@ def compose_edit_prompt(
             chunks.append(pose)
     if pose_id in {"legs_spread", "missionary", "lying_back"}:
         skip_acts.add("spreading")
+    selected_prolapse = _selected_ids(scene, "act", "primary") | _selected_ids(
+        scene, "features", "extras"
+    )
+    if selected_prolapse & _PROLAPSE_IDS:
+        skip_acts.add("anal_gape")
+    if selected_prolapse & {"prolapse_creampie", "prolapse_fucking"}:
+        skip_acts.add("prolapse")
 
     for act_id in acts:
         if act_id in skip_acts:
@@ -395,6 +437,10 @@ def compose_edit_prompt(
         for x in ((scene.get("features") or {}).get("extras") or [])
         if _tag_value(x) and x not in _FLUID_IDS
     ]
+    if (_selected_ids(scene, "act", "primary") | set(feat_ids)) & _PROLAPSE_IDS:
+        feat_ids = [x for x in feat_ids if x != "anal_gape"]
+    if any(x in feat_ids for x in ("prolapse_creampie", "prolapse_fucking")):
+        feat_ids = [x for x in feat_ids if x != "prolapse"]
     feats = _frag(fr, "features.extras", feat_ids)
     if isinstance(feats, list):
         for item in feats:
@@ -405,7 +451,7 @@ def compose_edit_prompt(
     penis_already = (
         "penis" in hay
         and any(t in hay for t in ("penetrat", "enter", "inside", "if a penis", "if one is there"))
-        and any(t in hay for t in ("hip", "thigh", "attached", "photo 2"))
+        and any(t in hay for t in ("hip", "thigh", "attached", "photo 2", "rosebud"))
     )
     fluid_bits = _fluid_bits(scene)
     if "pearly-white" in hay or "pearly white" in hay:
