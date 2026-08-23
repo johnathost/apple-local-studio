@@ -65,6 +65,43 @@ function catalogMode() {
   return state.mode;
 }
 
+function renderPoseGallery(wrap, field) {
+  const cats = state.schema?.pose_categories || [];
+  const current = getSceneValue("pose", "scene") || field.default;
+  for (const cat of cats) {
+    const section = document.createElement("div");
+    section.className = "pose-cat";
+    const heading = document.createElement("div");
+    heading.className = "pose-cat-label";
+    heading.textContent = cat.label || "Poses";
+    section.appendChild(heading);
+    const list = document.createElement("div");
+    list.className = "pose-cat-list";
+    for (const pose of cat.poses || []) {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "pose-row" + (pose.id === current ? " active" : "");
+      const title = document.createElement("span");
+      title.className = "pose-row-title";
+      title.textContent = pose.title || pose.id;
+      const img = document.createElement("img");
+      img.className = "pose-row-thumb";
+      img.src = pose.image_url;
+      img.alt = pose.title || "";
+      row.appendChild(title);
+      row.appendChild(img);
+      row.addEventListener("click", () => {
+        setSceneValue("pose", "scene", pose.id);
+        list.querySelectorAll(".pose-row").forEach((r) => r.classList.remove("active"));
+        row.classList.add("active");
+      });
+      list.appendChild(row);
+    }
+    section.appendChild(list);
+    wrap.appendChild(section);
+  }
+}
+
 function optionAllowed(opt) {
   if (!opt?.poses || !opt.poses.length) return true;
   return opt.poses.includes(getSceneValue("pose", "scene"));
@@ -156,12 +193,16 @@ function renderBuilder() {
 
     for (const field of group.fields || []) {
       const wrap = document.createElement("div");
-      const label = document.createElement("div");
-      label.className = "field-label";
-      label.textContent = field.label;
-      wrap.appendChild(label);
+      if (field.type !== "pose_gallery") {
+        const label = document.createElement("div");
+        label.className = "field-label";
+        label.textContent = field.label;
+        wrap.appendChild(label);
+      }
 
-      if (field.type === "choice") {
+      if (field.type === "pose_gallery") {
+        renderPoseGallery(wrap, field);
+      } else if (field.type === "choice") {
         const chips = document.createElement("div");
         chips.className = "chips";
         for (const opt of field.options || []) {
