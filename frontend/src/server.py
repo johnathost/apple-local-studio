@@ -24,7 +24,7 @@ from src.catalog_loader import (
     scenes_public,
 )
 from src.composer import compose_prompt, retarget_pose_for_extras, scene_tags, wants_genital_override
-from src.recipe import keep_frames, lora_files_for_job, plan_recipe
+from src.recipe import clamp_takes, keep_frames, lora_files_for_job, plan_recipe
 from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
 from src.system_prompts import SYSTEM_EDIT, SYSTEM_EDIT_POSE, SYSTEM_GEN, SYSTEM_UNDRESS
 from src.engine import engine
@@ -225,6 +225,7 @@ def api_recipe(req: RecipeRequest) -> JobResponse:
             "notes": req.notes,
             "retry_step": req.retry_step,
             "keep_steps": keep_frames(req.keep_steps),
+            "takes": clamp_takes(req.takes),
         }
     )
     return _job_response(job)

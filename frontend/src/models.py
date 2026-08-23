@@ -76,6 +76,8 @@ class RecipeRequest(BaseModel):
     # Re-run one planned step. keep_steps are the frames before it.
     retry_step: int | None = None
     keep_steps: list[dict[str, Any]] = Field(default_factory=list)
+    # 2 = last step (or the retried step) rolls two seeds; UI picks the keeper.
+    takes: int = 1
 
 
 class JobResponse(BaseModel):

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import random
 import uuid
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,7 @@ from src.imageutil import sniffed_image_suffix
 
 
 MAX_STEPS = 4
+MAX_TAKES = 2
 
 GENITAL_EXTRAS = {
     "creampie",
@@ -150,6 +152,27 @@ def keep_frames(raw: Any) -> list[dict[str, Any]]:
         if len(out) >= MAX_STEPS:
             break
     return out
+
+
+def clamp_takes(n: Any) -> int:
+    try:
+        v = int(n)
+    except (TypeError, ValueError):
+        return 1
+    if v <= 1:
+        return 1
+    return MAX_TAKES
+
+
+def take_seeds(base: int | None, n: int) -> list[int | None]:
+    """One seed, or two distinct seeds. None = backend picks at generate time."""
+    if n <= 1:
+        return [base]
+    a = int(base) if base is not None else random.randint(0, 2**31 - 1)
+    b = (a + 7919) % (2**31)
+    if b == a:
+        b = (a + 1) % (2**31)
+    return [a, b]
 
 
 def _queued_frame(step: dict[str, Any], index: int) -> dict[str, Any]:
@@ -310,28 +333,25 @@ def run_recipe(job: Any, *, generate_fn: Any, on_inner_progress: Any) -> None:
         frames = []
 
     frames.extend(_queued_frame(step, start + i) for i, step in enumerate(run_plan))
-    n = max(len(run_plan), 1)
-    job.steps = n
+    takes_n = clamp_takes(req.get("takes"))
+    klein_counts = [
+        takes_n if i == len(run_plan) - 1 else 1 for i in range(len(run_plan))
+    ]
+    total_klein = max(sum(klein_counts), 1)
+    job.steps = total_klein
     job.step = 1
     _publish_frames(job, frames)
     current = identity
+    klein_done = 0
 
     for i, step in enumerate(run_plan):
         slot = start + i
-        job.step = i + 1
-        job.message = str(step.get("label") or f"Step {i + 1}")
-        job.progress = i / n
+        n_takes = klein_counts[i]
+        label = str(step.get("label") or f"Step {i + 1}")
+        job.message = label
         if slot < len(frames):
             frames[slot]["status"] = "running"
             _publish_frames(job, frames)
-
-        def _progress(info: dict[str, Any], *, _i: int = i) -> None:
-            inner = float(info.get("progress") or 0)
-            job.progress = (_i + max(0.0, min(inner, 1.0))) / n
-            msg = info.get("message")
-            if msg:
-                job.message = f"{step.get('label')}: {msg}"
-            on_inner_progress(info)
 
         payload = build_step_job(
             step,
@@ -339,26 +359,71 @@ def run_recipe(job: Any, *, generate_fn: Any, on_inner_progress: Any) -> None:
             width=int(req.get("width") or 1024),
             height=int(req.get("height") or 576),
             steps=int(req.get("steps") or 4),
-            seed=req.get("seed"),
+            seed=None,
             quantize=int(req.get("quantize") or 4),
             guidance=req.get("guidance"),
             max_loras=req.get("max_loras"),
             notes=req.get("notes"),
         )
-        path = generate_fn(payload, _progress)
-        out_name = Path(path).name
-        frames[slot] = {
-            "label": step.get("label"),
-            "status": "done",
-            "image_file": out_name,
-            "image_url": f"/outputs/{out_name}",
-            "prompt": payload.get("prompt"),
-            "loras": payload.get("loras") or [],
-            "index": slot,
-        }
-        _publish_frames(job, frames)
-        current = _promote(Path(path))
+        seeds = take_seeds(req.get("seed"), n_takes)
+        rolled: list[dict[str, Any]] = []
+        last_path: Path | None = None
+
+        for t, seed in enumerate(seeds):
+            take_id = chr(ord("A") + t)
+            job.step = klein_done + 1
+            job.message = label if n_takes == 1 else f"{label} · take {take_id}"
+
+            def _progress(
+                info: dict[str, Any],
+                *,
+                _k: int = klein_done,
+                _tid: str = take_id,
+                _lab: str = label,
+                _multi: bool = n_takes > 1,
+            ) -> None:
+                inner = float(info.get("progress") or 0)
+                job.progress = (_k + max(0.0, min(inner, 1.0))) / total_klein
+                msg = info.get("message")
+                if msg:
+                    job.message = f"{_lab} · take {_tid}: {msg}" if _multi else f"{_lab}: {msg}"
+                on_inner_progress(info)
+
+            gen_payload = dict(payload)
+            gen_payload["seed"] = seed
+            path = generate_fn(gen_payload, _progress)
+            last_path = Path(path)
+            out_name = last_path.name
+            rolled.append(
+                {
+                    "id": take_id,
+                    "seed": seed,
+                    "image_file": out_name,
+                    "image_url": f"/outputs/{out_name}",
+                }
+            )
+            show = rolled[-1]
+            pending = [
+                {"id": chr(ord("A") + t + 1), "seed": None, "image_file": None, "image_url": None}
+            ] if t + 1 < n_takes else []
+            frames[slot] = {
+                "label": label,
+                "status": "running" if t + 1 < n_takes else "done",
+                "image_file": show["image_file"],
+                "image_url": show["image_url"],
+                "prompt": payload.get("prompt"),
+                "loras": payload.get("loras") or [],
+                "index": slot,
+                "seed": show.get("seed"),
+                "takes": list(rolled) + pending,
+                "pick_required": n_takes > 1,
+            }
+            _publish_frames(job, frames)
+            klein_done += 1
+
+        if last_path is not None:
+            current = _promote(last_path)
 
     job.progress = 1.0
-    job.message = "Done"
+    job.message = "Pick a take" if takes_n > 1 else "Done"
     _publish_frames(job, frames, done=True)

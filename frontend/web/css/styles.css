@@ -589,7 +589,7 @@ textarea { line-height: 1.4; }
   min-height: 0;
 }
 .take-hero.hidden { display: none !important; }
-.take-hero img {
+.take-hero > img {
   max-width: 100%;
   max-height: min(42vh, 420px);
   border-radius: 10px;
@@ -603,6 +603,39 @@ textarea { line-height: 1.4; }
   gap: 8px;
   flex-wrap: wrap;
 }
+.take-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.take-choice {
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  overflow: hidden;
+  color: var(--text);
+  text-align: left;
+}
+.take-choice:hover { border-color: #4b5163; }
+.take-choice.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(255, 77, 109, 0.35);
+}
+.take-choice.queued { opacity: 0.55; cursor: default; }
+.take-choice img {
+  width: 100%;
+  max-height: min(36vh, 340px);
+  object-fit: contain;
+  display: block;
+  background: var(--bg-elevated);
+}
+.take-choice .lbl {
+  display: block;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+}
+.filmstrip-frame.pick { border-color: var(--accent-2); }
 .recipe-step {
   margin-bottom: 12px;
 }

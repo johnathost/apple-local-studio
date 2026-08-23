@@ -28,6 +28,7 @@ const state = {
   studioSimple: true,
   showPrompt: false,
   undressFirst: false,
+  twoTakes: true,
   shoot: null, // { identity, recipe, frames, selected, subjectIndex }
 };
 
@@ -245,6 +246,14 @@ function renderSceneStudio() {
     renderSceneStudio();
   });
   root.appendChild(undressRow);
+  const takesRow = document.createElement("label");
+  takesRow.className = "toggle";
+  takesRow.innerHTML = `<input type="checkbox" id="studio-takes" ${state.twoTakes ? "checked" : ""} /> Two takes on the last step`;
+  takesRow.querySelector("input").addEventListener("change", (e) => {
+    state.twoTakes = e.target.checked;
+    renderSceneStudio();
+  });
+  root.appendChild(takesRow);
 
   const ek = document.createElement("p");
   ek.className = "studio-kicker";
@@ -278,7 +287,9 @@ function renderSceneStudio() {
   planEl.textContent =
     plan.length === 0
       ? "Pick a scene or undress."
-      : `This will run ${plan.length} step${plan.length === 1 ? "" : "s"}: ${plan.join(" → ")}`;
+      : state.twoTakes
+        ? `This will run ${plan.length} step${plan.length === 1 ? "" : "s"}: ${plan.join(" → ")}. Last step: 2 takes, you pick.`
+        : `This will run ${plan.length} step${plan.length === 1 ? "" : "s"}: ${plan.join(" → ")}`;
   root.appendChild(planEl);
 }
 
@@ -718,13 +729,27 @@ function applyShootFromJob(job) {
         subjectIndex: null,
       };
     }
-    state.shoot.frames = steps.map((s, i) => ({
-      index: s.index ?? i,
-      label: s.label || `Step ${i + 1}`,
-      status: s.status || (s.image_url ? "done" : "queued"),
-      image_file: s.image_file || null,
-      image_url: s.image_url || null,
-    }));
+    const prevByIndex = Object.fromEntries(
+      (state.shoot.frames || []).map((f) => [f.index, f])
+    );
+    state.shoot.frames = steps.map((s, i) => {
+      const index = s.index ?? i;
+      const prev = prevByIndex[index] || {};
+      const takes = Array.isArray(s.takes) ? s.takes : [];
+      const picked = prev.picked || s.picked || null;
+      const winner = picked ? takes.find((t) => t.id === picked) || prev : null;
+      return {
+        index,
+        label: s.label || `Step ${i + 1}`,
+        status: s.status || (s.image_url ? "done" : "queued"),
+        image_file: winner?.image_file || s.image_file || null,
+        image_url: winner?.image_url || s.image_url || null,
+        seed: winner?.seed ?? s.seed ?? null,
+        takes,
+        pick_required: picked ? false : Boolean(s.pick_required),
+        picked,
+      };
+    });
     const lastDone = [...state.shoot.frames].reverse().find((f) => f.image_url);
     const stillThere = state.shoot.frames.some((f) => f.index === state.shoot.selected);
     if (state.shoot.selected == null || !stillThere) {
@@ -779,7 +804,8 @@ function renderFilmstrip() {
     btn.className =
       "filmstrip-frame" +
       (frame.index === selected ? " active" : "") +
-      (frame.image_url ? "" : " queued");
+      (frame.image_url ? "" : " queued") +
+      (frame.takes?.length > 1 && !frame.picked ? " pick" : "");
     btn.dataset.frame = String(frame.index);
     if (frame.image_url) {
       const img = document.createElement("img");
@@ -793,35 +819,69 @@ function renderFilmstrip() {
     }
     const lbl = document.createElement("span");
     lbl.className = "lbl";
+    const takeBit =
+      frame.picked
+        ? ` · ${frame.picked}`
+        : frame.takes?.length > 1
+          ? " · A|B"
+          : "";
     lbl.textContent =
       frame.status === "running"
-        ? `${frame.label}…`
+        ? `${frame.label}${takeBit}…`
         : frame.status === "queued"
           ? frame.label || "…"
-          : frame.label || `Step ${frame.index + 1}`;
+          : `${frame.label || `Step ${frame.index + 1}`}${takeBit}`;
     btn.appendChild(lbl);
     strip.appendChild(btn);
   }
 
   const cur = frames.find((f) => f.index === selected);
   if (!hero) return;
-  if (!cur?.image_url) {
+  if (!cur?.image_url && !(cur?.takes || []).some((t) => t.image_url)) {
     hero.classList.add("hidden");
     hero.innerHTML = "";
     return;
   }
   hero.classList.remove("hidden");
   const canRetry = Boolean(state.shoot.recipe) || Boolean(state.lastGenerate);
+  const takesReady =
+    (cur.takes || []).length > 1 && (cur.takes || []).every((t) => t.image_url);
+  const needPick = takesReady && !cur.picked;
+  const takesHtml = (cur.takes || [])
+    .map((t) => {
+      if (!t.image_url) {
+        return `<div class="take-choice queued"><div class="filmstrip-ph"></div><span class="lbl">Take ${escapeHtml(t.id || "")}…</span></div>`;
+      }
+      const on = cur.picked ? cur.picked === t.id : false;
+      return `<button type="button" class="take-choice${on ? " active" : ""}" data-pick-take="${escapeHtml(t.id)}">
+        <img src="${escapeHtml(t.image_url)}" alt="Take ${escapeHtml(t.id)}" />
+        <span class="lbl">${needPick ? `Pick ${escapeHtml(t.id)}` : `Take ${escapeHtml(t.id)}`}</span>
+      </button>`;
+    })
+    .join("");
+  const mainImg = needPick || (cur.takes || []).length > 1
+    ? `<div class="take-pair">${takesHtml}</div>
+       ${needPick ? `<p class="muted">Pick the keeper. Then continue from it.</p>` : ""}`
+    : `<img src="${escapeHtml(cur.image_url)}" alt="${escapeHtml(cur.label || "")}" />`;
   hero.innerHTML = `
-    <img src="${escapeHtml(cur.image_url)}" alt="${escapeHtml(cur.label || "")}" />
+    ${mainImg}
     <div class="actions">
-      <button type="button" class="ghost sm" data-continue="${escapeHtml(cur.image_file)}">Use as subject</button>
       ${
-        canRetry
-          ? `<button type="button" class="ghost sm" data-retry-step="${cur.index}">Retry this step</button>`
+        cur.image_file && !needPick
+          ? `<button type="button" class="ghost sm" data-continue="${escapeHtml(cur.image_file)}">Use as subject</button>`
           : ""
       }
-      <a class="file-btn" href="${escapeHtml(cur.image_url)}" download>Download</a>
+      ${
+        canRetry
+          ? `<button type="button" class="ghost sm" data-retry-step="${cur.index}">Retry this step</button>
+             <button type="button" class="ghost sm" data-two-takes="${cur.index}">Two takes</button>`
+          : ""
+      }
+      ${
+        cur.image_url
+          ? `<a class="file-btn" href="${escapeHtml(cur.image_url)}" download>Download</a>`
+          : ""
+      }
     </div>`;
 }
 
@@ -832,12 +892,32 @@ async function selectShootFrame(index) {
   state.shoot.selected = index;
   renderFilmstrip();
   if (!frame.image_file) return;
+  if (frame.takes?.length > 1 && !frame.picked) return;
   if (state.shoot.subjectIndex === index) return;
   state.shoot.subjectIndex = index;
   await continueFromOutput(frame.image_file);
 }
 
-async function retryShootStep(index) {
+async function pickTake(frameIndex, takeId) {
+  const frame = state.shoot?.frames.find((f) => f.index === frameIndex);
+  const take = frame?.takes?.find((t) => t.id === takeId);
+  if (!frame || !take?.image_file) return;
+  if (frame.takes?.length > 1 && frame.takes.some((t) => !t.image_file) && !frame.picked) {
+    return;
+  }
+  frame.image_file = take.image_file;
+  frame.image_url = take.image_url;
+  frame.seed = take.seed;
+  frame.picked = takeId;
+  frame.pick_required = false;
+  state.shoot.selected = frameIndex;
+  state.shoot.subjectIndex = null;
+  renderFilmstrip();
+  await continueFromOutput(take.image_file);
+  state.shoot.subjectIndex = frameIndex;
+}
+
+async function retryShootStep(index, { takes = 1 } = {}) {
   const shoot = state.shoot;
   if (!shoot) {
     await retryLast();
@@ -879,6 +959,7 @@ async function retryShootStep(index) {
     retry_step: index,
     keep_steps: keep,
     seed: null,
+    takes: takes > 1 ? 2 : 1,
     _recipe: true,
   };
   state.lastGenerate = body;
@@ -886,7 +967,7 @@ async function retryShootStep(index) {
   shoot.subjectIndex = null;
   setBusy(true);
   appendMsg(
-    `<div class="muted">Retry ${escapeHtml(shoot.frames.find((f) => f.index === index)?.label || "step")}</div>`,
+    `<div class="muted">${takes > 1 ? "Two takes" : "Retry"} ${escapeHtml(shoot.frames.find((f) => f.index === index)?.label || "step")}</div>`,
     "user"
   );
   try {
@@ -1154,6 +1235,7 @@ async function generateRecipe() {
     seed: $("#eng-seed").value === "" ? null : Number($("#eng-seed").value),
     max_loras: Number($("#eng-max-loras").value) || 2,
     notes: $("#notes-quick")?.value || null,
+    takes: state.twoTakes ? 2 : 1,
     _recipe: true,
   };
   state.lastGenerate = body;
@@ -1174,7 +1256,9 @@ async function generateRecipe() {
   setBusy(true);
   appendMsg(
     `<div class="prompt">${escapeHtml(plan.join(" → "))}</div>
-     <div class="muted">recipe · ${plan.length} step${plan.length === 1 ? "" : "s"}</div>`,
+     <div class="muted">recipe · ${plan.length} step${plan.length === 1 ? "" : "s"}${
+       state.twoTakes ? " · 2 takes on last step" : ""
+     }</div>`,
     "user"
   );
   try {
@@ -1294,7 +1378,8 @@ function pollJob(id) {
         if (lastDone) {
           state.shoot.selected = lastDone.index;
           renderFilmstrip();
-          selectShootFrame(lastDone.index).catch(() => {});
+          const waitPick = lastDone.takes?.length > 1 && !lastDone.picked;
+          if (!waitPick) selectShootFrame(lastDone.index).catch(() => {});
         }
       } else if (job.status === "error") {
         clearInterval(state.pollTimer);
@@ -1387,6 +1472,20 @@ async function init() {
     );
   });
   $("#take-hero")?.addEventListener("click", (e) => {
+    const pick = e.target.closest("[data-pick-take]");
+    if (pick) {
+      pickTake(state.shoot?.selected, pick.dataset.pickTake).catch((err) =>
+        alert(err.message || "Could not use that take")
+      );
+      return;
+    }
+    const two = e.target.closest("[data-two-takes]");
+    if (two) {
+      retryShootStep(Number(two.dataset.twoTakes), { takes: 2 }).catch((err) =>
+        alert(err.message || "Two takes failed")
+      );
+      return;
+    }
     const retry = e.target.closest("[data-retry-step]");
     if (retry) {
       retryShootStep(Number(retry.dataset.retryStep)).catch((err) =>
