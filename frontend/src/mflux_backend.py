@@ -6,8 +6,10 @@ inside the Docker API image at runtime for generation (image has no mflux).
 
 from __future__ import annotations
 
+import gc
 import logging
 import os
+import queue
 import random
 import threading
 import time
@@ -238,7 +240,12 @@ class MfluxBackendError(RuntimeError):
 
 
 class MfluxBackend:
-    """Lazy-load Flux2Klein / Edit; one mode loaded at a time."""
+    """Lazy-load Flux2Klein / Edit; one mode loaded at a time.
+
+    MLX streams are thread-local. Importing mflux, loading weights, generate,
+    and unload must all run on the same long-lived thread or mx.eval raises
+    ``There is no Stream(...) in current thread``.
+    """
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
@@ -248,17 +255,66 @@ class MfluxBackend:
         self._quantize: int | None = None
         self._last_used = 0.0
         self._available: bool | None = None
+        self._jobs: queue.Queue[tuple[Any, tuple, dict, queue.Queue] | None] = queue.Queue()
+        self._mlx_thread = threading.Thread(
+            target=self._mlx_loop, name="studio-mlx", daemon=True
+        )
+        self._mlx_thread.start()
+
+    def _mlx_loop(self) -> None:
+        self._boot_mlx()
+        logger.info("mlx worker thread ready (ident=%s)", threading.get_ident())
+        while True:
+            item = self._jobs.get()
+            if item is None:
+                return
+            fn, args, kwargs, box = item
+            try:
+                box.put(("ok", fn(*args, **kwargs)))
+            except Exception as e:  # noqa: BLE001
+                box.put(("err", e))
+
+    def _boot_mlx(self) -> None:
+        """Create the default MLX streams on this thread before any generate."""
+        try:
+            import mlx.core as mx
+            import mflux  # noqa: F401
+
+            for device in (mx.default_device(), getattr(mx, "cpu", None), getattr(mx, "gpu", None)):
+                if device is None:
+                    continue
+                try:
+                    mx.default_stream(device)
+                except Exception:  # noqa: BLE001
+                    pass
+            self._available = True
+        except Exception:
+            self._available = False
+            logger.exception("mlx/mflux not available on worker thread")
+
+    def _on_mlx(self, fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+        if threading.current_thread() is self._mlx_thread:
+            return fn(*args, **kwargs)
+        if not self._mlx_thread.is_alive():
+            raise MfluxBackendError("MLX worker thread is not running")
+        box: queue.Queue[tuple[str, Any]] = queue.Queue(maxsize=1)
+        self._jobs.put((fn, args, kwargs, box))
+        kind, payload = box.get()
+        if kind == "err":
+            raise payload
+        return payload
 
     @property
     def available(self) -> bool:
-        if self._available is None:
-            try:
-                import mflux  # noqa: F401
+        if self._available is not None:
+            return self._available
+        return bool(self._on_mlx(self._probe_available))
 
-                self._available = True
-            except Exception:
-                self._available = False
-        return self._available
+    def _probe_available(self) -> bool:
+        if self._available is not None:
+            return self._available
+        self._boot_mlx()
+        return bool(self._available)
 
     def status(self) -> dict[str, Any]:
         local = resolve_local_model_path()
@@ -273,11 +329,23 @@ class MfluxBackend:
         }
 
     def unload(self) -> None:
+        self._on_mlx(self._unload_impl)
+
+    def _unload_impl(self) -> None:
         with self._lock:
             self._model = None
             self._mode = None
             self._lora_sig = None
             self._quantize = None
+            gc.collect()
+            try:
+                import mlx.core as mx
+
+                metal = getattr(mx, "metal", None)
+                if metal is not None and hasattr(metal, "clear_cache"):
+                    metal.clear_cache()
+            except Exception:  # noqa: BLE001
+                pass
             logger.info("mflux backend unloaded")
 
     def _ensure_model(
@@ -370,6 +438,25 @@ class MfluxBackend:
         system_mode: str | None = None,
     ) -> dict[str, Any]:
         """Run generation and save PNG to out_path. Returns {seed, path}."""
+        if threading.current_thread() is not self._mlx_thread:
+            return self._on_mlx(
+                self.generate,
+                prompt=prompt,
+                out_path=out_path,
+                width=width,
+                height=height,
+                steps=steps,
+                seed=seed,
+                quantize=quantize,
+                lora_paths=lora_paths,
+                lora_scales=lora_scales,
+                image_paths=image_paths,
+                on_progress=on_progress,
+                mode=mode,
+                image_strength=image_strength,
+                guidance=guidance,
+                system_mode=system_mode,
+            )
         from src.system_prompts import with_system_prompt
 
         lora_paths = lora_paths or []
