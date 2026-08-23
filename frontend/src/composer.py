@@ -324,12 +324,9 @@ def compose_edit_prompt(
             pussy += ", white semen inside the gape leaking out"
         lines.append(pussy + ".")
     elif "spreading" in selected or pose_key.startswith("spread_"):
-        pussy = (
-            "Pussy: copy the vulva from photo 2 — skin, labia, a vertical slit, "
-            "not a pearl, not an egg, not a smooth white blob"
-        )
+        pussy = "Pussy: copy the vulva from photo 2, skin and labia, a vertical slit"
         if cream:
-            pussy += ". White semen in the slit leaking out, not a blob sitting on top"
+            pussy += ", white semen in the slit leaking out"
         lines.append(pussy + ".")
 
     if "prolapse_fucking" in selected:

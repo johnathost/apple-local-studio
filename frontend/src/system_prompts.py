@@ -21,7 +21,7 @@ SEMEN_LOCK = (
 
 SEX_SCENE_LOCK = (
     "No extra limbs, no melted genitals, no fused pussy-and-anus into one hole, "
-    "no floating disconnected penis, no pearl, no egg, no smooth blob for a vulva."
+    "no floating disconnected penis."
 )
 
 # Short identity lock for the user-facing edit prompt. Pose/camera are NOT locked.
@@ -57,7 +57,7 @@ SYSTEM_EDIT_POSE = (
     "System: Two reference photos. "
     "Image 1 is WHO: keep this person's face, skin, hair, and nails. "
     "Image 2 is the pose and the genitals: copy body position, camera, and crotch from image 2. "
-    "The vulva is skin with labia and a slit, copied from image 2 — not a pearl, egg, orb, or white blob. "
+    "Copy image 2's vulva as skin, labia, and a slit. "
     "Do not copy image 2's face, hair, or identity. "
     "Photoreal, no text, no watermark. "
     f"{SEX_SCENE_LOCK}"
@@ -70,8 +70,7 @@ SYSTEM_EDIT_POSE_OVERRIDE = (
     "Two openings. Pussy on top. Prolapsed anus below. "
     "The prolapse is folded wrinkled flesh, not a smooth pink ball. "
     "If a penis is requested, draw a real skin-colored cock attached to male hips, not a toy. "
-    "Photoreal, no text, no watermark. "
-    f"{SEMEN_LOCK}"
+    "Photoreal, no text, no watermark."
 )
 
 # Used as CFG negative when guidance > 1 (mflux only encodes a negative then).
@@ -86,7 +85,15 @@ QUALITY_NEGATIVE = (
     "text, watermark, cartoon, illustration, 3d render"
 )
 
-# Pose/undress skip QUALITY_NEGATIVE (deformed/grotesque fights gape). Keep fluids.
+# Pose/undress skip QUALITY_NEGATIVE (deformed/grotesque fights gape).
+# Dry pose: no cum/semen tokens at all (they leak into a pearl on the mons).
+DRY_POSE_NEGATIVE = (
+    "pearl, egg, orb, marble, blob on crotch, toy sitting on skin, sticker on crotch, "
+    "fused pussy and anus, cloaca, one giant genital hole, extra vagina, "
+    "dildo, glass penis, detached cock, floating penis"
+)
+
+# Only when the edit actually asks for cum.
 SEMEN_NEGATIVE = (
     "yellow cum, yellow semen, golden cum, orange cum, honey-colored semen, "
     "urine, piss, cheddar, yellow fluid leaking from pussy, yellow fluid leaking from anus, "

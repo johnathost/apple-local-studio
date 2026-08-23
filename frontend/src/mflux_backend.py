@@ -521,9 +521,16 @@ class MfluxBackend:
             if sys_mode == "undress":
                 prev_encode = None
             elif sys_mode == "pose" or (mode == "edit" and sys_mode != "gen"):
-                from src.system_prompts import SEMEN_NEGATIVE
+                from src.system_prompts import DRY_POSE_NEGATIVE, SEMEN_NEGATIVE
 
-                prev_encode = _install_negative(model, SEMEN_NEGATIVE)
+                # Combined prompt already includes SEMEN_LOCK only when fluids were asked.
+                fluids = any(
+                    k in (prompt or "").lower()
+                    for k in ("semen", "creampie", "cum:", "cum ")
+                )
+                prev_encode = _install_negative(
+                    model, SEMEN_NEGATIVE if fluids else DRY_POSE_NEGATIVE
+                )
             else:
                 prev_encode = _install_quality_negative(model)
             try:
