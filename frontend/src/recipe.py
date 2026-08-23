@@ -129,28 +129,23 @@ def _promote(src: Path) -> str:
     return dest.name
 
 
-def _lora_meta(composed: Any, *, mode: str, pose_id: str | None) -> list[dict[str, Any]]:
-    has_plate = bool(pose_id) and bundled_pose_ref(pose_id)
-    skip = {"spreading", "cum"} if mode == "pose" and has_plate else None
-    # composed.loras already matched; filter available
+def lora_files_for_job(composed: Any) -> list[dict[str, Any]]:
+    """Basename-only LoRA list for the backend (shared mounts / remote)."""
     out: list[dict[str, Any]] = []
     for m in composed.loras:
         if not m.get("available"):
             continue
-        from pathlib import Path as P
-
-        file_name = m.get("file") or (P(m["path"]).name if m.get("path") else "")
+        file_name = m.get("file") or (Path(m["path"]).name if m.get("path") else "")
         if not file_name:
             continue
         out.append(
             {
                 "id": m.get("id"),
                 "name": m.get("name"),
-                "file": P(file_name).name,
+                "file": Path(file_name).name,
                 "scale": float(m.get("scale") or 0.8),
             }
         )
-    _ = skip  # matching already happened in _compose
     return out
 
 
@@ -231,7 +226,7 @@ def build_step_job(
         "steps": steps or defaults.get("steps", 4),
         "seed": seed,
         "quantize": quantize or defaults.get("quantize", 8),
-        "loras": _lora_meta(composed, mode=mode, pose_id=pose_id),
+        "loras": lora_files_for_job(composed),
         "ref_images": refs,
         "mode": eng,
         "system_mode": cat if cat in {"undress", "pose"} else eng,

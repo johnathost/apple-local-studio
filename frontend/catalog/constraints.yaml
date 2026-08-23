@@ -184,7 +184,8 @@ on_select:
       - field: act.primary
         drop: [vaginal, anal, oral, deepthroat, facehumping, titfuck, all_holes, prolapse_fucking]
 
-# Legs-spread category. UI merges `apply`; composer appends `fragment`.
+# Pose plates. `apply` patches the scene for LoRA tags. `caption` is the
+# prompt line; `fragment` is fallback + rosebud/gape detection.
 edit_presets:
   spread_frog:
     label: Frog-leg · heels planted

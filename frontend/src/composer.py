@@ -70,47 +70,6 @@ def _join_edit(parts: list[str]) -> str:
     return " ".join(kept)
 
 
-def _covered(haystack: str, needle: str) -> bool:
-    if not needle:
-        return True
-    h = " ".join(haystack.lower().split())
-    n = " ".join(needle.lower().split()).rstrip(".!")
-    if not n or n in h:
-        return True
-    words = [w for w in n.replace(",", " ").split() if len(w) > 3]
-    if len(words) >= 3 and sum(1 for w in words if w in h) >= max(3, len(words) - 1):
-        return True
-    return False
-
-
-def _filter_edit_triggers(prompt: str, triggers: list[str] | None) -> list[str]:
-    """Keep short unique LoRA tokens. Skip gen-style sentences already covered."""
-    if not triggers:
-        return []
-    out: list[str] = []
-    existing = prompt.lower()
-    skip_prefixes = ("a woman", "the girl", "the image", "the photograph", "image shows")
-    for raw in triggers:
-        t = (raw or "").strip().strip(",")
-        if not t:
-            continue
-        low = t.lower()
-        if t.isupper() and len(t) >= 4:
-            if t not in out:
-                out.append(t)
-            continue
-        if low.startswith(skip_prefixes) or len(t) > 48:
-            continue
-        if low in existing or _covered(existing, t):
-            continue
-        stems = [w.strip(".,") for w in low.split() if len(w) > 4]
-        if stems and all(w[:5] in existing for w in stems):
-            continue
-        if t not in out:
-            out.append(t)
-    return out
-
-
 def _tag_value(value: Any) -> bool:
     return value not in (None, "", "keep", "none")
 
@@ -127,9 +86,6 @@ FEATURE_TAGS: dict[str, list[str]] = {
     "cum_face": ["finish:cum_face"],
     "cum_body": ["finish:cum_body"],
     "wet": ["finish:wet"],
-    "sloppy": ["finish:sloppy"],
-    "anal": ["act:anal"],
-    "deepthroat": ["act:deepthroat"],
 }
 
 
@@ -205,7 +161,6 @@ def _selected_ids(scene: dict[str, Any], group: str, key: str) -> set[str]:
     return set()
 
 
-_FLUID_IDS = {"creampie", "cum_face", "cum_body", "cum_inside"}
 _PENIS_ACTS = {
     "vaginal",
     "anal",
@@ -216,83 +171,6 @@ _PENIS_ACTS = {
     "prolapse_fucking",
 }
 _PROLAPSE_IDS = {"prolapse", "prolapse_creampie", "prolapse_fucking"}
-
-
-def _penetration_bits(scene: dict[str, Any]) -> list[str]:
-    """Force readable male anatomy. Klein edit otherwise drops the cock as 'extra'."""
-    acts = _selected_ids(scene, "act", "primary")
-    extras = _selected_ids(scene, "features", "extras")
-    partners = (scene.get("partners") or {}).get("count")
-    wants_penis = (
-        bool(acts & _PENIS_ACTS)
-        or bool(extras & _PENIS_ACTS)
-        or partners in {"one_man", "two_men", "three_men"}
-    )
-    if not wants_penis:
-        return []
-    if "prolapse_fucking" in acts or "prolapse_fucking" in extras:
-        return [
-            "A realistic erect penis is penetrating through the center of the prolapsed "
-            "rosebud into the anus, shaft and glans visible, pink everted mucosa ringing "
-            "the shaft, male hips and thighs attached"
-        ]
-    if "anal" in acts or "anal" in extras:
-        return [
-            "A realistic erect penis is in the shot, shaft and glans visible, "
-            "correctly attached to male hips and thighs, the shaft entering her anus"
-        ]
-    if "vaginal" in acts:
-        return [
-            "A realistic erect penis is in the shot, shaft and glans visible, "
-            "correctly attached to male hips and thighs, the shaft entering her vagina"
-        ]
-    if acts & {"oral", "deepthroat"}:
-        return [
-            "A realistic erect penis is in her mouth, shaft and glans visible, attached to a male body"
-        ]
-    if "titfuck" in acts:
-        return [
-            "A realistic erect penis is between her breasts, shaft and glans visible, attached to a male body"
-        ]
-    return [
-        "The male partner's erect penis, hips, and thighs are visible and correctly attached"
-    ]
-
-
-def _fluid_bits(scene: dict[str, Any]) -> list[str]:
-    """Flux paints unspecified 'cum' as yellow. Name the color and the orifice."""
-    extras = _selected_ids(scene, "features", "extras")
-    finish = _selected_ids(scene, "finish", "effects")
-    acts = _selected_ids(scene, "act", "primary")
-    out: list[str] = []
-    prolapse_on = bool(acts & _PROLAPSE_IDS or extras & _PROLAPSE_IDS)
-    cream_on = (
-        "creampie" in extras
-        or "cum_inside" in finish
-        or "prolapse_creampie" in extras
-        or "prolapse_creampie" in acts
-    )
-    if cream_on and prolapse_on:
-        out.append(
-            "Pearly-white semen smeared on the everted folds and dripping from the anal rim, "
-            "creamy white, not yellow, not a rope pouring from a hole"
-        )
-    elif cream_on:
-        if acts & {"anal", "anal_gape"} or extras & {"anal_gape", "anal"}:
-            out.append(
-                "Thick opaque pearly-white semen leaking from the open anus, creamy white cum "
-                "pooling on the rim, not yellow, not golden, not urine"
-            )
-        else:
-            out.append(
-                "Thick opaque pearly-white semen leaking from the pussy, creamy white cum "
-                "on the labia, not yellow, not golden, not urine"
-            )
-    if "cum_face" in extras or "cum_face" in finish:
-        out.append("Thick opaque pearly-white semen on their face, white streaks, not yellow")
-    if "cum_body" in extras or "cum_body" in finish:
-        out.append("Thick opaque pearly-white semen on their body, white not yellow")
-    return out
 
 
 # Extras that need a plate which already shows that crotch. Klein cannot invent
@@ -351,36 +229,6 @@ def wants_genital_override(scene: dict[str, Any]) -> bool:
     ):
         return False
     return True
-
-
-def _prolapse_layout_bits() -> list[str]:
-    return [
-        "Keep this pose and furniture. Two holes: pussy above, anus below, skin between them. "
-        "AN4LPR0L4PS3 rosebud comes out of the anus, not out of the pussy"
-    ]
-
-
-def _soften_preset_for_prolapse(text: str) -> str:
-    """Stop spreading plates from owning the crotch when a rosebud is requested."""
-    out = text
-    for old, new in (
-        (
-            "Both hands hold her inner thighs and spread her pussy open",
-            "Both hands hold her inner thighs apart",
-        ),
-        (
-            "Pussy is the center of the frame, anus just below it",
-            "Vulva visible in the upper crotch, anus below the perineum",
-        ),
-        (
-            "pussy is the center of the frame, anus just below it",
-            "vulva visible in the upper crotch, anus below the perineum",
-        ),
-        ("spread her pussy open", "hold her inner thighs apart"),
-        ("spreading her pussy", "holding her inner thighs"),
-    ):
-        out = out.replace(old, new)
-    return out
 
 
 def compose_edit_prompt(
@@ -517,7 +365,6 @@ def compose_edit_prompt(
 def compose_undress_prompt(
     scene: dict[str, Any],
     *,
-    extra_triggers: list[str] | None = None,
     raw_override: str | None = None,
 ) -> str:
     if raw_override and raw_override.strip():
@@ -550,9 +397,7 @@ def compose_prompt(
     """Build final prompt. raw_override replaces the assembled body if set."""
     kind = (mode or "").strip().lower()
     if kind == "undress":
-        return compose_undress_prompt(
-            scene, extra_triggers=extra_triggers, raw_override=raw_override
-        )
+        return compose_undress_prompt(scene, raw_override=raw_override)
     if kind in {"edit", "pose"}:
         return compose_edit_prompt(
             scene,

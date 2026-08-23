@@ -24,18 +24,6 @@ groups:
           - { id: red, label: Red }
           - { id: blue, label: Blue }
 
-  - id: strength
-    label: How far
-    fields:
-      - id: amount
-        label: Strength
-        type: choice
-        default: medium
-        options:
-          - { id: subtle, label: Subtle }
-          - { id: medium, label: Medium }
-          - { id: strong, label: Strong }
-
 engine_defaults:
   width: 1024
   height: 576

@@ -140,7 +140,6 @@ def match_loras(
         reasons = sorted((require_all & tags) | strong | (require_any & tags))
 
         present = _on_disk(file_name, names=on_disk, lora_dir=lora_dir)
-        group = (entry.get("exclusive_group") or "").strip() or None
 
         scored.append(
             MatchedLora(

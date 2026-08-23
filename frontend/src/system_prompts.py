@@ -74,19 +74,6 @@ SYSTEM_EDIT_POSE_OVERRIDE = (
     f"{SEMEN_LOCK}"
 )
 
-# Spreading pose plate + a real prolapse plate as image 3.
-SYSTEM_EDIT_POSE_ANATOMY = (
-    "System: Three reference photos. "
-    "Image 1 is identity: keep this person's face, skin, and hair. "
-    "Image 2 is pose and camera only: body position, legs, hands, furniture. Ignore image 2's crotch. "
-    "Image 3 is anal anatomy: copy the rosebud coming out of the anus. "
-    "Place that on this person's anus, the lower hole toward the seat, below a normal empty vulva. "
-    "A strip of perineum skin must separate the vaginal opening from the anus. "
-    "Nothing hangs out of the vagina. Not a doughnut, not a toy. "
-    "Photoreal, natural skin, no text, no watermark. "
-    f"{SEX_SCENE_LOCK}"
-)
-
 # Used as CFG negative when guidance > 1 (mflux only encodes a negative then).
 QUALITY_NEGATIVE = (
     "deformed, mutated, extra limbs, extra arms, extra legs, extra fingers, "
@@ -114,32 +101,18 @@ SEMEN_NEGATIVE = (
 )
 
 
-def system_prompt_for(mode: str) -> str:
-    m = (mode or "").strip().lower()
-    if m == "undress":
-        return SYSTEM_UNDRESS
-    if m == "pose":
-        return SYSTEM_EDIT_POSE
-    if m == "edit":
-        return SYSTEM_EDIT
-    return SYSTEM_GEN
-
-
 def with_system_prompt(
     user_prompt: str,
     *,
     mode: str,
     pose_ref: bool = False,
     genital_override: bool = False,
-    anatomy_ref: bool = False,
 ) -> str:
     m = (mode or "").strip().lower()
     if m == "undress":
         system = SYSTEM_UNDRESS
     elif m in {"edit", "pose"}:
-        if pose_ref and anatomy_ref:
-            system = SYSTEM_EDIT_POSE_ANATOMY
-        elif pose_ref and genital_override:
+        if pose_ref and genital_override:
             system = SYSTEM_EDIT_POSE_OVERRIDE
         elif pose_ref:
             system = SYSTEM_EDIT_POSE

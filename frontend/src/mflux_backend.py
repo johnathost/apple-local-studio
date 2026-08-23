@@ -477,25 +477,17 @@ class MfluxBackend:
             raise MfluxBackendError("Edit mode requires a source image")
         mode = requested
         pose_ref = bool(image_paths and len(image_paths) >= 2)
-        anatomy_ref = bool(image_paths and len(image_paths) >= 3)
         prompt = with_system_prompt(
             prompt,
             mode=system_mode or mode,
             pose_ref=pose_ref and (system_mode or mode) != "undress",
             genital_override=bool(genital_override),
-            anatomy_ref=anatomy_ref and (system_mode or mode) != "undress",
         )
         seed = int(seed) if seed is not None else random.randint(0, 2**31 - 1)
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         if image_paths:
-            # 3-ref: snap to the pose plate (index 1), not the anatomy donor.
-            if len(image_paths) >= 3:
-                snap_src = image_paths[1]
-            elif pose_ref:
-                snap_src = image_paths[-1]
-            else:
-                snap_src = image_paths[0]
+            snap_src = image_paths[-1] if pose_ref else image_paths[0]
             width, height = _snap_edit_size(snap_src, width, height)
 
         with self._lock:

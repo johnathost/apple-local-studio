@@ -167,10 +167,8 @@ def sanitize_scene(
     scene: dict[str, Any],
     *,
     winner: str | None = None,
-    mode: str = "gen",
 ) -> tuple[dict[str, Any], list[str]]:
     """Return (scene, dropped descriptors). Never mutates the input."""
-    _ = mode
     out = deepcopy(scene)
     spec = load_constraints()
     on_select = _on_select(spec)

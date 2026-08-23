@@ -24,7 +24,7 @@ from src.catalog_loader import (
     scenes_public,
 )
 from src.composer import compose_prompt, retarget_pose_for_extras, scene_tags, wants_genital_override
-from src.recipe import plan_recipe
+from src.recipe import lora_files_for_job, plan_recipe
 from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
 from src.system_prompts import SYSTEM_EDIT, SYSTEM_EDIT_POSE, SYSTEM_GEN, SYSTEM_UNDRESS
 from src.engine import engine
@@ -74,15 +74,12 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
     if raw_mode not in {"gen", "edit", "undress", "pose"}:
         raw_mode = "gen"
     mode = catalog_mode(raw_mode)
-    scene = {**default_scene(mode), **(req.scene or {})}
-    # deep-merge top-level groups if partial
-    base = default_scene(mode)
+    scene = default_scene(mode)
     for k, v in (req.scene or {}).items():
-        if isinstance(v, dict) and isinstance(base.get(k), dict):
-            base[k] = {**base[k], **v}
+        if isinstance(v, dict) and isinstance(scene.get(k), dict):
+            scene[k] = {**scene[k], **v}
         else:
-            base[k] = v
-    scene = base
+            scene[k] = v
 
     winner = (req.winner or "").strip() or None
     if mode == "pose":
@@ -95,7 +92,7 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
     else:
         retargeted = []
 
-    scene, dropped = sanitize_scene(scene, winner=winner, mode=mode)
+    scene, dropped = sanitize_scene(scene, winner=winner)
     dropped = list(retargeted) + list(dropped)
 
     # Undress is a clothing-only Klein edit. Pose/body LoRAs melt identity.
@@ -264,22 +261,7 @@ def api_generate(req: GenerateRequest) -> JobResponse:
     eng = engine_mode(req_mode)
     defaults = engine_defaults(cat)
 
-    # Basename-only LoRA list (shared mounts / remote backend)
-    lora_meta: list[dict[str, Any]] = []
-    for m in composed.loras:
-        if not m.get("available"):
-            continue
-        file_name = m.get("file") or (Path(m["path"]).name if m.get("path") else "")
-        if not file_name:
-            continue
-        lora_meta.append(
-            {
-                "id": m.get("id"),
-                "name": m.get("name"),
-                "file": Path(file_name).name,
-                "scale": float(m.get("scale") or 0.8),
-            }
-        )
+    lora_meta = lora_files_for_job(composed)
 
     ref_images: list[str] = []
     if eng == "edit" and not req.image_paths:

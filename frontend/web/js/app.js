@@ -118,11 +118,6 @@ function renderPoseGallery(wrap, field) {
   }
 }
 
-function optionAllowed(opt) {
-  if (!opt?.poses || !opt.poses.length) return true;
-  return opt.poses.includes(getSceneValue("pose", "scene"));
-}
-
 function currentStudioScene() {
   const id = getSceneValue("pose", "scene");
   return (state.scenes.scenes || []).find((s) => s.id === id || s.plate === id) || null;
@@ -147,7 +142,6 @@ function pruneStudioExtra() {
 
 function directorText() {
   const extras = getSceneValue("features", "extras") || [];
-  const extra = extras[0];
   const scene = currentStudioScene();
   const face = state.refImage ? "your photo" : "need a photo";
   let crotch = "this plate";
@@ -186,7 +180,6 @@ function renderSceneStudio() {
   root.classList.remove("hidden");
   pruneStudioExtra();
   const selectedExtras = getSceneValue("features", "extras") || [];
-  const extra = selectedExtras[0] || "";
   const scene = currentStudioScene();
   const allowed = new Set(scene?.compatible_extras || []);
   const chips = (state.scenes.extras || []).filter((e) => allowed.has(e.id));
@@ -300,31 +293,11 @@ function renderSceneStudio() {
   root.appendChild(planEl);
 }
 
-function prunePoseFeatures() {
-  const extras = getSceneValue("features", "extras");
-  if (!Array.isArray(extras) || !extras.length) return;
-  const allowed = new Set();
-  for (const group of state.schema?.groups || []) {
-    for (const field of group.fields || []) {
-      if (group.id !== "features") continue;
-      for (const opt of field.options || []) {
-        if (optionAllowed(opt)) allowed.add(opt.id);
-      }
-    }
-  }
-  const next = extras.filter((id) => allowed.has(id));
-  if (next.length !== extras.length) {
-    if (!state.scene.features) state.scene.features = {};
-    state.scene.features.extras = next;
-  }
-}
-
 function setSceneValue(groupId, fieldId, value) {
   if (!state.scene[groupId]) state.scene[groupId] = {};
   state.scene[groupId][fieldId] = value;
   state.winner = `${groupId}.${fieldId}`;
   if (groupId === "pose" && fieldId === "scene") {
-    prunePoseFeatures();
     pruneStudioExtra();
     renderBuilder();
     renderSceneStudio();
@@ -401,7 +374,6 @@ function renderBuilder() {
         const chips = document.createElement("div");
         chips.className = "chips";
         for (const opt of field.options || []) {
-          if (!optionAllowed(opt)) continue;
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "chip";
@@ -427,7 +399,6 @@ function renderBuilder() {
         chips.className = "chips";
         const selected = new Set(getSceneValue(group.id, field.id) || []);
         for (const opt of field.options || []) {
-          if (!optionAllowed(opt)) continue;
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "chip multi";
@@ -967,8 +938,6 @@ async function enterStudio(mode) {
 function setBusy(busy) {
   const run = $("#btn-generate");
   if (run) run.disabled = busy;
-  $("#mode-gen") && ($("#mode-gen").disabled = busy);
-  $("#mode-edit") && ($("#mode-edit").disabled = busy);
 }
 
 async function generateRecipe() {
@@ -1200,8 +1169,6 @@ async function init() {
     const card = e.target.closest("[data-enter]");
     if (card) enterStudio(card.dataset.enter);
   });
-  $("#enter-gen")?.addEventListener("click", () => enterStudio("gen"));
-  $("#enter-edit")?.addEventListener("click", () => enterStudio("edit"));
   $("#btn-home")?.addEventListener("click", showHome);
   $("#aspect-row")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".aspect-btn");
@@ -1328,11 +1295,6 @@ async function init() {
     scheduleCompose();
   });
 }
-
-document.getElementById("home-cards")?.addEventListener("click", (e) => {
-  const card = e.target.closest("[data-enter]");
-  if (card) enterStudio(card.dataset.enter);
-});
 
 init().catch((e) => {
   console.error(e);
