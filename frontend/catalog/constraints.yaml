@@ -314,3 +314,78 @@ edit_presets:
       She sits back with one leg raised, camera at her crotch looking toward
       her face. Pussy above, AN4LPR0L4PS3 prolapsed anus rosebud below,
       dripping. Breasts and face in frame. She is alone.
+
+  spread_held_open:
+    label: Ottoman · holding open
+    apply:
+      position: { pose: legs_spread }
+      act: { primary: [spreading] }
+      camera: { angle: genital_focus }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      She sits on a white ottoman facing the camera, both legs raised high in
+      a wide V, knees toward her chest. Both hands hold her inner thighs and
+      spread her pussy open. Camera at crotch height looking toward her face.
+      Pussy is the center of the frame, anus just below it, breasts and face
+      above. She is alone.
+
+  anal_missionary:
+    label: On back · anal
+    apply:
+      position: { pose: lying_back }
+      act: { primary: [anal] }
+      camera: { angle: genital_focus }
+      partners: { count: one_man }
+      clothing: { state: keep }
+    fragment: >-
+      She lies on her back, one leg raised and held open, the other lower.
+      Three-quarter view from her side so her face, breasts, pussy, and anus
+      are all visible. A penis is penetrating her anus; her pussy is visible
+      above the penetration. One man, mostly out of frame except his penis,
+      hips, and a hand holding her raised thigh.
+
+  anal_creampie:
+    label: Legs up · anal creampie
+    apply:
+      position: { pose: legs_spread }
+      act: { primary: [anal, anal_gape] }
+      camera: { angle: genital_focus }
+      partners: { count: one_man }
+      clothing: { state: keep }
+      finish: { effects: [cum_inside] }
+    fragment: >-
+      She is on her back with both legs raised high in a wide V. Both hands
+      spread her ass. Camera tight on her crotch looking toward her face.
+      Gaping anus in the center with creampie, cum leaking out, pussy above it,
+      breasts and face at the top. One man stands over her, mostly out of
+      frame except his hips and penis.
+
+  anal_cowgirl:
+    label: Cowgirl · anal
+    apply:
+      position: { pose: cowgirl }
+      act: { primary: [anal] }
+      camera: { angle: side }
+      partners: { count: one_man }
+      clothing: { state: keep }
+    fragment: >-
+      She sits on a man's lap in cowgirl, the penis of the man penetrating
+      her anus. He lies on his back on a sofa under her. Camera from the side
+      looking down so her pussy, the anal penetration, her body, and her face
+      are all visible. She is looking at the camera. One man is in frame
+      under her.
+
+  masturbate_bed:
+    label: On back · masturbating
+    apply:
+      position: { pose: legs_spread }
+      act: { primary: [masturbation] }
+      camera: { angle: genital_focus }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      She lies on her back on a bed, legs spread toward the camera, one hand
+      on her pussy masturbating. Camera from between her knees looking at her
+      body and face. Pussy in the lower center, breasts and face above.
+      She is alone, no partner in frame.

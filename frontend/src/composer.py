@@ -224,16 +224,24 @@ def compose_edit_prompt(
     preset_text = preset_fragment(preset_id)
     skip_pose = False
     skip_camera = False
+    skip_partners = False
     skip_acts: set[str] = set()
     if preset_text:
         chunks.append(preset_text)
         skip_pose = True
         skip_camera = True
+        low_preset = preset_text.lower()
+        if any(tok in low_preset for tok in ("alone", "one man", "two men", "three men")):
+            skip_partners = True
         for act_id in acts:
             piece = _frag(fr, "act.primary", act_id)
             if isinstance(piece, str) and piece and _covered(preset_text, piece):
                 skip_acts.add(act_id)
-            elif act_id == "spreading" and "spread" in preset_text.lower():
+            elif act_id == "spreading" and "spread" in low_preset:
+                skip_acts.add(act_id)
+            elif act_id == "anal" and any(t in low_preset for t in ("anus", "anal")):
+                skip_acts.add(act_id)
+            elif act_id == "masturbation" and "masturbat" in low_preset:
                 skip_acts.add(act_id)
 
     on_back = pose_id in {"legs_spread", "lying_back", "missionary"}
@@ -276,7 +284,8 @@ def compose_edit_prompt(
     pcount = _frag(fr, "partners.count", partners.get("count"))
     so_far = " ".join(chunks).lower()
     if (
-        isinstance(pcount, str)
+        not skip_partners
+        and isinstance(pcount, str)
         and pcount
         and not _covered(so_far, pcount)
         and not ("alone" in so_far and "alone" in pcount.lower())
