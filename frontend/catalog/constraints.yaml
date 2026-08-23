@@ -246,3 +246,71 @@ edit_presets:
       She lies back on a bed, knees out, both hands spreading her pussy open.
       Camera in front looking at her crotch, body, and face. Pussy is the
       center of the frame. She is alone.
+
+  prolapse_sofa_hold:
+    label: Sofa · legs back, held
+    apply:
+      position: { pose: legs_spread }
+      act: { primary: [spreading, prolapse] }
+      camera: { angle: genital_focus }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      She sits back on a sofa, knees pulled up and back, both hands at her
+      crotch. Camera at pussy height looking at her face. Pussy in the center,
+      AN4LPR0L4PS3 prolapsed anus rosebud just below it, breasts and face above.
+      She is alone.
+
+  prolapse_chair_tight:
+    label: Chair · tight crotch-cam
+    apply:
+      position: { pose: legs_spread }
+      act: { primary: [spreading, prolapse] }
+      camera: { angle: genital_focus }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      Tight crop. She leans back on a chair, legs pulled back, both hands
+      spreading herself. Camera close at her crotch looking toward her face.
+      Pussy and AN4LPR0L4PS3 prolapsed anus rosebud in the center, breasts
+      and face above. She is alone.
+
+  prolapse_legs_back:
+    label: On back · legs to chest
+    apply:
+      position: { pose: legs_spread }
+      act: { primary: [spreading, prolapse] }
+      camera: { angle: genital_focus }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      She is on her back, legs pulled back toward her chest, knees wide, both
+      hands spreading her crotch. Camera at the crotch looking toward her face.
+      Pussy in the center, AN4LPR0L4PS3 prolapsed anus rosebud below it.
+      She is alone.
+
+  prolapse_sofa_side:
+    label: Sofa · three-quarter
+    apply:
+      position: { pose: legs_spread }
+      act: { primary: [spreading, prolapse] }
+      camera: { angle: genital_focus }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      She reclines on a sofa, one leg up, three-quarter view. Hands spreading
+      her crotch. Camera close on her hips looking toward her face. Pussy and
+      AN4LPR0L4PS3 prolapsed anus rosebud clearly visible. She is alone.
+
+  prolapse_one_leg:
+    label: One leg up
+    apply:
+      position: { pose: legs_spread }
+      act: { primary: [spreading, prolapse] }
+      camera: { angle: genital_focus }
+      partners: { count: solo }
+      clothing: { state: keep }
+    fragment: >-
+      She sits back with one leg raised, camera at her crotch looking toward
+      her face. Pussy above, AN4LPR0L4PS3 prolapsed anus rosebud below,
+      dripping. Breasts and face in frame. She is alone.
