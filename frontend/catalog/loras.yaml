@@ -17,6 +17,7 @@ loras:
     tags:
       - act:vaginal_gape
       - act:spreading
+    prompt_trigger: "she has a gaping pussy, she is spreading her pussy"
     triggers:
       - "she has a gaping pussy"
       - "she is gaping her pussy"
@@ -383,6 +384,9 @@ loras:
     default_scale: 0.8
     priority: 70
     exclusive_group: spreading
+    # Pose plates already spread the legs. Auto + trigger "spreading legs"
+    # melts the crotch on Klein Edit.
+    auto: false
     require_any:
       - position:legs_spread
       - act:spreading

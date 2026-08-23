@@ -72,6 +72,7 @@ def match_loras(
     on_disk: set[str] | None = None,
     max_loras: int | None = None,
     manual: list[dict[str, Any]] | None = None,
+    skip_groups: set[str] | None = None,
 ) -> list[MatchedLora]:
     """
     Score catalog LoRAs against scene tags.
@@ -81,6 +82,7 @@ def match_loras(
     max_loras = max_loras if max_loras is not None else int(engine_defaults().get("max_loras", 2))
     if int(max_loras) <= 0 and not manual:
         return []
+    skip_groups = skip_groups or set()
     tags = scene_tags(scene)
     catalog = load_loras()
 
@@ -89,6 +91,9 @@ def match_loras(
         if entry.get("enabled") is False:
             continue
         if entry.get("auto") is False:
+            continue
+        group = (entry.get("exclusive_group") or "").strip() or None
+        if group and group in skip_groups:
             continue
         file_name = (entry.get("file") or "").strip()
         entry_tags = set(entry.get("tags") or [])

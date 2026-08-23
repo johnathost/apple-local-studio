@@ -466,11 +466,20 @@ def compose_edit_prompt(
             anus += ", a little white semen on the folds"
         lines.append(anus + ".")
     elif "anal_gape" in selected:
-        lines.append("Anus: anal gape, she has a gaping ass, huge gape.")
+        anus = "Anus: anal gape, she has a gaping ass, huge gape"
+        if cream:
+            anus += ", a little white semen in the gape"
+        lines.append(anus + ".")
     elif "vaginal_gape" in selected:
-        lines.append("Pussy: she has a gaping pussy.")
+        pussy = "Pussy: she has a gaping pussy, she is spreading her pussy"
+        if cream:
+            pussy += ", white semen inside the gape leaking out"
+        lines.append(pussy + ".")
     elif "spreading" in selected or pose_key.startswith("spread_"):
-        lines.append("Pussy: visible vulva with labia and a slit, copy from photo 2.")
+        pussy = "Pussy: copy the vulva from photo 2, labia and a slit"
+        if cream:
+            pussy += ", white semen in the slit leaking out, not a blob on top"
+        lines.append(pussy + ".")
 
     if "prolapse_fucking" in selected:
         lines.append(
@@ -488,8 +497,6 @@ def compose_edit_prompt(
             "in her vagina. Not a dildo, not a toy."
         )
 
-    if cream and not (selected & _PROLAPSE_IDS):
-        lines.append("Cum: pearly-white semen leaking out.")
     if extras & {"cum_face"} or finish & {"cum_face"}:
         lines.append("Cum: pearly-white semen on her face.")
     if extras & {"cum_body"} or finish & {"cum_body"}:

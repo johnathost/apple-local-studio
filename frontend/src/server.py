@@ -94,11 +94,17 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
     if mode == "undress" and max_loras is None:
         max_loras = int(engine_defaults(mode).get("max_loras", 0))
 
+    pose_id = (scene.get("pose") or {}).get("scene")
+    has_pose_plate = bool(req.pose_ref) or bundled_pose_ref(pose_id)
+    # Pose plates already show spread legs/pussy. Spreading LoRAs melt the hole.
+    # Cum LoRAs on a copied pussy became a white egg — fluid is prompt-only.
+    skip_groups = {"spreading", "cum"} if mode == "pose" and has_pose_plate else None
     matched = match_loras(
         scene,
         on_disk=set(engine.list_lora_files()),
         max_loras=max_loras,
         manual=[m.model_dump() for m in req.manual_loras],
+        skip_groups=skip_groups,
     )
     triggers: list[str] = []
     if req.include_triggers and mode != "undress":
@@ -110,8 +116,6 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
             else:
                 triggers.extend(m.triggers)
 
-    pose_id = (scene.get("pose") or {}).get("scene")
-    has_pose_plate = bool(req.pose_ref) or bundled_pose_ref(pose_id)
     prompt = compose_prompt(
         scene,
         extra_triggers=triggers if req.include_triggers else None,
