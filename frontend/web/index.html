@@ -78,6 +78,38 @@
           </div>
         </div>
         <p id="session-line" class="session-line hidden"></p>
+        <div id="work-status" class="work-status hidden" aria-live="polite">
+          <div class="cheeky-ph" aria-hidden="true">
+            <svg class="cheeky-svg" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="cheek-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ffb3c1"/>
+                  <stop offset="100%" stop-color="#ff4d6d"/>
+                </linearGradient>
+              </defs>
+              <ellipse class="cheek cheek-l" cx="92" cy="102" rx="46" ry="52" fill="url(#cheek-grad)"/>
+              <ellipse class="cheek cheek-r" cx="148" cy="102" rx="46" ry="52" fill="url(#cheek-grad)"/>
+              <path d="M120 58 Q120 118 120 148" fill="none" stroke="#1c1f29" stroke-width="3" stroke-linecap="round" opacity="0.35"/>
+              <circle class="spark spark-a" cx="48" cy="48" r="4" fill="#c084fc"/>
+              <circle class="spark spark-b" cx="196" cy="40" r="3" fill="#ff4d6d"/>
+              <path class="spark spark-c" d="M200 88 l6 0 m-3-3 l0 6" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+              <ellipse cx="78" cy="108" rx="8" ry="5" fill="#fff" opacity="0.28"/>
+              <ellipse cx="162" cy="108" rx="8" ry="5" fill="#fff" opacity="0.28"/>
+            </svg>
+            <p class="cheeky-caption">Hold still — she’s being edited</p>
+          </div>
+          <div class="work-stage">
+            <div class="work-copy">
+              <p class="work-kicker">Editing in the background</p>
+              <p id="work-message" class="work-message">Starting…</p>
+            </div>
+            <div class="work-meta">
+              <span id="work-elapsed" class="work-elapsed">0:00</span>
+              <span id="work-step" class="work-step"></span>
+            </div>
+          </div>
+          <div class="progress det"><i id="work-bar"></i></div>
+        </div>
         <div id="filmstrip" class="filmstrip hidden"></div>
         <div id="take-hero" class="take-hero hidden"></div>
         <div id="chat-thread" class="chat-thread"></div>

@@ -30,6 +30,8 @@ const state = {
   undressFirst: false,
   twoTakes: true,
   shoot: null, // { identity, recipe, frames, selected, subjectIndex }
+  jobStartedAt: null,
+  elapsedTimer: null,
 };
 
 const GENITAL_EXTRAS = new Set([
@@ -641,23 +643,84 @@ function ensureEmptyHint() {
     : `<div class="empty-hint">Build a scene on the left. Prompt &amp; LoRAs update live on the right. Hit <strong>Generate</strong> when ready.</div>`;
 }
 
+function formatElapsed(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(s / 60);
+  return `${m}:${String(s % 60).padStart(2, "0")}`;
+}
+
+function tickElapsed() {
+  const el = $("#work-elapsed");
+  if (!el || !state.jobStartedAt) return;
+  el.textContent = formatElapsed(Date.now() - state.jobStartedAt);
+}
+
+function startElapsed() {
+  state.jobStartedAt = Date.now();
+  clearInterval(state.elapsedTimer);
+  tickElapsed();
+  state.elapsedTimer = setInterval(tickElapsed, 250);
+}
+
+function stopElapsed() {
+  clearInterval(state.elapsedTimer);
+  state.elapsedTimer = null;
+  tickElapsed();
+}
+
 function showJobStatus(job) {
   const el = $("#job-status");
-  el.classList.remove("hidden", "error", "running", "done");
+  const work = $("#work-status");
+  const live = job && (job.status === "running" || job.status === "queued");
+  const pct = Math.max(0, Math.min(100, Math.round((Number(job?.progress) || 0) * 100)));
+  const stepBit =
+    job?.step != null && job?.steps != null ? `${job.step}/${job.steps}` : "";
+
+  if (el) {
+    el.classList.remove("hidden", "error", "running", "done");
+    if (!job) {
+      el.classList.add("hidden");
+    } else {
+      el.classList.add(job.status === "error" ? "error" : job.status === "done" ? "done" : "running");
+      el.innerHTML = `
+        <div><strong>${escapeHtml(job.status)}</strong> — ${escapeHtml(job.message || "")}${
+          live ? ` (${pct}%${stepBit ? ` · ${stepBit}` : ""})` : ""
+        }</div>
+        ${job.error ? `<div>${escapeHtml(job.error)}</div>` : ""}
+        ${live ? `<div class="progress det"><i style="width:${pct}%"></i></div>` : ""}
+      `;
+    }
+  }
+
+  if (!work) return;
   if (!job) {
-    el.classList.add("hidden");
+    work.classList.add("hidden");
+    work.classList.remove("error", "running", "done");
     return;
   }
-  el.classList.add(job.status === "error" ? "error" : job.status === "done" ? "done" : "running");
-  const pct = Math.max(0, Math.min(100, Math.round((Number(job.progress) || 0) * 100)));
-  const stepBit =
-    job.step != null && job.steps != null ? ` · ${job.step}/${job.steps}` : "";
-  const live = job.status === "running" || job.status === "queued";
-  el.innerHTML = `
-    <div><strong>${escapeHtml(job.status)}</strong> — ${escapeHtml(job.message || "")}${live ? ` (${pct}%${stepBit})` : ""}</div>
-    ${job.error ? `<div>${escapeHtml(job.error)}</div>` : ""}
-    ${live ? `<div class="progress det"><i style="width:${pct}%"></i></div>` : ""}
-  `;
+  work.classList.remove("hidden", "error", "running", "done", "as-hero");
+  work.classList.add(job.status === "error" ? "error" : job.status === "done" ? "done" : "running");
+  const gotFrame = (state.shoot?.frames || []).some((f) => f.image_url);
+  work.classList.toggle("as-hero", Boolean(live && !gotFrame));
+  const kicker = $("#work-status .work-kicker");
+  const msg = $("#work-message");
+  const stepEl = $("#work-step");
+  const bar = $("#work-bar");
+  if (kicker) {
+    kicker.textContent =
+      job.status === "done"
+        ? "Done"
+        : job.status === "error"
+          ? "Failed"
+          : "Editing in the background";
+  }
+  if (msg) msg.textContent = job.error || job.message || job.status || "";
+  if (stepEl) stepEl.textContent = live && stepBit ? stepBit : live ? `${pct}%` : "";
+  if (bar) {
+    bar.style.width = `${pct}%`;
+    bar.parentElement?.classList.toggle("indet", live && pct < 3);
+    bar.parentElement?.classList.toggle("det", !(live && pct < 3));
+  }
 }
 
 function setRefImage(data) {
@@ -804,6 +867,7 @@ function renderFilmstrip() {
     btn.className =
       "filmstrip-frame" +
       (frame.index === selected ? " active" : "") +
+      (frame.status === "running" ? " running" : "") +
       (frame.image_url ? "" : " queued") +
       (frame.takes?.length > 1 && !frame.picked ? " pick" : "");
     btn.dataset.frame = String(frame.index);
@@ -1208,6 +1272,12 @@ async function enterStudio(mode) {
 function setBusy(busy) {
   const run = $("#btn-generate");
   if (run) run.disabled = busy;
+  if (busy) {
+    startElapsed();
+    showJobStatus({ status: "queued", message: "Queued", progress: 0 });
+  } else {
+    stopElapsed();
+  }
 }
 
 async function generateRecipe() {
@@ -1364,13 +1434,19 @@ function pollJob(id) {
       if (job.status === "done") {
         clearInterval(state.pollTimer);
         setBusy(false);
+        showJobStatus(job);
         const url = job.result?.image_url;
         const file = job.result?.image_file || "";
         state.lastResult = { image_file: file, image_url: url };
         const n = (job.result?.steps || state.shoot?.frames || []).filter((s) => s.image_url).length;
         const loras = (job.result?.loras || []).map((l) => l.name).join(", ");
+        const elapsed = state.jobStartedAt
+          ? formatElapsed(Date.now() - state.jobStartedAt)
+          : "";
         appendMsg(
-          `<div class="muted">Take ready${n ? ` · ${n} frame${n === 1 ? "" : "s"}` : ""}</div>
+          `<div class="muted">Take ready${n ? ` · ${n} frame${n === 1 ? "" : "s"}` : ""}${
+            elapsed ? ` · ${elapsed}` : ""
+          }</div>
            ${loras ? `<div class="muted">${escapeHtml(loras)}</div>` : ""}`,
           "assistant"
         );
@@ -1384,6 +1460,7 @@ function pollJob(id) {
       } else if (job.status === "error") {
         clearInterval(state.pollTimer);
         setBusy(false);
+        showJobStatus(job);
         appendMsg(`<div class="system">Generation failed: ${escapeHtml(job.error || "unknown")}</div>`, "system");
       }
     } catch (e) {

@@ -285,7 +285,10 @@ def compose_edit_prompt(
         elif wants_penis:
             lines.append("Photo 2: pose, camera, and the sex act. Copy any penis in the photo.")
         else:
-            lines.append("Photo 2: pose, camera, and crotch. Copy the pussy from photo 2.")
+            lines.append(
+                "Photo 2: pose, camera, and crotch. "
+                "Copy the vulva from photo 2 — it sits above the anus, not on the buttocks."
+            )
     else:
         lines.append(EDIT_IDENTITY_LOCK)
 
@@ -324,9 +327,16 @@ def compose_edit_prompt(
             pussy += ", white semen inside the gape leaking out"
         lines.append(pussy + ".")
     elif "spreading" in selected or pose_key.startswith("spread_"):
-        pussy = "Pussy: copy the vulva from photo 2, skin and labia, a vertical slit"
+        lines.append(
+            "two openings: pussy on top toward the belly, anus underneath toward the seat, "
+            "a strip of perineum skin between them"
+        )
+        pussy = (
+            "Pussy: copy photo 2's vulva — mons, outer labia, inner lips, clitoral hood, "
+            "a natural cleft"
+        )
         if cream:
-            pussy += ", white semen in the slit leaking out"
+            pussy += ". White semen in the cleft leaking out"
         lines.append(pussy + ".")
 
     if "prolapse_fucking" in selected:

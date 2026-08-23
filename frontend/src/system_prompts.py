@@ -57,7 +57,7 @@ SYSTEM_EDIT_POSE = (
     "System: Two reference photos. "
     "Image 1 is WHO: keep this person's face, skin, hair, and nails. "
     "Image 2 is the pose and the genitals: copy body position, camera, and crotch from image 2. "
-    "Copy image 2's vulva as skin, labia, and a slit. "
+    "Copy image 2's vulva: mons, labia, a natural cleft above a separate anus. "
     "Do not copy image 2's face, hair, or identity. "
     "Photoreal, no text, no watermark. "
     f"{SEX_SCENE_LOCK}"
@@ -89,7 +89,8 @@ QUALITY_NEGATIVE = (
 # Dry pose: no cum/semen tokens at all (they leak into a pearl on the mons).
 DRY_POSE_NEGATIVE = (
     "pearl, egg, orb, marble, blob on crotch, toy sitting on skin, sticker on crotch, "
-    "fused pussy and anus, cloaca, one giant genital hole, extra vagina, "
+    "gash, wound, knife cut, extra vagina, missing labia, "
+    "fused pussy and anus, cloaca, one giant genital hole, "
     "dildo, glass penis, detached cock, floating penis"
 )
 
