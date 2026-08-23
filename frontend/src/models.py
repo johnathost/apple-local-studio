@@ -56,6 +56,10 @@ class GenerateRequest(BaseModel):
     winner: str | None = None
 
 
+class PromoteRequest(BaseModel):
+    name: str
+
+
 class JobResponse(BaseModel):
     id: str
     status: str

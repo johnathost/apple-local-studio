@@ -21,6 +21,9 @@ const state = {
   winner: null,
   blocked: {},
   dropped: [],
+  undoStack: [], // previous refImage snapshots
+  lastGenerate: null, // last POST /api/generate body
+  lastResult: null, // { image_file, image_url }
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -500,6 +503,82 @@ function showJobStatus(job) {
   `;
 }
 
+function setRefImage(data) {
+  state.refImage = data;
+  const label = $("#ref-label");
+  if (label) label.textContent = data?.filename || "";
+  $("#btn-clear-ref")?.classList.toggle("hidden", !data);
+  syncStrengthChrome();
+  updateSessionLine();
+}
+
+function clearRefImage() {
+  state.refImage = null;
+  $("#ref-label").textContent = "";
+  $("#btn-clear-ref")?.classList.add("hidden");
+  const input = $("#ref-image");
+  if (input) input.value = "";
+  syncStrengthChrome();
+  updateSessionLine();
+}
+
+function updateSessionLine() {
+  const line = $("#session-line");
+  const undo = $("#btn-undo-session");
+  if (!line) return;
+  if (!state.refImage) {
+    line.classList.add("hidden");
+    line.textContent = "";
+    undo?.classList.add("hidden");
+    return;
+  }
+  line.classList.remove("hidden");
+  const n = state.undoStack.length;
+  line.textContent =
+    n > 0
+      ? `Subject: ${state.refImage.filename} (${n} earlier)`
+      : `Subject: ${state.refImage.filename}`;
+  undo?.classList.toggle("hidden", n === 0);
+}
+
+async function continueFromOutput(imageFile) {
+  const data = await api("/api/promote-output", {
+    method: "POST",
+    body: JSON.stringify({ name: imageFile }),
+  });
+  if (state.refImage) {
+    state.undoStack.push({ filename: state.refImage.filename, url: state.refImage.url });
+  }
+  setRefImage(data);
+}
+
+function undoSession() {
+  const prev = state.undoStack.pop();
+  if (prev) setRefImage(prev);
+  else clearRefImage();
+}
+
+async function retryLast() {
+  if (!state.lastGenerate) {
+    alert("Nothing to retry yet.");
+    return;
+  }
+  setBusy(true);
+  appendMsg(`<div class="muted">Retry last step</div>`, "user");
+  try {
+    const job = await api("/api/generate", {
+      method: "POST",
+      body: JSON.stringify(state.lastGenerate),
+    });
+    showJobStatus(job);
+    pollJob(job.id);
+  } catch (e) {
+    showJobStatus({ status: "error", message: "Failed", error: String(e.message || e) });
+    appendMsg(`<div class="system">Error: ${escapeHtml(e.message || e)}</div>`, "system");
+    setBusy(false);
+  }
+}
+
 function applyModeChrome() {
   const edit = state.mode === "edit";
   const kind = state.editKind;
@@ -712,6 +791,8 @@ async function generate() {
         : null,
   };
 
+  state.lastGenerate = body;
+
   const poseBit = state.poseImage ? ` · pose ${state.poseImage.filename}` : "";
   appendMsg(
     `<div class="prompt">${escapeHtml(prompt)}</div>
@@ -745,12 +826,19 @@ function pollJob(id) {
         clearInterval(state.pollTimer);
         setBusy(false);
         const url = job.result?.image_url;
+        const file = job.result?.image_file || "";
+        state.lastResult = { image_file: file, image_url: url };
         const loras = (job.result?.loras || []).map((l) => l.name).join(", ");
         appendMsg(
           `${url ? `<img src="${url}" alt="result" />` : ""}
            <div class="actions">
              <a class="file-btn" href="${url}" download>Download</a>
-             <button type="button" class="ghost sm remix">Remix scene</button>
+             ${
+               file
+                 ? `<button type="button" class="ghost sm" data-continue="${escapeHtml(file)}">Continue from this</button>`
+                 : ""
+             }
+             <button type="button" class="ghost sm" data-retry="1">Retry this step</button>
            </div>
            <div class="muted" style="margin-top:6px">${escapeHtml(loras)}</div>`,
           "assistant"
@@ -826,12 +914,19 @@ async function init() {
   });
   $("#btn-generate")?.addEventListener("click", generate);
   $("#btn-clear-ref").addEventListener("click", () => {
-    state.refImage = null;
-    $("#ref-label").textContent = "";
-    $("#btn-clear-ref").classList.add("hidden");
-    const input = $("#ref-image");
-    if (input) input.value = "";
-    syncStrengthChrome();
+    state.undoStack = [];
+    clearRefImage();
+  });
+  $("#btn-undo-session")?.addEventListener("click", undoSession);
+  $("#chat-thread")?.addEventListener("click", (e) => {
+    const cont = e.target.closest("[data-continue]");
+    if (cont) {
+      continueFromOutput(cont.dataset.continue).catch((err) =>
+        alert(err.message || "Could not use that result as the subject")
+      );
+      return;
+    }
+    if (e.target.closest("[data-retry]")) retryLast();
   });
   $("#btn-reset-scene").addEventListener("click", async () => {
     const defaults = await api(`/api/defaults?mode=${catalogMode()}`);
@@ -897,10 +992,8 @@ async function init() {
     if (!file) return;
     try {
       const data = await uploadToStudio(file);
-      state.refImage = data;
-      $("#ref-label").textContent = data.filename;
-      $("#btn-clear-ref").classList.remove("hidden");
-      syncStrengthChrome();
+      state.undoStack = [];
+      setRefImage(data);
     } catch (err) {
       alert(err.message || "Upload failed");
     }

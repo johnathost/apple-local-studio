@@ -69,8 +69,12 @@
       <section class="panel chat">
         <div class="panel-head">
           <h2>Results</h2>
-          <button type="button" id="btn-clear-chat" class="ghost sm">Clear</button>
+          <div class="panel-head-actions">
+            <button type="button" id="btn-undo-session" class="ghost sm hidden">Undo subject</button>
+            <button type="button" id="btn-clear-chat" class="ghost sm">Clear</button>
+          </div>
         </div>
+        <p id="session-line" class="session-line hidden"></p>
         <div id="chat-thread" class="chat-thread"></div>
         <div class="composer-bar">
           <p id="system-line" class="system-line"></p>

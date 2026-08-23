@@ -511,6 +511,12 @@ textarea { line-height: 1.4; }
   max-height: 2.8em;
   overflow: hidden;
 }
+.session-line {
+  margin: 0;
+  padding: 0 14px 8px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
 .composer-row {
   display: flex;
   align-items: center;

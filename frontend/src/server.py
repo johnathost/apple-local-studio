@@ -29,7 +29,13 @@ from src.engine import engine
 from src.imageutil import MAX_IMAGE_BYTES, sniffed_image_suffix
 from src.jobs import Job, jobs
 from src.lora_match import list_catalog, match_loras
-from src.models import ComposeRequest, ComposeResponse, GenerateRequest, JobResponse
+from src.models import (
+    ComposeRequest,
+    ComposeResponse,
+    GenerateRequest,
+    JobResponse,
+    PromoteRequest,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
@@ -295,6 +301,19 @@ def api_job(job_id: str) -> JobResponse:
 @app.get("/api/jobs")
 def api_jobs(limit: int = 30) -> list[dict[str, Any]]:
     return [_job_response(j).model_dump() for j in jobs.list_recent(limit)]
+
+
+@app.post("/api/promote-output")
+def api_promote_output(req: PromoteRequest) -> dict[str, str]:
+    """Copy a generated PNG into uploads so it can be the next source image."""
+    src = _file_in(OUTPUTS_DIR, req.name)
+    raw = src.read_bytes()
+    if len(raw) > MAX_IMAGE_BYTES:
+        raise HTTPException(413, f"Image exceeds {MAX_IMAGE_BYTES} bytes")
+    suffix = sniffed_image_suffix(raw) or Path(src.name).suffix or ".png"
+    dest = UPLOADS_DIR / f"cont-{uuid.uuid4().hex}{suffix}"
+    dest.write_bytes(raw)
+    return {"filename": dest.name, "url": f"/uploads/{dest.name}"}
 
 
 @app.post("/api/upload")

@@ -123,6 +123,7 @@ class JobQueue:
             job.result = {
                 "image_path": str(path),
                 "image_url": f"/outputs/{Path(path).name}",
+                "image_file": Path(path).name,
                 "seed": req.get("seed"),
                 "prompt": req["prompt"],
                 "loras": req.get("loras") or [],
