@@ -273,8 +273,8 @@ def _fluid_bits(scene: dict[str, Any]) -> list[str]:
     )
     if cream_on and prolapse_on:
         out.append(
-            "Thick opaque pearly-white semen leaking from the open center of the rosebud "
-            "and coating the everted pink mucosa, creamy white cum, not yellow, not urine"
+            "Pearly-white semen smeared on the everted folds and dripping from the anal rim, "
+            "creamy white, not yellow, not a rope pouring from a hole"
         )
     elif cream_on:
         if acts & {"anal", "anal_gape"} or extras & {"anal_gape", "anal"}:
@@ -291,6 +291,62 @@ def _fluid_bits(scene: dict[str, Any]) -> list[str]:
         out.append("Thick opaque pearly-white semen on their face, white streaks, not yellow")
     if "cum_body" in extras or "cum_body" in finish:
         out.append("Thick opaque pearly-white semen on their body, white not yellow")
+    return out
+
+
+def wants_genital_override(scene: dict[str, Any]) -> bool:
+    """True when extras ask for crotch anatomy the pose plate does not show."""
+    extras = _selected_ids(scene, "features", "extras")
+    acts = _selected_ids(scene, "act", "primary")
+    requested = extras | acts
+    if not (requested & (_PROLAPSE_IDS | {"anal_gape", "vaginal_gape"})):
+        return False
+    preset_id = (scene.get("pose") or {}).get("scene") or (scene.get("preset") or {}).get(
+        "scene"
+    ) or ""
+    preset = (preset_fragment(str(preset_id)) or "").lower()
+    pid = str(preset_id)
+    if requested & _PROLAPSE_IDS and (
+        "rosebud" in preset or "prolapse" in preset or pid.startswith("prolapse")
+    ):
+        return False
+    if "anal_gape" in requested and (
+        "gape" in preset or "dilated" in preset or pid.startswith("anal_")
+    ):
+        return False
+    return True
+
+
+def _prolapse_layout_bits() -> list[str]:
+    return [
+        "Two holes, both visible: a complete vulva with labia and vaginal slit in the upper "
+        "crotch, then perineum, then the anus lower down. Rectal lining is coming out through "
+        "the anus only, still attached to the anal rim, hanging from the asshole. "
+        "Do not cover the pussy. Do not put the rosebud on the vulva. "
+        "This is flesh connected to the anus, not a pastry, not a toy, not a ring sitting on the skin"
+    ]
+
+
+def _soften_preset_for_prolapse(text: str) -> str:
+    """Stop spreading plates from owning the crotch when a rosebud is requested."""
+    out = text
+    for old, new in (
+        (
+            "Both hands hold her inner thighs and spread her pussy open",
+            "Both hands hold her inner thighs apart",
+        ),
+        (
+            "Pussy is the center of the frame, anus just below it",
+            "Vulva visible in the upper crotch, anus below the perineum",
+        ),
+        (
+            "pussy is the center of the frame, anus just below it",
+            "vulva visible in the upper crotch, anus below the perineum",
+        ),
+        ("spread her pussy open", "hold her inner thighs apart"),
+        ("spreading her pussy", "holding her inner thighs"),
+    ):
+        out = out.replace(old, new)
     return out
 
 
@@ -313,23 +369,61 @@ def compose_edit_prompt(
     camera_changing = _tag_value(angle_id)
     must_restage = pose_changing or camera_changing or pose_ref
 
+    extras_ids = _selected_ids(scene, "features", "extras")
+    act_ids = _selected_ids(scene, "act", "primary")
+    selected_prolapse = extras_ids | act_ids
+    override = wants_genital_override(scene)
+    wants_penis = bool((extras_ids | act_ids) & _PENIS_ACTS)
+    skip_acts: set[str] = set()
+
     chunks: list[str] = []
     if pose_ref:
-        chunks.append(
-            "Photo 1 is their identity: face, skin, hair (man or woman). "
-            "Photo 2 is the target scene: copy pose, camera, the hole, and fluids as they "
-            "appear in photo 2, including a penis if one is there. Same person as photo 1."
-        )
+        if override:
+            chunks.append(
+                "Photo 1 is their identity: face, skin, hair (man or woman). "
+                "Photo 2 is pose and camera only — copy body position and framing, "
+                "do not copy photo 2's genitals. Same person as photo 1."
+            )
+        elif wants_penis:
+            chunks.append(
+                "Photo 1 is their identity: face, skin, hair (man or woman). "
+                "Photo 2 is the target scene: copy pose, camera, and any penis, partner, "
+                "or fluids actually visible in photo 2. Same person as photo 1."
+            )
+        else:
+            chunks.append(
+                "Photo 1 is their identity: face, skin, hair (man or woman). "
+                "Photo 2 is pose and camera. Same person as photo 1."
+            )
     else:
         chunks.append(EDIT_IDENTITY_LOCK)
+
+    if selected_prolapse & _PROLAPSE_IDS:
+        chunks.extend(_prolapse_layout_bits())
+    # Lead with crotch extras so 4-step Klein does not lock onto "pussy is the center".
+    early_ids = [
+        x
+        for x in list(extras_ids) + [a for a in act_ids if a not in extras_ids]
+        if x in _PROLAPSE_IDS or x in {"anal_gape", "vaginal_gape"}
+    ]
+    seen_early: set[str] = set()
+    for item_id in early_ids:
+        if item_id in seen_early:
+            continue
+        seen_early.add(item_id)
+        piece = _frag(fr, "features.extras", item_id) or _frag(fr, "act.primary", item_id)
+        if isinstance(piece, str) and piece and not _covered(" ".join(chunks), piece):
+            chunks.append(piece)
+            skip_acts.add(item_id)
 
     preset_id = (scene.get("pose") or {}).get("scene") or (scene.get("preset") or {}).get("scene")
     preset_text = preset_fragment(preset_id)
     skip_pose = False
     skip_camera = False
     skip_partners = False
-    skip_acts: set[str] = set()
     if preset_text:
+        if selected_prolapse & _PROLAPSE_IDS:
+            preset_text = _soften_preset_for_prolapse(preset_text)
         chunks.append(preset_text)
         skip_pose = True
         skip_camera = True
@@ -392,9 +486,6 @@ def compose_edit_prompt(
             chunks.append(pose)
     if pose_id in {"legs_spread", "missionary", "lying_back"}:
         skip_acts.add("spreading")
-    selected_prolapse = _selected_ids(scene, "act", "primary") | _selected_ids(
-        scene, "features", "extras"
-    )
     if selected_prolapse & _PROLAPSE_IDS:
         skip_acts.add("anal_gape")
     if selected_prolapse & {"prolapse_creampie", "prolapse_fucking"}:
@@ -441,6 +532,7 @@ def compose_edit_prompt(
         feat_ids = [x for x in feat_ids if x != "anal_gape"]
     if any(x in feat_ids for x in ("prolapse_creampie", "prolapse_fucking")):
         feat_ids = [x for x in feat_ids if x != "prolapse"]
+    feat_ids = [x for x in feat_ids if x not in skip_acts]
     feats = _frag(fr, "features.extras", feat_ids)
     if isinstance(feats, list):
         for item in feats:

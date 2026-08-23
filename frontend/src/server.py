@@ -22,7 +22,7 @@ from src.catalog_loader import (
     pose_plate_bytes,
     reload_catalogs,
 )
-from src.composer import compose_prompt, scene_tags
+from src.composer import compose_prompt, scene_tags, wants_genital_override
 from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
 from src.system_prompts import SYSTEM_EDIT, SYSTEM_EDIT_POSE, SYSTEM_GEN, SYSTEM_UNDRESS
 from src.engine import engine
@@ -270,6 +270,7 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             "image_strength": image_strength,
             "guidance": req.guidance if req.guidance is not None else defaults.get("guidance"),
             "scene": composed.scene,
+            "genital_override": wants_genital_override(composed.scene),
         }
     )
     return _job_response(job)

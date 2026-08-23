@@ -115,6 +115,7 @@ class JobQueue:
                 image_strength=req.get("image_strength"),
                 guidance=req.get("guidance"),
                 system_mode=req.get("system_mode"),
+                genital_override=bool(req.get("genital_override")),
             )
             job.progress = 1.0
             job.status = JobStatus.done

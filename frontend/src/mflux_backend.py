@@ -440,6 +440,7 @@ class MfluxBackend:
         image_strength: float | None = None,
         guidance: float | None = None,
         system_mode: str | None = None,
+        genital_override: bool = False,
     ) -> dict[str, Any]:
         """Run generation and save PNG to out_path. Returns {seed, path}."""
         if threading.current_thread() is not self._mlx_thread:
@@ -460,6 +461,7 @@ class MfluxBackend:
                 image_strength=image_strength,
                 guidance=guidance,
                 system_mode=system_mode,
+                genital_override=genital_override,
             )
         from src.system_prompts import with_system_prompt
 
@@ -476,7 +478,10 @@ class MfluxBackend:
         mode = requested
         pose_ref = bool(image_paths and len(image_paths) >= 2)
         prompt = with_system_prompt(
-            prompt, mode=system_mode or mode, pose_ref=pose_ref and (system_mode or mode) != "undress"
+            prompt,
+            mode=system_mode or mode,
+            pose_ref=pose_ref and (system_mode or mode) != "undress",
+            genital_override=bool(genital_override),
         )
         seed = int(seed) if seed is not None else random.randint(0, 2**31 - 1)
         out_path = Path(out_path)

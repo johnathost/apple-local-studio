@@ -20,10 +20,8 @@ SEMEN_LOCK = (
 )
 
 SEX_SCENE_LOCK = (
-    "Match the pose reference. If it shows a penis or a second person, draw them: "
-    "an erect penis correctly attached to a body, shaft and glans readable. "
-    "That is scene content, not extra anatomy. Do not drop a penis that is in the plate. "
-    "No extra limbs, no melted genitals, no floating disconnected penis. "
+    "No extra limbs, no melted genitals, no fused pussy-and-anus into one hole, "
+    "no floating disconnected penis. "
     f"{SEMEN_LOCK}"
 )
 
@@ -60,9 +58,23 @@ SYSTEM_EDIT_POSE = (
     "System: Two reference photos. "
     "Image 1 is identity only: keep this person's face, skin complexion, and hair "
     "(man or woman, match the source). "
-    "Image 2 is the target scene: match pose, camera, framing, the open hole, and fluids. "
-    "If image 2 shows a penis, copy it attached and readable. "
-    "Do not copy image 2's face. Do not copy image 1's pose or camera angle. "
+    "Image 2 is pose, camera, framing, and limb placement. "
+    "Follow the edit request for the crotch. Copy a penis from image 2 only if "
+    "the edit request describes a penis or partner. "
+    "Do not copy image 2's face. Do not copy image 1's pose or camera. "
+    "Photoreal, natural skin, no text, no watermark. "
+    f"{SEX_SCENE_LOCK}"
+)
+
+# Spreading plate + gape/prolapse extras: the plate's crotch is the WRONG anatomy.
+SYSTEM_EDIT_POSE_OVERRIDE = (
+    "System: Two reference photos. "
+    "Image 1 is identity only: keep this person's face, skin complexion, and hair. "
+    "Image 2 is pose, camera, and limb placement only. Do not copy image 2's genitals. "
+    "Keep a complete vulva with labia above the perineum. "
+    "Anal prolapse is rectal lining coming out of the anus, attached to the anal rim, "
+    "below the vulva. Not a doughnut, not a silicone ring, not an object on the skin. "
+    "Do not invent a penis unless the edit request describes one. "
     "Photoreal, natural skin, no text, no watermark. "
     f"{SEX_SCENE_LOCK}"
 )
@@ -82,7 +94,10 @@ QUALITY_NEGATIVE = (
 # Pose/undress skip QUALITY_NEGATIVE (deformed/grotesque fights gape). Keep fluids.
 SEMEN_NEGATIVE = (
     "yellow cum, yellow semen, golden cum, orange cum, honey-colored semen, "
-    "urine, piss, cheddar, yellow fluid leaking from pussy, yellow fluid leaking from anus"
+    "urine, piss, cheddar, yellow fluid leaking from pussy, yellow fluid leaking from anus, "
+    "fused pussy and anus, cloaca, one giant genital hole, extra vagina, "
+    "doughnut, donut, pastry, glazed icing, bagel, silicone ring, fleshlight, "
+    "toy sitting on skin, sticker on crotch, toothpaste cum, rope of cum pouring"
 )
 
 
@@ -97,12 +112,23 @@ def system_prompt_for(mode: str) -> str:
     return SYSTEM_GEN
 
 
-def with_system_prompt(user_prompt: str, *, mode: str, pose_ref: bool = False) -> str:
+def with_system_prompt(
+    user_prompt: str,
+    *,
+    mode: str,
+    pose_ref: bool = False,
+    genital_override: bool = False,
+) -> str:
     m = (mode or "").strip().lower()
     if m == "undress":
         system = SYSTEM_UNDRESS
     elif m in {"edit", "pose"}:
-        system = SYSTEM_EDIT_POSE if pose_ref else SYSTEM_EDIT
+        if pose_ref and genital_override:
+            system = SYSTEM_EDIT_POSE_OVERRIDE
+        elif pose_ref:
+            system = SYSTEM_EDIT_POSE
+        else:
+            system = SYSTEM_EDIT
     else:
         system = SYSTEM_GEN
     user = (user_prompt or "").strip()
