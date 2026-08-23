@@ -73,6 +73,9 @@ class RecipeRequest(BaseModel):
     guidance: float | None = None
     max_loras: int | None = None
     notes: str | None = None
+    # Re-run one planned step. keep_steps are the frames before it.
+    retry_step: int | None = None
+    keep_steps: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class JobResponse(BaseModel):

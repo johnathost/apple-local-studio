@@ -24,7 +24,7 @@ from src.catalog_loader import (
     scenes_public,
 )
 from src.composer import compose_prompt, retarget_pose_for_extras, scene_tags, wants_genital_override
-from src.recipe import lora_files_for_job, plan_recipe
+from src.recipe import keep_frames, lora_files_for_job, plan_recipe
 from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
 from src.system_prompts import SYSTEM_EDIT, SYSTEM_EDIT_POSE, SYSTEM_GEN, SYSTEM_UNDRESS
 from src.engine import engine
@@ -206,6 +206,10 @@ def api_recipe(req: RecipeRequest) -> JobResponse:
         )
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
+    if req.retry_step is not None and (
+        req.retry_step < 0 or req.retry_step >= len(plan)
+    ):
+        raise HTTPException(400, "retry_step out of range")
     job = jobs.submit(
         {
             "kind": "recipe",
@@ -219,6 +223,8 @@ def api_recipe(req: RecipeRequest) -> JobResponse:
             "guidance": req.guidance,
             "max_loras": req.max_loras,
             "notes": req.notes,
+            "retry_step": req.retry_step,
+            "keep_steps": keep_frames(req.keep_steps),
         }
     )
     return _job_response(job)

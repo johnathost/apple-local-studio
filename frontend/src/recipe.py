@@ -129,6 +129,53 @@ def _promote(src: Path) -> str:
     return dest.name
 
 
+def keep_frames(raw: Any) -> list[dict[str, Any]]:
+    """Sanitize prior filmstrip frames (basename-only output files)."""
+    out: list[dict[str, Any]] = []
+    for i, item in enumerate(raw or []):
+        if not isinstance(item, dict):
+            continue
+        name = Path(str(item.get("image_file") or "")).name
+        if not name or name in {".", ".."}:
+            continue
+        out.append(
+            {
+                "label": str(item.get("label") or f"Step {i + 1}"),
+                "status": "done",
+                "image_file": name,
+                "image_url": f"/outputs/{name}",
+                "index": i,
+            }
+        )
+        if len(out) >= MAX_STEPS:
+            break
+    return out
+
+
+def _queued_frame(step: dict[str, Any], index: int) -> dict[str, Any]:
+    return {
+        "label": str(step.get("label") or f"Step {index + 1}"),
+        "status": "queued",
+        "image_file": None,
+        "image_url": None,
+        "index": index,
+    }
+
+
+def _publish_frames(job: Any, frames: list[dict[str, Any]], *, done: bool = False) -> None:
+    finished = [f for f in frames if f.get("image_file")]
+    last = finished[-1] if finished else None
+    job.result = {
+        "image_path": f"/data/outputs/{last['image_file']}" if last else None,
+        "image_url": last.get("image_url") if last else None,
+        "image_file": last.get("image_file") if last else None,
+        "prompt": last.get("prompt") if last else None,
+        "loras": (last.get("loras") or []) if last else [],
+        "steps": frames,
+        "partial": not done,
+    }
+
+
 def lora_files_for_job(composed: Any) -> list[dict[str, Any]]:
     """Basename-only LoRA list for the backend (shared mounts / remote)."""
     out: list[dict[str, Any]] = []
@@ -245,15 +292,38 @@ def run_recipe(job: Any, *, generate_fn: Any, on_inner_progress: Any) -> None:
     identity = Path(str(req.get("identity") or "")).name
     if not plan:
         raise ValueError("Recipe has no steps")
-    n = len(plan)
+
+    retry_step = req.get("retry_step")
+    kept = keep_frames(req.get("keep_steps"))
+    if retry_step is not None:
+        idx = int(retry_step)
+        if idx < 0 or idx >= len(plan):
+            raise ValueError("retry_step out of range")
+        run_plan = [plan[idx]]
+        start = idx
+        frames: list[dict[str, Any]] = list(kept[:idx])
+        while len(frames) < idx:
+            frames.append(_queued_frame({"label": f"Step {len(frames) + 1}"}, len(frames)))
+    else:
+        run_plan = plan
+        start = 0
+        frames = []
+
+    frames.extend(_queued_frame(step, start + i) for i, step in enumerate(run_plan))
+    n = max(len(run_plan), 1)
     job.steps = n
-    results: list[dict[str, Any]] = []
+    job.step = 1
+    _publish_frames(job, frames)
     current = identity
 
-    for i, step in enumerate(plan):
+    for i, step in enumerate(run_plan):
+        slot = start + i
         job.step = i + 1
         job.message = str(step.get("label") or f"Step {i + 1}")
         job.progress = i / n
+        if slot < len(frames):
+            frames[slot]["status"] = "running"
+            _publish_frames(job, frames)
 
         def _progress(info: dict[str, Any], *, _i: int = i) -> None:
             inner = float(info.get("progress") or 0)
@@ -277,26 +347,18 @@ def run_recipe(job: Any, *, generate_fn: Any, on_inner_progress: Any) -> None:
         )
         path = generate_fn(payload, _progress)
         out_name = Path(path).name
-        results.append(
-            {
-                "label": step.get("label"),
-                "status": "done",
-                "image_file": out_name,
-                "image_url": f"/outputs/{out_name}",
-                "prompt": payload.get("prompt"),
-                "loras": payload.get("loras") or [],
-            }
-        )
+        frames[slot] = {
+            "label": step.get("label"),
+            "status": "done",
+            "image_file": out_name,
+            "image_url": f"/outputs/{out_name}",
+            "prompt": payload.get("prompt"),
+            "loras": payload.get("loras") or [],
+            "index": slot,
+        }
+        _publish_frames(job, frames)
         current = _promote(Path(path))
 
-    last = results[-1]
     job.progress = 1.0
     job.message = "Done"
-    job.result = {
-        "image_path": f"/data/outputs/{last['image_file']}",
-        "image_url": last["image_url"],
-        "image_file": last["image_file"],
-        "prompt": last.get("prompt"),
-        "loras": last.get("loras") or [],
-        "steps": results,
-    }
+    _publish_frames(job, frames, done=True)
