@@ -22,7 +22,7 @@ from src.catalog_loader import (
     pose_plate_bytes,
     reload_catalogs,
 )
-from src.composer import compose_prompt, scene_tags, wants_genital_override
+from src.composer import compose_prompt, retarget_pose_for_extras, scene_tags, wants_genital_override
 from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
 from src.system_prompts import SYSTEM_EDIT, SYSTEM_EDIT_POSE, SYSTEM_GEN, SYSTEM_UNDRESS
 from src.engine import engine
@@ -82,8 +82,12 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
         )
         if preset_id:
             scene = apply_edit_preset(scene, preset_id)
+        scene, retargeted = retarget_pose_for_extras(scene)
+    else:
+        retargeted = []
 
     scene, dropped = sanitize_scene(scene, winner=winner, mode=mode)
+    dropped = list(retargeted) + list(dropped)
 
     # Undress is a clothing-only Klein edit. Pose/body LoRAs melt identity.
     max_loras = req.max_loras

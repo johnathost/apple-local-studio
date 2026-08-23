@@ -56,13 +56,10 @@ SYSTEM_EDIT = (
 # Used when a pose plate is passed as the second reference image.
 SYSTEM_EDIT_POSE = (
     "System: Two reference photos. "
-    "Image 1 is identity only: keep this person's face, skin complexion, and hair "
-    "(man or woman, match the source). "
-    "Image 2 is pose, camera, framing, and limb placement. "
-    "Follow the edit request for the crotch. Copy a penis from image 2 only if "
-    "the edit request describes a penis or partner. "
-    "Do not copy image 2's face. Do not copy image 1's pose or camera. "
-    "Photoreal, natural skin, no text, no watermark. "
+    "Image 1 is WHO: keep this person's face, skin, hair, and nails. "
+    "Image 2 is the pose and the genitals: copy body position, camera, and crotch from image 2. "
+    "Do not copy image 2's face, hair, or identity. "
+    "Photoreal, no text, no watermark. "
     f"{SEX_SCENE_LOCK}"
 )
 

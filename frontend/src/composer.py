@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Any
 
-from src.catalog_loader import load_fragments
-from src.constraints import preset_caption, preset_fragment
+from src.catalog_loader import bundled_pose_ref, load_fragments
+from src.constraints import apply_edit_preset, preset_caption, preset_fragment
 from src.system_prompts import EDIT_IDENTITY_LOCK, SEMEN_LOCK
 
 
@@ -294,6 +295,41 @@ def _fluid_bits(scene: dict[str, Any]) -> list[str]:
     return out
 
 
+# Extras that need a plate which already shows that crotch. Klein cannot invent
+# a second hole onto a spreading-pussy crop in 4 distilled steps.
+_PLATE_FOR_EXTRA = {
+    "prolapse_fucking": "prolapse_chair_tight",
+    "prolapse_creampie": "prolapse_chair_tight",
+    "prolapse": "prolapse_chair_tight",
+}
+
+
+def retarget_pose_for_extras(scene: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """If extras disagree with the selected plate, switch to a matching one.
+
+    Photo 2 must already contain the genitals we want. Identity stays Photo 1.
+    Furniture is not sacred.
+    """
+    current = str((scene.get("pose") or {}).get("scene") or "")
+    requested = _selected_ids(scene, "features", "extras") | _selected_ids(scene, "act", "primary")
+    donor = None
+    for extra, plate in _PLATE_FOR_EXTRA.items():
+        if extra in requested:
+            donor = plate
+            break
+    if not donor or donor == current or current.startswith("prolapse"):
+        return scene, []
+    if not bundled_pose_ref(donor):
+        return scene, []
+    extras_keep = scene.get("features")
+    out = deepcopy(scene)
+    out.setdefault("pose", {})["scene"] = donor
+    out = apply_edit_preset(out, donor)
+    if isinstance(extras_keep, dict):
+        out["features"] = extras_keep
+    return out, [f"using {donor} so the reference already shows that crotch"]
+
+
 def wants_genital_override(scene: dict[str, Any]) -> bool:
     """True when extras ask for crotch anatomy the pose plate does not show."""
     extras = _selected_ids(scene, "features", "extras")
@@ -379,20 +415,29 @@ def compose_edit_prompt(
     if pose_ref:
         lines.append("Photo 1: identity, same face, skin, hair.")
         if pose_key.startswith("prolapse") or "rosebud" in (preset_fragment(pose_key) or "").lower():
-            lines.append("Photo 2: pose and the rosebud on the anus. Keep the furniture. Do not copy her face.")
+            if wants_penis:
+                lines.append(
+                    "Photo 2: pose and crotch — copy the rosebud on the anus. "
+                    "There is no penis in photo 2; add a real one. "
+                    "Do not copy photo 2's face or nails."
+                )
+            else:
+                lines.append(
+                    "Photo 2: pose and crotch — copy the rosebud on the anus. "
+                    "Do not copy photo 2's face or nails."
+                )
         elif pose_key.startswith("anal_"):
             lines.append("Photo 2: pose, camera, and the sex act. Copy the penis in the photo.")
         elif override and wants_penis:
             lines.append(
-                "Photo 2: keep this pose and furniture, same legs and hands. "
-                "There is no penis in photo 2; add a real one."
+                "Photo 2: pose and legs. There is no penis in photo 2; add a real one."
             )
         elif override:
-            lines.append("Photo 2: keep this pose and furniture, same legs and hands.")
+            lines.append("Photo 2: pose and legs.")
         elif wants_penis:
             lines.append("Photo 2: pose, camera, and the sex act. Copy any penis in the photo.")
         else:
-            lines.append("Photo 2: pose and camera. Keep this furniture.")
+            lines.append("Photo 2: pose and camera.")
     else:
         lines.append(EDIT_IDENTITY_LOCK)
 
