@@ -22,7 +22,7 @@ from src.catalog_loader import (
     pose_plate_bytes,
     reload_catalogs,
 )
-from src.composer import compose_prompt, scene_tags, wants_genital_override
+from src.composer import anatomy_ref_pose_id, compose_prompt, scene_tags, wants_genital_override
 from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
 from src.system_prompts import SYSTEM_EDIT, SYSTEM_EDIT_POSE, SYSTEM_GEN, SYSTEM_UNDRESS
 from src.engine import engine
@@ -243,6 +243,17 @@ def api_generate(req: GenerateRequest) -> JobResponse:
         if plate is not None:
             raw, suffix = plate
             dest = UPLOADS_DIR / f"pose-ref-{Path(str(pose_id)).name}{suffix}"
+            if not dest.is_file() or dest.stat().st_size != len(raw):
+                dest.write_bytes(raw)
+            if dest.name not in ref_images:
+                ref_images.append(dest.name)
+
+    anatomy_id = anatomy_ref_pose_id(composed.scene) if cat == "pose" else None
+    if anatomy_id:
+        plate = pose_plate_bytes(anatomy_id)
+        if plate is not None:
+            raw, suffix = plate
+            dest = UPLOADS_DIR / f"anatomy-ref-{Path(str(anatomy_id)).name}{suffix}"
             if not dest.is_file() or dest.stat().st_size != len(raw):
                 dest.write_bytes(raw)
             if dest.name not in ref_images:

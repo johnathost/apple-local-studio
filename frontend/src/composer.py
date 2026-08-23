@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.catalog_loader import load_fragments
+from src.catalog_loader import bundled_pose_ref, load_fragments
 from src.constraints import preset_fragment
 from src.system_prompts import EDIT_IDENTITY_LOCK, SEMEN_LOCK
 
@@ -294,6 +294,17 @@ def _fluid_bits(scene: dict[str, Any]) -> list[str]:
     return out
 
 
+def anatomy_ref_pose_id(scene: dict[str, Any]) -> str | None:
+    """Bundled plate whose crotch we copy when extras disagree with the pose plate."""
+    if not wants_genital_override(scene):
+        return None
+    requested = _selected_ids(scene, "features", "extras") | _selected_ids(scene, "act", "primary")
+    if requested & _PROLAPSE_IDS:
+        donor = "prolapse_legs_back"
+        return donor if bundled_pose_ref(donor) else None
+    return None
+
+
 def wants_genital_override(scene: dict[str, Any]) -> bool:
     """True when extras ask for crotch anatomy the pose plate does not show."""
     extras = _selected_ids(scene, "features", "extras")
@@ -319,11 +330,12 @@ def wants_genital_override(scene: dict[str, Any]) -> bool:
 
 def _prolapse_layout_bits() -> list[str]:
     return [
-        "Two holes, both visible: a complete vulva with labia and vaginal slit in the upper "
-        "crotch, then perineum, then the anus lower down. Rectal lining is coming out through "
-        "the anus only, still attached to the anal rim, hanging from the asshole. "
-        "Do not cover the pussy. Do not put the rosebud on the vulva. "
-        "This is flesh connected to the anus, not a pastry, not a toy, not a ring sitting on the skin"
+        "From this camera, between her legs looking at her face: toward her belly is the mons, "
+        "clitoris, and a normal vaginal slit with labia — nothing hanging out of the pussy. "
+        "Then a clear strip of perineum skin. Toward the ottoman and her buttocks is the anus. "
+        "The rosebud comes out of that lower hole only, still attached to the anal rim. "
+        "Do not hang tissue from the vagina. Do not hide the anus. "
+        "This is flesh connected to the anus, not a pastry, not a toy, not a ring on the skin"
     ]
 
 
@@ -378,7 +390,15 @@ def compose_edit_prompt(
 
     chunks: list[str] = []
     if pose_ref:
-        if override:
+        anatomy_id = anatomy_ref_pose_id(scene)
+        if anatomy_id:
+            chunks.append(
+                "Photo 1 is identity: face, skin, hair. "
+                "Photo 2 is pose and camera only — copy body position and framing, ignore its crotch. "
+                "Photo 3 is the anus and rosebud: copy that anal anatomy onto this person. "
+                "Put it on the anus, below an empty vulva. Same person as photo 1."
+            )
+        elif override:
             chunks.append(
                 "Photo 1 is their identity: face, skin, hair (man or woman). "
                 "Photo 2 is pose and camera only — copy body position and framing, "

@@ -71,10 +71,23 @@ SYSTEM_EDIT_POSE_OVERRIDE = (
     "System: Two reference photos. "
     "Image 1 is identity only: keep this person's face, skin complexion, and hair. "
     "Image 2 is pose, camera, and limb placement only. Do not copy image 2's genitals. "
-    "Keep a complete vulva with labia above the perineum. "
-    "Anal prolapse is rectal lining coming out of the anus, attached to the anal rim, "
-    "below the vulva. Not a doughnut, not a silicone ring, not an object on the skin. "
+    "Vagina is a normal empty slit. Anal prolapse is rectal lining coming out of the anus "
+    "below the perineum, attached to the anal rim. Nothing hangs from the pussy. "
+    "Not a doughnut, not a silicone ring, not an object on the skin. "
     "Do not invent a penis unless the edit request describes one. "
+    "Photoreal, natural skin, no text, no watermark. "
+    f"{SEX_SCENE_LOCK}"
+)
+
+# Spreading pose plate + a real prolapse plate as image 3.
+SYSTEM_EDIT_POSE_ANATOMY = (
+    "System: Three reference photos. "
+    "Image 1 is identity: keep this person's face, skin, and hair. "
+    "Image 2 is pose and camera only: body position, legs, hands, furniture. Ignore image 2's crotch. "
+    "Image 3 is anal anatomy: copy the rosebud coming out of the anus. "
+    "Place that on this person's anus, the lower hole toward the seat, below a normal empty vulva. "
+    "A strip of perineum skin must separate the vaginal opening from the anus. "
+    "Nothing hangs out of the vagina. Not a doughnut, not a toy. "
     "Photoreal, natural skin, no text, no watermark. "
     f"{SEX_SCENE_LOCK}"
 )
@@ -97,7 +110,9 @@ SEMEN_NEGATIVE = (
     "urine, piss, cheddar, yellow fluid leaking from pussy, yellow fluid leaking from anus, "
     "fused pussy and anus, cloaca, one giant genital hole, extra vagina, "
     "doughnut, donut, pastry, glazed icing, bagel, silicone ring, fleshlight, "
-    "toy sitting on skin, sticker on crotch, toothpaste cum, rope of cum pouring"
+    "toy sitting on skin, sticker on crotch, toothpaste cum, rope of cum pouring, "
+    "vaginal prolapse, tissue hanging from the pussy, insides coming out of the vagina, "
+    "cervix, swirl hanging from the vulva"
 )
 
 
@@ -118,12 +133,15 @@ def with_system_prompt(
     mode: str,
     pose_ref: bool = False,
     genital_override: bool = False,
+    anatomy_ref: bool = False,
 ) -> str:
     m = (mode or "").strip().lower()
     if m == "undress":
         system = SYSTEM_UNDRESS
     elif m in {"edit", "pose"}:
-        if pose_ref and genital_override:
+        if pose_ref and anatomy_ref:
+            system = SYSTEM_EDIT_POSE_ANATOMY
+        elif pose_ref and genital_override:
             system = SYSTEM_EDIT_POSE_OVERRIDE
         elif pose_ref:
             system = SYSTEM_EDIT_POSE
