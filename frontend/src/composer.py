@@ -300,7 +300,7 @@ def anatomy_ref_pose_id(scene: dict[str, Any]) -> str | None:
         return None
     requested = _selected_ids(scene, "features", "extras") | _selected_ids(scene, "act", "primary")
     if requested & _PROLAPSE_IDS:
-        donor = "prolapse_legs_back"
+        donor = "prolapse_chair_tight"
         return donor if bundled_pose_ref(donor) else None
     return None
 
