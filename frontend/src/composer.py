@@ -215,15 +215,10 @@ def compose_edit_prompt(
     chunks: list[str] = []
     if pose_ref:
         chunks.append(
-            "The first image is the person (keep her face, skin, hair). "
-            "The second image is pose and camera only — match that body position and framing. "
-            "Do not copy the second person's identity or the first image's pose"
+            "Photo 1 is her face and body. Photo 2 is the pose and camera. Same woman."
         )
-    elif must_restage:
-        chunks.append(
-            "Restage this photo. Do not copy the original pose or camera angle."
-        )
-    chunks.append(EDIT_IDENTITY_LOCK)
+    else:
+        chunks.append(EDIT_IDENTITY_LOCK)
 
     preset_id = (scene.get("pose") or {}).get("scene") or (scene.get("preset") or {}).get("scene")
     preset_text = preset_fragment(preset_id)
@@ -325,21 +320,7 @@ def compose_edit_prompt(
 
     extras = _filter_edit_triggers(" ".join(chunks), extra_triggers)
     chunks.extend(extras)
-
-    feats_sel = {
-        str(x) for x in ((scene.get("features") or {}).get("extras") or []) if _tag_value(x)
-    }
-    if feats_sel & {"prolapse", "anal_gape"}:
-        chunks.append(
-            "The anus must be in frame. Do not attach a prolapse to her navel or belly"
-        )
-    if preset_id == "lie_spread" or (pose_id == "legs_spread" and must_restage):
-        chunks.append(
-            "Camera at her feet, between the thighs, crotch in the foreground, "
-            "head farther away. Not a top-down shot of her face"
-        )
-
-    chunks.append("Photoreal, sharp, natural skin, correct anatomy")
+    chunks.append("Photoreal photograph")
 
     return _join_edit(chunks)
 

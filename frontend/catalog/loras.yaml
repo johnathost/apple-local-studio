@@ -395,6 +395,8 @@ loras:
       - position:from_behind_stand
       - position:reverse_cowgirl
       - position:cowgirl
+      - act:prolapse
+      - act:anal_gape
 
   - id: breast_implants
     name: Breast Implants
@@ -621,6 +623,8 @@ loras:
       - position:cowgirl
       - position:on_side
       - act:all_holes
+      - act:prolapse
+      - act:anal_gape
 
   - id: dildo_insertion
     name: Dildo Insertion

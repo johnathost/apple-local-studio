@@ -34,12 +34,10 @@ SYSTEM_UNDRESS = (
 )
 
 SYSTEM_EDIT = (
-    "System: Edit the source photograph of a consenting adult woman. "
-    "Identity is locked: same face, same skin complexion, same hair, same body type. "
-    "Pose, camera, clothing, and the act are NOT locked. "
-    "If a new pose or camera is requested, restage the shot — do not copy the original pose or framing. "
-    "Do not stretch or squash the image. Photoreal, natural skin, no text, no watermark. "
-    f"{QUALITY_LOCK}"
+    "System: Restage the source photograph. "
+    "Keep the same adult woman's face, hair, and skin. "
+    "Change pose and camera to match the edit request. "
+    "Photoreal, natural skin, no text, no watermark."
 )
 
 # Used when a pose plate is passed as the second reference image.

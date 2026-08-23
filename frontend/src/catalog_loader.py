@@ -6,6 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+import json
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -58,6 +59,8 @@ def load_schema(mode: str = "gen") -> dict[str, Any]:
     data["constraints"] = extra.get("on_select") or {}
     data["presets"] = extra.get("edit_presets") or {}
     data["sanitize_order"] = extra.get("sanitize_order") or []
+    if kind == "pose":
+        data["pose_categories"] = pose_categories_public()
     return data
 
 
@@ -90,8 +93,70 @@ def engine_defaults(mode: str = "gen") -> dict[str, Any]:
     return dict(load_schema(mode).get("engine_defaults") or {})
 
 
+@lru_cache(maxsize=1)
+def load_pose_plates() -> dict[str, Any]:
+    path = CATALOG_DIR / "pose_plates.json"
+    if not path.exists():
+        return {"categories": []}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def pose_categories_public() -> list[dict[str, Any]]:
+    """Categories + pose titles and image URLs (no base64)."""
+    out: list[dict[str, Any]] = []
+    for cat in load_pose_plates().get("categories") or []:
+        poses = []
+        for p in cat.get("poses") or []:
+            pid = str(p.get("id") or "")
+            if not pid:
+                continue
+            poses.append(
+                {
+                    "id": pid,
+                    "title": p.get("title") or pid,
+                    "image_url": f"/api/pose-plates/{pid}",
+                }
+            )
+        out.append(
+            {
+                "id": cat.get("id") or "cat",
+                "label": cat.get("label") or cat.get("id") or "Poses",
+                "poses": poses,
+            }
+        )
+    return out
+
+
+def pose_plate_bytes(pose_id: str | None) -> tuple[bytes, str] | None:
+    """Decoded plate bytes and filename suffix, or None."""
+    if not pose_id:
+        return None
+    stem = Path(str(pose_id)).name
+    if stem in {".", ".."}:
+        return None
+    import base64
+
+    for cat in load_pose_plates().get("categories") or []:
+        for p in cat.get("poses") or []:
+            if str(p.get("id")) != stem:
+                continue
+            b64 = p.get("image_b64") or ""
+            if not b64:
+                return None
+            raw = base64.b64decode(b64)
+            mime = str(p.get("mime") or "image/png")
+            suffix = ".jpg" if "jpeg" in mime else ".webp" if "webp" in mime else ".png"
+            return raw, suffix
+    return None
+
+
+def bundled_pose_ref(pose_id: str | None) -> bool:
+    return pose_plate_bytes(pose_id) is not None
+
+
 def reload_catalogs() -> None:
     load_schema.cache_clear()
     load_fragments.cache_clear()
     load_loras.cache_clear()
     load_constraints.cache_clear()
+    load_pose_plates.cache_clear()

@@ -421,7 +421,10 @@ class MfluxBackend:
             tap = _StepProgress(lambda p: _emit(on_progress, p), steps)
             _register_step_progress(model, tap)
             sys_mode = (system_mode or mode or "").strip().lower()
-            prev_encode = None if sys_mode == "undress" else _install_quality_negative(model)
+            # Pose/undress: "deformed / grotesque" negatives fight gape and prolapse.
+            prev_encode = (
+                None if sys_mode in {"undress", "pose"} else _install_quality_negative(model)
+            )
             try:
                 if guidance is None:
                     if sys_mode == "undress":

@@ -176,136 +176,73 @@ on_select:
       - field: act.primary
         drop: [vaginal, anal, oral, deepthroat, facehumping, titfuck, all_holes]
 
-# Solo pose plates. UI merges `apply` into the scene; composer appends `fragment`.
+# Legs-spread category. UI merges `apply`; composer appends `fragment`.
 edit_presets:
-  stand_front:
-    label: Standing · front
-    apply:
-      position: { pose: standing }
-      act: { primary: [] }
-      camera: { angle: medium }
-      partners: { count: solo }
-      clothing: { state: keep }
-    fragment: >-
-      New shot: full-body photograph, camera at chest height in front of her.
-      She is standing, facing the camera, both legs visible, feet on the floor.
-      Not a close-up of the head. She is alone.
-
-  stand_back:
-    label: Standing · from behind
-    apply:
-      position: { pose: from_behind_stand }
-      act: { primary: [] }
-      camera: { angle: from_behind }
-      partners: { count: solo }
-      clothing: { state: keep }
-    fragment: >-
-      New shot: full-body photograph from behind, camera at hip height.
-      She is standing with her back to the camera, buttocks and legs visible,
-      looking over her shoulder. She is alone.
-
-  sit:
-    label: Sitting
-    apply:
-      position: { pose: sitting }
-      act: { primary: [] }
-      camera: { angle: medium }
-      partners: { count: solo }
-      clothing: { state: keep }
-    fragment: >-
-      New shot: camera in front of her at torso height. She is sitting on a bed
-      or chair, knees together, whole body in frame from head to feet.
-      She is alone.
-
-  sit_spread:
-    label: Sitting · legs open
-    apply:
-      position: { pose: sitting }
-      act: { primary: [spreading] }
-      camera: { angle: medium }
-      partners: { count: solo }
-      clothing: { state: keep }
-    fragment: >-
-      New shot: camera in front of her at crotch height, not a face close-up.
-      She is sitting facing the lens with knees pulled wide apart, thighs in a V.
-      Her pussy is clearly visible between her legs. She is alone.
-
-  lie_back:
-    label: Lying on back
-    apply:
-      position: { pose: lying_back }
-      act: { primary: [] }
-      camera: { angle: medium }
-      partners: { count: solo }
-      clothing: { state: keep }
-    fragment: >-
-      New shot: she is lying on her back on a bed, legs together, photographed
-      from the side or three-quarter view so the whole body is visible.
-      Not a shot from directly above her head. She is alone.
-
-  lie_spread:
-    label: Lying on back · legs open
+  spread_frog:
+    label: Frog-leg · heels planted
     apply:
       position: { pose: legs_spread }
       act: { primary: [spreading] }
-      camera: { angle: pov_45 }
+      camera: { angle: genital_focus }
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: the camera is BETWEEN her open thighs at the FOOT of the bed,
-      looking toward her face. She is on her back. Knees pulled back toward
-      her chest, thighs in a wide V aimed at the lens, hips closest to camera.
-      Pussy and anus are in the foreground; belly, breasts, and face recede
-      toward the top of the frame. Do not place the camera above her head.
-      Do not hide her crotch behind her thighs. She is alone.
+      She sits back on the floor, knees bent and dropped wide in a frog-leg
+      pose, high heels planted on the floor at the lower left and right.
+      Camera in front, slightly above her crotch, looking at her pussy, body,
+      and face. Pussy is the center of the frame, anus visible just below it,
+      breasts and face above. She is alone.
 
-  lie_side:
-    label: Lying on side
+  spread_chair:
+    label: Chair · held thighs
     apply:
-      position: { pose: on_side }
-      act: { primary: [] }
-      camera: { angle: side }
+      position: { pose: legs_spread }
+      act: { primary: [spreading] }
+      camera: { angle: genital_focus }
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: camera at the side of the bed, full body in profile.
-      She is lying on her side, hips stacked, knees slightly bent.
+      She leans back on a chair, holding her thighs apart with both hands.
+      Knees pulled up and out, feet in the lower left and right corners toward
+      the camera. Camera low at her pussy looking toward her face. Tight crop:
+      pussy and asshole in the center, breasts above, face at the top.
       She is alone.
 
-  all_fours:
-    label: On all fours
+  spread_couch:
+    label: Couch · legs in a V
     apply:
-      position: { pose: all_fours }
-      act: { primary: [] }
-      camera: { angle: from_behind }
+      position: { pose: legs_spread }
+      act: { primary: [spreading] }
+      camera: { angle: genital_focus }
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: camera behind her at hip height. She is on hands and knees,
-      back arched, ass toward the lens. Pussy and anus visible between her
-      buttocks. She is alone.
+      She sits on a couch facing the camera, legs in a wide V, hands spreading
+      her pussy. Camera at crotch height looking at her face. Pussy centered,
+      breasts and face above. She is alone.
 
-  kneel:
-    label: Kneeling
+  spread_legs_up:
+    label: Sofa · legs up
     apply:
-      position: { pose: kneeling }
-      act: { primary: [] }
-      camera: { angle: medium }
+      position: { pose: legs_spread }
+      act: { primary: [spreading] }
+      camera: { angle: genital_focus }
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: camera in front at chest height. She is kneeling, whole body
-      in frame from head to knees, facing the lens. She is alone.
+      She reclines on a sofa with both legs lifted in the air, spread wide,
+      one hand at her pussy. Camera in front looking at her crotch, body, and
+      face. She is alone.
 
-  bent_over:
-    label: Bent over
+  spread_bed:
+    label: Bed · spreading
     apply:
-      position: { pose: from_behind_stand }
-      act: { primary: [] }
-      camera: { angle: from_behind }
+      position: { pose: legs_spread }
+      act: { primary: [spreading] }
+      camera: { angle: genital_focus }
       partners: { count: solo }
       clothing: { state: keep }
     fragment: >-
-      New shot: camera behind her at hip height. She is standing bent forward
-      at the waist, hands on the bed or her knees, ass toward the lens.
-      Pussy and anus visible. She is alone.
+      She lies back on a bed, knees out, both hands spreading her pussy open.
+      Camera in front looking at her crotch, body, and face. Pussy is the
+      center of the frame. She is alone.

@@ -9,15 +9,17 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from src.catalog_loader import (
+    bundled_pose_ref,
     catalog_mode,
     default_scene,
     engine_defaults,
     engine_mode,
     load_schema,
+    pose_plate_bytes,
     reload_catalogs,
 )
 from src.composer import compose_prompt, scene_tags
@@ -104,12 +106,14 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
             else:
                 triggers.extend(m.triggers)
 
+    pose_id = (scene.get("pose") or {}).get("scene")
+    has_pose_plate = bool(req.pose_ref) or bundled_pose_ref(pose_id)
     prompt = compose_prompt(
         scene,
         extra_triggers=triggers if req.include_triggers else None,
         raw_override=req.raw_prompt,
         mode=mode,
-        pose_ref=bool(req.pose_ref) and mode == "pose",
+        pose_ref=has_pose_plate and mode == "pose",
     )
     return ComposeResponse(
         prompt=prompt,
@@ -135,6 +139,16 @@ def health() -> dict[str, Any]:
 @app.get("/api/schema")
 def api_schema(mode: str = "gen") -> dict[str, Any]:
     return load_schema(mode)
+
+
+@app.get("/api/pose-plates/{pose_id}")
+def api_pose_plate(pose_id: str) -> Response:
+    plate = pose_plate_bytes(pose_id)
+    if plate is None:
+        raise HTTPException(404, "Pose plate not found")
+    raw, suffix = plate
+    media = {".jpg": "image/jpeg", ".webp": "image/webp"}.get(suffix, "image/png")
+    return Response(content=raw, media_type=media, headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/api/defaults")
@@ -173,7 +187,7 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             max_loras=req.max_loras,
             include_triggers=req.include_triggers,
             winner=req.winner,
-            pose_ref=bool(req.pose_path),
+            pose_ref=True,
         )
     )
     prompt = (req.prompt or composed.prompt or "").strip()
@@ -223,6 +237,16 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             raise HTTPException(400, f"Pose reference not found: {pose_name}")
         if pose_name not in ref_images:
             ref_images.append(pose_name)
+    elif cat == "pose":
+        pose_id = (composed.scene.get("pose") or {}).get("scene")
+        plate = pose_plate_bytes(pose_id)
+        if plate is not None:
+            raw, suffix = plate
+            dest = UPLOADS_DIR / f"pose-ref-{Path(str(pose_id)).name}{suffix}"
+            if not dest.is_file() or dest.stat().st_size != len(raw):
+                dest.write_bytes(raw)
+            if dest.name not in ref_images:
+                ref_images.append(dest.name)
 
     image_strength = req.image_strength
     if cat in {"undress", "pose"}:

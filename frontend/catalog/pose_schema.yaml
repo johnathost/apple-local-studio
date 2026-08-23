@@ -1,4 +1,4 @@
-# Pose restage: 10 solo poses, then optional features for the selected pose.
+# Pose restage: categories of solo poses. For now: Legs spread only.
 
 groups:
   - id: pose
@@ -6,19 +6,8 @@ groups:
     fields:
       - id: scene
         label: Pose
-        type: choice
-        default: stand_front
-        options:
-          - { id: stand_front, label: Standing · front }
-          - { id: stand_back, label: Standing · from behind }
-          - { id: sit, label: Sitting }
-          - { id: sit_spread, label: Sitting · legs open }
-          - { id: lie_back, label: Lying on back }
-          - { id: lie_spread, label: Lying on back · legs open }
-          - { id: lie_side, label: Lying on side }
-          - { id: all_fours, label: On all fours }
-          - { id: kneel, label: Kneeling }
-          - { id: bent_over, label: Bent over }
+        type: pose_gallery
+        default: spread_frog
 
   - id: features
     label: Pose features
@@ -28,15 +17,15 @@ groups:
         type: multi
         default: []
         options:
-          - { id: spreading, label: Spreading / exposing, poses: [sit_spread, lie_spread] }
-          - { id: vaginal_gape, label: Vaginal gape, poses: [sit_spread, lie_spread] }
-          - { id: anal_gape, label: Anal gape, poses: [all_fours, bent_over, lie_spread] }
-          - { id: prolapse, label: Anal prolapse, poses: [all_fours, bent_over, lie_spread] }
-          - { id: masturbation, label: Masturbation, poses: [sit, sit_spread, lie_back, lie_spread, kneel, lie_side] }
-          - { id: creampie, label: Creampie, poses: [sit_spread, lie_spread, all_fours, bent_over] }
-          - { id: cum_face, label: Cum on face, poses: [kneel, lie_back, lie_spread] }
-          - { id: cum_body, label: Cum on body, poses: [stand_front, sit, sit_spread, lie_back, lie_spread, kneel] }
-          - { id: wet, label: Very wet, poses: [sit_spread, lie_spread, all_fours, bent_over] }
+          - { id: spreading, label: Spreading / exposing }
+          - { id: vaginal_gape, label: Vaginal gape }
+          - { id: anal_gape, label: Anal gape }
+          - { id: prolapse, label: Anal prolapse }
+          - { id: masturbation, label: Masturbation }
+          - { id: creampie, label: Creampie }
+          - { id: cum_face, label: Cum on face }
+          - { id: cum_body, label: Cum on body }
+          - { id: wet, label: Very wet }
 
   - id: clothing
     label: Clothing
