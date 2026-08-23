@@ -380,10 +380,17 @@ def compose_edit_prompt(
         lines.append("Photo 1: identity, same face, skin, hair.")
         if pose_key.startswith("prolapse") or "rosebud" in (preset_fragment(pose_key) or "").lower():
             lines.append("Photo 2: pose and the rosebud on the anus. Keep the furniture. Do not copy her face.")
-        elif wants_penis or pose_key.startswith("anal_"):
-            lines.append("Photo 2: pose, camera, and the sex act. Copy any penis in the photo.")
+        elif pose_key.startswith("anal_"):
+            lines.append("Photo 2: pose, camera, and the sex act. Copy the penis in the photo.")
+        elif override and wants_penis:
+            lines.append(
+                "Photo 2: keep this pose and furniture, same legs and hands. "
+                "There is no penis in photo 2; add a real one."
+            )
         elif override:
             lines.append("Photo 2: keep this pose and furniture, same legs and hands.")
+        elif wants_penis:
+            lines.append("Photo 2: pose, camera, and the sex act. Copy any penis in the photo.")
         else:
             lines.append("Photo 2: pose and camera. Keep this furniture.")
     else:
@@ -419,11 +426,20 @@ def compose_edit_prompt(
         lines.append("Pussy: she has a gaping pussy.")
 
     if "prolapse_fucking" in selected:
-        lines.append("Penis: erect, going through the rosebud into the anus, hips attached.")
+        lines.append(
+            "Penis: a real skin-colored erect cock, glans and shaft, attached to a man's hips "
+            "and thighs, going through the rosebud into the anus. Not a dildo, not glass, not a toy."
+        )
     elif wants_penis and "anal" in selected:
-        lines.append("Penis: erect, in her anus, shaft visible, hips attached.")
+        lines.append(
+            "Penis: a real skin-colored erect cock, glans and shaft, attached to a man's hips, "
+            "in her anus. Not a dildo, not a toy."
+        )
     elif wants_penis and "vaginal" in selected:
-        lines.append("Penis: erect, in her vagina, shaft visible, hips attached.")
+        lines.append(
+            "Penis: a real skin-colored erect cock, glans and shaft, attached to a man's hips, "
+            "in her vagina. Not a dildo, not a toy."
+        )
 
     if cream and not (selected & _PROLAPSE_IDS):
         lines.append("Cum: pearly-white semen leaking out.")

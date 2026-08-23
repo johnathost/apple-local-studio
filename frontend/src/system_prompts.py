@@ -72,6 +72,7 @@ SYSTEM_EDIT_POSE_OVERRIDE = (
     "Photo 2 is the pose: keep that furniture, legs, hands, and camera. "
     "Two openings. Pussy on top. Prolapsed anus below. "
     "The prolapse is folded wrinkled flesh, not a smooth pink ball. "
+    "If a penis is requested, draw a real skin-colored cock attached to male hips, not a toy. "
     "Photoreal, no text, no watermark. "
     f"{SEMEN_LOCK}"
 )
@@ -110,6 +111,7 @@ SEMEN_NEGATIVE = (
     "toy sitting on skin, sticker on crotch, toothpaste cum, rope of cum pouring, "
     "white egg, peeled egg, marshmallow, white balloon, dollop of cream, white blob, "
     "smooth pink ball, sphere, balloon, tomato, lollipop, ping pong, "
+    "dildo, glass penis, pearl, orb on a stick, detached cock, floating penis, "
     "vaginal prolapse, tissue hanging from the pussy, insides coming out of the vagina, "
     "cervix, swirl hanging from the vulva"
 )
