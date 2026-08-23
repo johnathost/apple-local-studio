@@ -70,10 +70,9 @@ SYSTEM_EDIT_POSE = (
 SYSTEM_EDIT_POSE_OVERRIDE = (
     "System: Two reference photos. "
     "Image 1 is identity only: keep this person's face, skin complexion, and hair. "
-    "Image 2 is pose, camera, and limb placement only. Do not copy image 2's genitals. "
-    "Vagina is a normal empty slit. Anal prolapse is rectal lining coming out of the anus "
-    "below the perineum, attached to the anal rim. Nothing hangs from the pussy. "
-    "Not a doughnut, not a silicone ring, not an object on the skin. "
+    "Image 2 is the pose: keep the furniture, leg position, hands, and camera. "
+    "Do not switch chairs or sets. Do not copy image 2's face, nails, or outfit. "
+    "Add an anal rosebud on the anus below the vulva. Keep a visible pussy above it. "
     "Do not invent a penis unless the edit request describes one. "
     "Photoreal, natural skin, no text, no watermark. "
     f"{SEX_SCENE_LOCK}"

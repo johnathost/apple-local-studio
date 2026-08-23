@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.catalog_loader import bundled_pose_ref, load_fragments
+from src.catalog_loader import load_fragments
 from src.constraints import preset_fragment
 from src.system_prompts import EDIT_IDENTITY_LOCK, SEMEN_LOCK
 
@@ -294,17 +294,6 @@ def _fluid_bits(scene: dict[str, Any]) -> list[str]:
     return out
 
 
-def anatomy_ref_pose_id(scene: dict[str, Any]) -> str | None:
-    """Bundled plate whose crotch we copy when extras disagree with the pose plate."""
-    if not wants_genital_override(scene):
-        return None
-    requested = _selected_ids(scene, "features", "extras") | _selected_ids(scene, "act", "primary")
-    if requested & _PROLAPSE_IDS:
-        donor = "prolapse_chair_tight"
-        return donor if bundled_pose_ref(donor) else None
-    return None
-
-
 def wants_genital_override(scene: dict[str, Any]) -> bool:
     """True when extras ask for crotch anatomy the pose plate does not show."""
     extras = _selected_ids(scene, "features", "extras")
@@ -330,12 +319,8 @@ def wants_genital_override(scene: dict[str, Any]) -> bool:
 
 def _prolapse_layout_bits() -> list[str]:
     return [
-        "From this camera, between her legs looking at her face: toward her belly is the mons, "
-        "clitoris, and a normal vaginal slit with labia — nothing hanging out of the pussy. "
-        "Then a clear strip of perineum skin. Toward the ottoman and her buttocks is the anus. "
-        "The rosebud comes out of that lower hole only, still attached to the anal rim. "
-        "Do not hang tissue from the vagina. Do not hide the anus. "
-        "This is flesh connected to the anus, not a pastry, not a toy, not a ring on the skin"
+        "Keep this pose and furniture. Two holes: pussy above, anus below, skin between them. "
+        "AN4LPR0L4PS3 rosebud comes out of the anus, not out of the pussy"
     ]
 
 
@@ -390,36 +375,41 @@ def compose_edit_prompt(
 
     chunks: list[str] = []
     if pose_ref:
-        anatomy_id = anatomy_ref_pose_id(scene)
-        if anatomy_id:
+        pose_key = str(
+            (scene.get("pose") or {}).get("scene")
+            or (scene.get("preset") or {}).get("scene")
+            or ""
+        )
+        if pose_key.startswith("prolapse") or "rosebud" in (preset_fragment(pose_key) or "").lower():
             chunks.append(
                 "Photo 1 is identity: face, skin, hair. "
-                "Photo 2 is pose and camera only — copy body position and framing, ignore its crotch. "
-                "Photo 3 is the anus and rosebud: copy that anal anatomy onto this person. "
-                "Put it on the anus, below an empty vulva. Same person as photo 1."
+                "Photo 2 is pose, camera, and anal anatomy. Copy the rosebud on the anus "
+                "from photo 2. Do not copy photo 2's face or nails. Same person as photo 1."
             )
         elif override:
             chunks.append(
-                "Photo 1 is their identity: face, skin, hair (man or woman). "
-                "Photo 2 is pose and camera only — copy body position and framing, "
-                "do not copy photo 2's genitals. Same person as photo 1."
+                "Photo 1 is identity: face, skin, hair. "
+                "Photo 2 is the pose: keep that furniture, legs, hands, and camera. "
+                "Do not change the furniture. Do not copy photo 2's face. Same person as photo 1."
             )
         elif wants_penis:
             chunks.append(
-                "Photo 1 is their identity: face, skin, hair (man or woman). "
+                "Photo 1 is identity: face, skin, hair. "
                 "Photo 2 is the target scene: copy pose, camera, and any penis, partner, "
                 "or fluids actually visible in photo 2. Same person as photo 1."
             )
         else:
             chunks.append(
-                "Photo 1 is their identity: face, skin, hair (man or woman). "
-                "Photo 2 is pose and camera. Same person as photo 1."
+                "Photo 1 is identity: face, skin, hair. "
+                "Photo 2 is pose and camera. Keep that furniture and body position. Same person as photo 1."
             )
     else:
         chunks.append(EDIT_IDENTITY_LOCK)
 
     if selected_prolapse & _PROLAPSE_IDS:
         chunks.extend(_prolapse_layout_bits())
+    if selected_prolapse & {"prolapse_creampie", "prolapse_fucking"}:
+        skip_acts.add("prolapse")
     # Lead with crotch extras so 4-step Klein does not lock onto "pussy is the center".
     early_ids = [
         x
@@ -428,7 +418,7 @@ def compose_edit_prompt(
     ]
     seen_early: set[str] = set()
     for item_id in early_ids:
-        if item_id in seen_early:
+        if item_id in seen_early or item_id in skip_acts:
             continue
         seen_early.add(item_id)
         piece = _frag(fr, "features.extras", item_id) or _frag(fr, "act.primary", item_id)

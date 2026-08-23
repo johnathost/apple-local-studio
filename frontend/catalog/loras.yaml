@@ -145,7 +145,7 @@ loras:
   - id: prolapse_anal
     name: Prolapse - Anal
     file: MrWeaz_ProlapseAnus_v2.safetensors
-    default_scale: 0.65
+    default_scale: 0.8
     priority: 95
     exclusive_group: gape
     require_all:
