@@ -21,8 +21,7 @@ SEMEN_LOCK = (
 
 SEX_SCENE_LOCK = (
     "No extra limbs, no melted genitals, no fused pussy-and-anus into one hole, "
-    "no floating disconnected penis. "
-    f"{SEMEN_LOCK}"
+    "no floating disconnected penis, no pearl, no egg, no smooth blob for a vulva."
 )
 
 # Short identity lock for the user-facing edit prompt. Pose/camera are NOT locked.
@@ -58,6 +57,7 @@ SYSTEM_EDIT_POSE = (
     "System: Two reference photos. "
     "Image 1 is WHO: keep this person's face, skin, hair, and nails. "
     "Image 2 is the pose and the genitals: copy body position, camera, and crotch from image 2. "
+    "The vulva is skin with labia and a slit, copied from image 2 — not a pearl, egg, orb, or white blob. "
     "Do not copy image 2's face, hair, or identity. "
     "Photoreal, no text, no watermark. "
     f"{SEX_SCENE_LOCK}"
@@ -123,6 +123,13 @@ def with_system_prompt(
     user = (user_prompt or "").strip()
     if not user:
         return system
+    # Only mention semen when the edit actually asks for it. On a dry spread,
+    # "pearly white" in the system prompt becomes a pearl glued to the mons.
+    low = user.lower()
+    if m in {"edit", "pose"} and any(
+        k in low for k in ("semen", "creampie", "cum:", "cum ")
+    ):
+        system = f"{system} {SEMEN_LOCK}"
     if m in {"edit", "pose", "undress"}:
         return f"{system}\n\nEdit request:\n{user}"
     return f"{system}\n\nUser: {user}"
