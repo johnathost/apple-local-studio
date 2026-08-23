@@ -610,6 +610,9 @@ loras:
     default_scale: 0.8
     priority: 75
     exclusive_group: spreading
+    # Pose plates already show a spread pussy. Auto-loading this LoRA with
+    # trigger "pussy" melts the crotch into a blob on Klein Edit.
+    auto: false
     require_any:
       - act:spreading
       - position:legs_spread
@@ -618,7 +621,7 @@ loras:
       - act:spreading
       - position:legs_spread
       - camera:genital_focus
-    prompt_trigger: "pussy"
+    prompt_trigger: "she is spreading her legs, pussy visible"
     triggers:
       - "pussy"
     conflicts:

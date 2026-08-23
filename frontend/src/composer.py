@@ -437,7 +437,7 @@ def compose_edit_prompt(
         elif wants_penis:
             lines.append("Photo 2: pose, camera, and the sex act. Copy any penis in the photo.")
         else:
-            lines.append("Photo 2: pose and camera.")
+            lines.append("Photo 2: pose, camera, and crotch. Copy the pussy from photo 2.")
     else:
         lines.append(EDIT_IDENTITY_LOCK)
 
@@ -469,6 +469,8 @@ def compose_edit_prompt(
         lines.append("Anus: anal gape, she has a gaping ass, huge gape.")
     elif "vaginal_gape" in selected:
         lines.append("Pussy: she has a gaping pussy.")
+    elif "spreading" in selected or pose_key.startswith("spread_"):
+        lines.append("Pussy: visible vulva with labia and a slit, copy from photo 2.")
 
     if "prolapse_fucking" in selected:
         lines.append(
