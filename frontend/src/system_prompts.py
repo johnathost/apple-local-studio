@@ -13,9 +13,23 @@ QUALITY_LOCK = (
     "No extra limbs, no fused bodies, no melted or monster features, no duplicate faces."
 )
 
+# Pose/sex restage must NOT use QUALITY_LOCK's "one head, two arms". That fights
+# a male partner and a penis (the model treats them as extra anatomy).
+SEMEN_LOCK = (
+    "Semen is thick, opaque, pearly white; never yellow, golden, or urine-colored."
+)
+
+SEX_SCENE_LOCK = (
+    "Match the pose reference. If it shows a penis or a second person, draw them: "
+    "an erect penis correctly attached to a body, shaft and glans readable. "
+    "That is scene content, not extra anatomy. Do not drop a penis that is in the plate. "
+    "No extra limbs, no melted genitals, no floating disconnected penis. "
+    f"{SEMEN_LOCK}"
+)
+
 # Short identity lock for the user-facing edit prompt. Pose/camera are NOT locked.
 EDIT_IDENTITY_LOCK = (
-    "Same woman as the photo: same face, same skin complexion, same hair. Do not swap identity."
+    "Same person as the photo: same face, same skin complexion, same hair. Do not swap identity."
 )
 
 SYSTEM_GEN = (
@@ -35,19 +49,22 @@ SYSTEM_UNDRESS = (
 
 SYSTEM_EDIT = (
     "System: Restage the source photograph. "
-    "Keep the same adult woman's face, hair, and skin. "
-    "Change pose and camera to match the edit request. "
-    "Photoreal, natural skin, no text, no watermark."
+    "Keep the same adult's face, hair, and skin (man or woman). "
+    "Change pose, camera, and the requested anatomy to match the edit request. "
+    "Photoreal, natural skin, no text, no watermark. "
+    f"{SEX_SCENE_LOCK}"
 )
 
 # Used when a pose plate is passed as the second reference image.
 SYSTEM_EDIT_POSE = (
     "System: Two reference photos. "
-    "Image 1 is the person: keep her face, skin complexion, and hair. "
-    "Image 2 is pose and camera only: match that body position, limb placement, and framing. "
-    "Do not copy image 2's identity. Do not copy image 1's pose or camera angle. "
+    "Image 1 is identity only: keep this person's face, skin complexion, and hair "
+    "(man or woman, match the source). "
+    "Image 2 is the target scene: match pose, camera, framing, the open hole, and fluids. "
+    "If image 2 shows a penis, copy it attached and readable. "
+    "Do not copy image 2's face. Do not copy image 1's pose or camera angle. "
     "Photoreal, natural skin, no text, no watermark. "
-    f"{QUALITY_LOCK}"
+    f"{SEX_SCENE_LOCK}"
 )
 
 # Used as CFG negative when guidance > 1 (mflux only encodes a negative then).
@@ -58,7 +75,14 @@ QUALITY_NEGATIVE = (
     "cloned face, extra heads, poorly drawn hands, messy anatomy, "
     "different person, different face, different skin tone, pale-washed skin, "
     "identity swap, new body, swapped face, "
+    "yellow cum, yellow semen, golden cum, urine, piss, honey-colored semen, "
     "text, watermark, cartoon, illustration, 3d render"
+)
+
+# Pose/undress skip QUALITY_NEGATIVE (deformed/grotesque fights gape). Keep fluids.
+SEMEN_NEGATIVE = (
+    "yellow cum, yellow semen, golden cum, orange cum, honey-colored semen, "
+    "urine, piss, cheddar, yellow fluid leaking from pussy, yellow fluid leaking from anus"
 )
 
 
@@ -66,7 +90,9 @@ def system_prompt_for(mode: str) -> str:
     m = (mode or "").strip().lower()
     if m == "undress":
         return SYSTEM_UNDRESS
-    if m in {"edit", "pose"}:
+    if m == "pose":
+        return SYSTEM_EDIT_POSE
+    if m == "edit":
         return SYSTEM_EDIT
     return SYSTEM_GEN
 

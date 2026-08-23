@@ -6,7 +6,7 @@ from typing import Any
 
 from src.catalog_loader import load_fragments
 from src.constraints import preset_fragment
-from src.system_prompts import EDIT_IDENTITY_LOCK
+from src.system_prompts import EDIT_IDENTITY_LOCK, SEMEN_LOCK
 
 
 def _frag(fragments: dict[str, Any], key: str, value: Any) -> str | list[str]:
@@ -193,6 +193,74 @@ def scene_tags(scene: dict[str, Any]) -> set[str]:
     return tags
 
 
+def _selected_ids(scene: dict[str, Any], group: str, key: str) -> set[str]:
+    val = (scene.get(group) or {}).get(key)
+    if isinstance(val, list):
+        return {str(x) for x in val if _tag_value(x)}
+    if _tag_value(val):
+        return {str(val)}
+    return set()
+
+
+_FLUID_IDS = {"creampie", "cum_face", "cum_body", "cum_inside"}
+_PENIS_ACTS = {"vaginal", "anal", "oral", "deepthroat", "all_holes", "titfuck"}
+
+
+def _penetration_bits(scene: dict[str, Any]) -> list[str]:
+    """Force readable male anatomy. Klein edit otherwise drops the cock as 'extra'."""
+    acts = _selected_ids(scene, "act", "primary")
+    extras = _selected_ids(scene, "features", "extras")
+    partners = (scene.get("partners") or {}).get("count")
+    wants_penis = bool(acts & _PENIS_ACTS) or partners in {"one_man", "two_men", "three_men"}
+    if not wants_penis:
+        return []
+    if "anal" in acts or "anal" in extras:
+        return [
+            "A realistic erect penis is in the shot, shaft and glans visible, "
+            "correctly attached to male hips and thighs, the shaft entering her anus"
+        ]
+    if "vaginal" in acts:
+        return [
+            "A realistic erect penis is in the shot, shaft and glans visible, "
+            "correctly attached to male hips and thighs, the shaft entering her vagina"
+        ]
+    if acts & {"oral", "deepthroat"}:
+        return [
+            "A realistic erect penis is in her mouth, shaft and glans visible, attached to a male body"
+        ]
+    if "titfuck" in acts:
+        return [
+            "A realistic erect penis is between her breasts, shaft and glans visible, attached to a male body"
+        ]
+    return [
+        "The male partner's erect penis, hips, and thighs are visible and correctly attached"
+    ]
+
+
+def _fluid_bits(scene: dict[str, Any]) -> list[str]:
+    """Flux paints unspecified 'cum' as yellow. Name the color and the orifice."""
+    extras = _selected_ids(scene, "features", "extras")
+    finish = _selected_ids(scene, "finish", "effects")
+    acts = _selected_ids(scene, "act", "primary")
+    out: list[str] = []
+    if "creampie" in extras or "cum_inside" in finish:
+        if acts & {"anal", "anal_gape"} or extras & {"anal_gape", "anal", "prolapse"}:
+            out.append(
+                "Thick opaque pearly-white semen leaking from the open anus, creamy white cum "
+                "pooling on the rim, not yellow, not golden, not urine"
+            )
+        else:
+            out.append(
+                "Thick opaque pearly-white semen leaking from the pussy, creamy white cum "
+                "on the labia, not yellow, not golden, not urine"
+            )
+    if "cum_face" in extras or "cum_face" in finish:
+        out.append("Thick opaque pearly-white semen on their face, white streaks, not yellow")
+    if "cum_body" in extras or "cum_body" in finish:
+        out.append("Thick opaque pearly-white semen on their body, white not yellow")
+    return out
+
+
 def compose_edit_prompt(
     scene: dict[str, Any],
     *,
@@ -215,7 +283,9 @@ def compose_edit_prompt(
     chunks: list[str] = []
     if pose_ref:
         chunks.append(
-            "Photo 1 is her face and body. Photo 2 is the pose and camera. Same woman."
+            "Photo 1 is their identity: face, skin, hair (man or woman). "
+            "Photo 2 is the target scene: copy pose, camera, the hole, and fluids as they "
+            "appear in photo 2, including a penis if one is there. Same person as photo 1."
         )
     else:
         chunks.append(EDIT_IDENTITY_LOCK)
@@ -231,7 +301,12 @@ def compose_edit_prompt(
         skip_pose = True
         skip_camera = True
         low_preset = preset_text.lower()
-        if any(tok in low_preset for tok in ("alone", "one man", "two men", "three men")):
+        if any(
+            tok in low_preset
+            for tok in ("alone", "one man", "two men", "three men", "if a penis", "photo 2")
+        ):
+            skip_partners = True
+        if "penis" in low_preset and any(t in low_preset for t in ("hips", "thigh", "attached")):
             skip_partners = True
         for act_id in acts:
             piece = _frag(fr, "act.primary", act_id)
@@ -239,9 +314,19 @@ def compose_edit_prompt(
                 skip_acts.add(act_id)
             elif act_id == "spreading" and "spread" in low_preset:
                 skip_acts.add(act_id)
-            elif act_id == "anal" and any(t in low_preset for t in ("anus", "anal")):
+            elif (
+                act_id == "anal"
+                and "penis" in low_preset
+                and any(t in low_preset for t in ("anus", "anal"))
+            ):
+                skip_acts.add(act_id)
+            elif act_id == "vaginal" and "penis" in low_preset and "vagin" in low_preset:
                 skip_acts.add(act_id)
             elif act_id == "masturbation" and "masturbat" in low_preset:
+                skip_acts.add(act_id)
+            elif act_id == "anal_gape" and any(
+                t in low_preset for t in ("dilated", "anal canal", "sphincter")
+            ):
                 skip_acts.add(act_id)
 
     on_back = pose_id in {"legs_spread", "lying_back", "missionary"}
@@ -298,17 +383,40 @@ def compose_edit_prompt(
             chunks.append(angle)
 
     finish = scene.get("finish") or {}
-    fx = _frag(fr, "finish.effects", finish.get("effects") or [])
+    fx_ids = [x for x in (finish.get("effects") or []) if _tag_value(x) and x not in _FLUID_IDS]
+    fx = _frag(fr, "finish.effects", fx_ids)
     if isinstance(fx, list):
         for item in fx:
             if item and not _covered(" ".join(chunks), item):
                 chunks.append(item)
 
-    feats = _frag(fr, "features.extras", (scene.get("features") or {}).get("extras") or [])
+    feat_ids = [
+        x
+        for x in ((scene.get("features") or {}).get("extras") or [])
+        if _tag_value(x) and x not in _FLUID_IDS
+    ]
+    feats = _frag(fr, "features.extras", feat_ids)
     if isinstance(feats, list):
         for item in feats:
             if item and not _covered(" ".join(chunks), item):
                 chunks.append(item)
+
+    hay = " ".join(chunks).lower()
+    penis_already = (
+        "penis" in hay
+        and any(t in hay for t in ("penetrat", "enter", "inside", "if a penis", "if one is there"))
+        and any(t in hay for t in ("hip", "thigh", "attached", "photo 2"))
+    )
+    fluid_bits = _fluid_bits(scene)
+    if "pearly-white" in hay or "pearly white" in hay:
+        fluid_bits = []
+    extra_bits = [] if penis_already else _penetration_bits(scene)
+    extra_bits.extend(fluid_bits)
+    for bit in extra_bits:
+        if bit and not _covered(" ".join(chunks), bit):
+            chunks.append(bit)
+    if fluid_bits and not _covered(" ".join(chunks), SEMEN_LOCK):
+        chunks.append(SEMEN_LOCK)
 
     keep = scene.get("keep") or {}
     keep_ids = [k for k in (keep.get("traits") or []) if _tag_value(k)]
@@ -471,6 +579,13 @@ def compose_prompt(
         chunks.extend(extra_triggers)
 
     chunks.append("correct anatomy, unstretched proportions, coherent sex act")
+    finish_ids = {
+        str(x)
+        for x in ((scene.get("finish") or {}).get("effects") or [])
+        if _tag_value(x)
+    }
+    if finish_ids & {"cum_inside", "cum_face", "cum_body"}:
+        chunks.append(SEMEN_LOCK)
 
     prompt = _join_unique(chunks)
     # Prefer a readable sentence-ish start for Flux.

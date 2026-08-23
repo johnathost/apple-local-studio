@@ -146,20 +146,24 @@ def _snap_edit_size(image_path: str, width: int, height: int) -> tuple[int, int]
     return _best_aspect_size(src_w, src_h, target_long)
 
 
-def _install_quality_negative(model: Any) -> Any:
-    """Swap mflux's dummy negative (' ') for an anatomy lock when CFG is on."""
-    from src.system_prompts import QUALITY_NEGATIVE
-
+def _install_negative(model: Any, text: str) -> Any:
+    """Swap mflux's dummy negative (' ') when CFG is on (guidance > 1)."""
     orig = getattr(model, "_encode_prompt_pair", None)
     if orig is None:
         return None
 
     def wrapped(*, prompt: str, negative_prompt: str, guidance: float):  # type: ignore[no-untyped-def]
-        neg = QUALITY_NEGATIVE if (guidance or 0) > 1.0 else negative_prompt
+        neg = text if (guidance or 0) > 1.0 else negative_prompt
         return orig(prompt=prompt, negative_prompt=neg, guidance=guidance)
 
     model._encode_prompt_pair = wrapped  # type: ignore[method-assign]
     return orig
+
+
+def _install_quality_negative(model: Any) -> Any:
+    from src.system_prompts import QUALITY_NEGATIVE
+
+    return _install_negative(model, QUALITY_NEGATIVE)
 
 
 def _unregister_step_progress(model: Any, tap: _StepProgress) -> None:
@@ -508,10 +512,16 @@ class MfluxBackend:
             tap = _StepProgress(lambda p: _emit(on_progress, p), steps)
             _register_step_progress(model, tap)
             sys_mode = (system_mode or mode or "").strip().lower()
-            # Pose/undress: "deformed / grotesque" negatives fight gape and prolapse.
-            prev_encode = (
-                None if sys_mode in {"undress", "pose"} else _install_quality_negative(model)
-            )
+            # Pose: skip "deformed / grotesque" (fights gape) but keep yellow-cum lock.
+            # Undress: no negative (guidance 1.0 anyway).
+            if sys_mode == "undress":
+                prev_encode = None
+            elif sys_mode == "pose" or (mode == "edit" and sys_mode != "gen"):
+                from src.system_prompts import SEMEN_NEGATIVE
+
+                prev_encode = _install_negative(model, SEMEN_NEGATIVE)
+            else:
+                prev_encode = _install_quality_negative(model)
             try:
                 if guidance is None:
                     if sys_mode == "undress":

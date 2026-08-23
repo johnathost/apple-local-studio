@@ -24,7 +24,7 @@ from src.catalog_loader import (
 )
 from src.composer import compose_prompt, scene_tags
 from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
-from src.system_prompts import SYSTEM_EDIT, SYSTEM_GEN, SYSTEM_UNDRESS
+from src.system_prompts import SYSTEM_EDIT, SYSTEM_EDIT_POSE, SYSTEM_GEN, SYSTEM_UNDRESS
 from src.engine import engine
 from src.imageutil import MAX_IMAGE_BYTES, sniffed_image_suffix
 from src.jobs import Job, jobs
@@ -159,7 +159,7 @@ def api_defaults(mode: str = "gen") -> dict[str, Any]:
         "system_prompts": {
             "gen": SYSTEM_GEN,
             "edit": SYSTEM_EDIT,
-            "pose": SYSTEM_EDIT,
+            "pose": SYSTEM_EDIT_POSE,
             "undress": SYSTEM_UNDRESS,
         },
         "mode": "edit" if (mode or "").strip().lower() == "edit" else "gen",

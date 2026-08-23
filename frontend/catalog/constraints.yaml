@@ -142,11 +142,10 @@ on_select:
 
   finish.effects:
     cum_inside:
+      # Afterglow is valid: ruined hole with cum, no partner in frame.
+      # Penetration acts already upgrade solo → one_man on their own.
       - field: act.primary
         drop: [masturbation]
-      - field: partners.count
-        replace_if_in: [solo]
-        replace_with: one_man
 
   camera.angle:
     pov:
@@ -341,25 +340,33 @@ edit_presets:
     fragment: >-
       She lies on her back, one leg raised and held open, the other lower.
       Three-quarter view from her side so her face, breasts, pussy, and anus
-      are all visible. A penis is penetrating her anus; her pussy is visible
-      above the penetration. One man, mostly out of frame except his penis,
-      hips, and a hand holding her raised thigh.
+      are all visible. A realistic erect penis with a visible shaft and glans
+      is penetrating her anus, correctly attached to male hips and thighs;
+      a male hand holds her raised thigh. Her pussy is visible above the
+      penetration. The penis is in frame and anatomically correct.
 
   anal_creampie:
     label: Legs up · anal creampie
     apply:
       position: { pose: legs_spread }
-      act: { primary: [anal, anal_gape] }
+      act: { primary: [anal_gape] }
       camera: { angle: genital_focus }
-      partners: { count: one_man }
+      partners: { count: solo }
       clothing: { state: keep }
       finish: { effects: [cum_inside] }
     fragment: >-
-      She is on her back with both legs raised high in a wide V. Both hands
-      spread her ass. Camera tight on her crotch looking toward her face.
-      Gaping anus in the center with creampie, cum leaking out, pussy above it,
-      breasts and face at the top. One man stands over her, mostly out of
-      frame except his hips and penis.
+      The subject from photo 1 (man or woman) is on their back with both legs
+      raised high in a wide V. Both hands pull the buttocks apart. Camera tight
+      on the ass looking toward the face. Anal gape, huge gape, gaping ass:
+      the anus is dilated into a wide open dark circle, sphincter stretched
+      loose, inner walls of the anal canal visible inside the hole, rim puffy
+      and swollen from use. A used gaping asshole in the center of the frame,
+      not a wound, not bloody, not torn, not a prolapse. Thick opaque
+      pearly-white semen leaking out of the open anal canal, pooling on the
+      rim, creamy white cum, not yellow, not urine. Match photo 2: if a penis
+      is at the hole, keep it in frame, correctly attached, with white cum
+      around the shaft; if there is no penis in photo 2, show the open hole
+      and the leaking cum.
 
   anal_cowgirl:
     label: Cowgirl · anal
@@ -370,11 +377,12 @@ edit_presets:
       partners: { count: one_man }
       clothing: { state: keep }
     fragment: >-
-      She sits on a man's lap in cowgirl, the penis of the man penetrating
-      her anus. He lies on his back on a sofa under her. Camera from the side
-      looking down so her pussy, the anal penetration, her body, and her face
-      are all visible. She is looking at the camera. One man is in frame
-      under her.
+      She sits on a man's lap in cowgirl. He lies on his back on a sofa under
+      her; his torso, hips, thighs, and erect penis are visible and correctly
+      attached. The penis is inside her anus, shaft entering the hole, her
+      pussy visible in front of the penetration. Camera from the side looking
+      down so the anal penetration, her body, and her face are all visible.
+      She is looking at the camera.
 
   masturbate_bed:
     label: On back · masturbating
