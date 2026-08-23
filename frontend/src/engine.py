@@ -13,6 +13,8 @@ from typing import Any, Callable, Protocol
 ProgressFn = Callable[[dict[str, Any]], None]
 from urllib.parse import urljoin
 
+from src.imageutil import prepare_pose_ref_images
+
 logger = logging.getLogger("studio.engine")
 
 DATA_HOME = Path(os.environ.get("STUDIO_DATA_HOME", "/opt/ivoai"))
@@ -111,7 +113,9 @@ class LocalMfluxEngine:
         from src.mflux_backend import MfluxBackendError, backend
 
         loras = loras or []
-        ref_images = ref_images or []
+        ref_images = prepare_pose_ref_images(
+            self._uploads_dir, ref_images or [], system_mode=system_mode
+        )
 
         lora_paths: list[str] = []
         lora_scales: list[float] = []
@@ -259,8 +263,11 @@ class RemoteHttpEngine:
     ) -> Path:
         import base64
 
+        ref_images = prepare_pose_ref_images(
+            self._uploads_dir, ref_images or [], system_mode=system_mode
+        )
         refs: list[dict[str, str]] = []
-        for name in ref_images or []:
+        for name in ref_images:
             path = self._uploads_dir / Path(name).name
             if not path.is_file():
                 raise EngineError(f"Reference image not found: {name}")
