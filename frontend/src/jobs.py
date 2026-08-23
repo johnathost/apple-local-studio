@@ -55,10 +55,6 @@ class JobQueue:
     def get(self, job_id: str) -> Job | None:
         return self._jobs.get(job_id)
 
-    def list_recent(self, limit: int = 50) -> list[Job]:
-        jobs = sorted(self._jobs.values(), key=lambda j: j.created_at, reverse=True)
-        return jobs[:limit]
-
     def _loop(self) -> None:
         while True:
             with self._cv:

@@ -181,7 +181,6 @@ def api_defaults(mode: str = "gen") -> dict[str, Any]:
             "pose": SYSTEM_EDIT_POSE,
             "undress": SYSTEM_UNDRESS,
         },
-        "mode": "edit" if (mode or "").strip().lower() == "edit" else "gen",
     }
 
 
@@ -193,17 +192,6 @@ def api_loras() -> list[dict[str, Any]]:
 @app.post("/api/compose", response_model=ComposeResponse)
 def api_compose(req: ComposeRequest) -> ComposeResponse:
     return _compose(req)
-
-
-@app.post("/api/recipe/plan")
-def api_recipe_plan(req: RecipeRequest) -> dict[str, Any]:
-    try:
-        steps = plan_recipe(
-            undress=req.undress, scene_id=req.scene_id, extras=req.extras
-        )
-    except ValueError as e:
-        raise HTTPException(400, str(e)) from e
-    return {"steps": steps, "count": len(steps)}
 
 
 @app.post("/api/recipe", response_model=JobResponse)
@@ -327,11 +315,6 @@ def api_job(job_id: str) -> JobResponse:
     if not job:
         raise HTTPException(404, "Job not found")
     return _job_response(job)
-
-
-@app.get("/api/jobs")
-def api_jobs(limit: int = 30) -> list[dict[str, Any]]:
-    return [_job_response(j).model_dump() for j in jobs.list_recent(limit)]
 
 
 @app.post("/api/promote-output")

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
-MAX_REF_IMAGES = 4
+MAX_REF_IMAGES = 2
 
 # Back-compat aliases used by the backend request checks.
 MAX_REF_BYTES = MAX_IMAGE_BYTES

@@ -308,9 +308,6 @@ class RemoteHttpEngine:
         on_progress: ProgressFn | None,
     ) -> dict[str, Any]:
         import json
-        from urllib.parse import urljoin
-        import urllib.error
-        import urllib.request
 
         url = urljoin(self.base_url, "generate")
         headers = {"Accept": "application/x-ndjson, application/json", "Content-Type": "application/json"}

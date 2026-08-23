@@ -60,18 +60,6 @@ async function api(path, opts = {}) {
   return res.json();
 }
 
-function deepMergeScene(base, partial) {
-  const out = structuredClone(base);
-  for (const [k, v] of Object.entries(partial || {})) {
-    if (v && typeof v === "object" && !Array.isArray(v) && typeof out[k] === "object") {
-      out[k] = { ...out[k], ...v };
-    } else {
-      out[k] = v;
-    }
-  }
-  return out;
-}
-
 function getSceneValue(groupId, fieldId) {
   return state.scene?.[groupId]?.[fieldId];
 }
@@ -302,15 +290,6 @@ function setSceneValue(groupId, fieldId, value) {
     renderBuilder();
     renderSceneStudio();
   }
-  if (
-    groupId !== "preset" &&
-    groupId !== "pose" &&
-    ["position", "act", "camera", "partners"].includes(groupId) &&
-    state.scene.preset?.scene &&
-    state.scene.preset.scene !== "none"
-  ) {
-    state.scene.preset.scene = "none";
-  }
   // Sync notes quick box into style.notes
   if (groupId === "style" && fieldId === "notes") {
     const nq = $("#notes-quick");
@@ -515,7 +494,7 @@ function syncStrengthChrome() {
 
 function setPoseChrome() {
   const wrap = $("#pose-wrap");
-  const poseMode = state.editKind === "pose";
+  const poseMode = state.editKind === "pose" && !state.studioSimple;
   wrap?.classList.toggle("hidden", !poseMode);
   const has = Boolean(state.poseImage);
   const label = $("#pose-label");
