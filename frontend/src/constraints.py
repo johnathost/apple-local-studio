@@ -122,6 +122,20 @@ def preset_fragment(preset_id: str | None) -> str:
     return str(frag).strip()
 
 
+def preset_caption(preset_id: str | None) -> str:
+    """One-line pose caption for Klein. Falls back to the fragment's first sentence."""
+    if not preset_id or preset_id == "none":
+        return ""
+    entry = (load_constraints().get("edit_presets") or {}).get(preset_id) or {}
+    cap = str(entry.get("caption") or "").strip().rstrip(".")
+    if cap:
+        return cap
+    frag = str(entry.get("fragment") or "").strip()
+    if not frag:
+        return ""
+    return frag.split(".")[0].strip()
+
+
 def blocked_options(scene: dict[str, Any]) -> dict[str, list[str]]:
     """Options that conflict with the current scene (UI greys them out)."""
     spec = _on_select(load_constraints())

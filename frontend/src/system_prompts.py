@@ -68,14 +68,12 @@ SYSTEM_EDIT_POSE = (
 
 # Spreading plate + gape/prolapse extras: the plate's crotch is the WRONG anatomy.
 SYSTEM_EDIT_POSE_OVERRIDE = (
-    "System: Two reference photos. "
-    "Image 1 is identity only: keep this person's face, skin complexion, and hair. "
-    "Image 2 is the pose: keep the furniture, leg position, hands, and camera. "
-    "Do not switch chairs or sets. Do not copy image 2's face, nails, or outfit. "
-    "Add an anal rosebud on the anus below the vulva. Keep a visible pussy above it. "
-    "Do not invent a penis unless the edit request describes one. "
-    "Photoreal, natural skin, no text, no watermark. "
-    f"{SEX_SCENE_LOCK}"
+    "System: Photo 1 is the person (face, skin, hair). "
+    "Photo 2 is the pose: keep that furniture, legs, hands, and camera. "
+    "Two openings. Pussy on top. Prolapsed anus below. "
+    "The prolapse is folded wrinkled flesh, not a smooth pink ball. "
+    "Photoreal, no text, no watermark. "
+    f"{SEMEN_LOCK}"
 )
 
 # Spreading pose plate + a real prolapse plate as image 3.
@@ -110,6 +108,8 @@ SEMEN_NEGATIVE = (
     "fused pussy and anus, cloaca, one giant genital hole, extra vagina, "
     "doughnut, donut, pastry, glazed icing, bagel, silicone ring, fleshlight, "
     "toy sitting on skin, sticker on crotch, toothpaste cum, rope of cum pouring, "
+    "white egg, peeled egg, marshmallow, white balloon, dollop of cream, white blob, "
+    "smooth pink ball, sphere, balloon, tomato, lollipop, ping pong, "
     "vaginal prolapse, tissue hanging from the pussy, insides coming out of the vagina, "
     "cervix, swirl hanging from the vulva"
 )

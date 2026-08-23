@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.catalog_loader import load_fragments
-from src.constraints import preset_fragment
+from src.constraints import preset_caption, preset_fragment
 from src.system_prompts import EDIT_IDENTITY_LOCK, SEMEN_LOCK
 
 
@@ -354,240 +354,94 @@ def compose_edit_prompt(
     raw_override: str | None = None,
     pose_ref: bool = False,
 ) -> str:
-    """Target-scene edit prompt. Lead with what to restage; identity once."""
+    """Short labeled caption. Klein 4-step follows triggers + Field: fact, not essays."""
     if raw_override and raw_override.strip():
         return raw_override.strip()
 
-    fr = load_fragments("edit")
-    pose_id = (scene.get("position") or {}).get("pose")
-    angle_id = (scene.get("camera") or {}).get("angle")
-    acts = [a for a in ((scene.get("act") or {}).get("primary") or []) if _tag_value(a)]
-    pose_changing = _tag_value(pose_id)
-    camera_changing = _tag_value(angle_id)
-    must_restage = pose_changing or camera_changing or pose_ref
-
-    extras_ids = _selected_ids(scene, "features", "extras")
-    act_ids = _selected_ids(scene, "act", "primary")
-    selected_prolapse = extras_ids | act_ids
+    extras = _selected_ids(scene, "features", "extras")
+    acts = _selected_ids(scene, "act", "primary")
+    finish = _selected_ids(scene, "finish", "effects")
+    selected = extras | acts
     override = wants_genital_override(scene)
-    wants_penis = bool((extras_ids | act_ids) & _PENIS_ACTS)
-    skip_acts: set[str] = set()
-
-    chunks: list[str] = []
-    if pose_ref:
-        pose_key = str(
-            (scene.get("pose") or {}).get("scene")
-            or (scene.get("preset") or {}).get("scene")
-            or ""
-        )
-        if pose_key.startswith("prolapse") or "rosebud" in (preset_fragment(pose_key) or "").lower():
-            chunks.append(
-                "Photo 1 is identity: face, skin, hair. "
-                "Photo 2 is pose, camera, and anal anatomy. Copy the rosebud on the anus "
-                "from photo 2. Do not copy photo 2's face or nails. Same person as photo 1."
-            )
-        elif override:
-            chunks.append(
-                "Photo 1 is identity: face, skin, hair. "
-                "Photo 2 is the pose: keep that furniture, legs, hands, and camera. "
-                "Do not change the furniture. Do not copy photo 2's face. Same person as photo 1."
-            )
-        elif wants_penis:
-            chunks.append(
-                "Photo 1 is identity: face, skin, hair. "
-                "Photo 2 is the target scene: copy pose, camera, and any penis, partner, "
-                "or fluids actually visible in photo 2. Same person as photo 1."
-            )
-        else:
-            chunks.append(
-                "Photo 1 is identity: face, skin, hair. "
-                "Photo 2 is pose and camera. Keep that furniture and body position. Same person as photo 1."
-            )
-    else:
-        chunks.append(EDIT_IDENTITY_LOCK)
-
-    if selected_prolapse & _PROLAPSE_IDS:
-        chunks.extend(_prolapse_layout_bits())
-    if selected_prolapse & {"prolapse_creampie", "prolapse_fucking"}:
-        skip_acts.add("prolapse")
-    # Lead with crotch extras so 4-step Klein does not lock onto "pussy is the center".
-    early_ids = [
-        x
-        for x in list(extras_ids) + [a for a in act_ids if a not in extras_ids]
-        if x in _PROLAPSE_IDS or x in {"anal_gape", "vaginal_gape"}
-    ]
-    seen_early: set[str] = set()
-    for item_id in early_ids:
-        if item_id in seen_early or item_id in skip_acts:
-            continue
-        seen_early.add(item_id)
-        piece = _frag(fr, "features.extras", item_id) or _frag(fr, "act.primary", item_id)
-        if isinstance(piece, str) and piece and not _covered(" ".join(chunks), piece):
-            chunks.append(piece)
-            skip_acts.add(item_id)
-
+    wants_penis = bool(selected & _PENIS_ACTS)
     preset_id = (scene.get("pose") or {}).get("scene") or (scene.get("preset") or {}).get("scene")
-    preset_text = preset_fragment(preset_id)
-    skip_pose = False
-    skip_camera = False
-    skip_partners = False
-    if preset_text:
-        if selected_prolapse & _PROLAPSE_IDS:
-            preset_text = _soften_preset_for_prolapse(preset_text)
-        chunks.append(preset_text)
-        skip_pose = True
-        skip_camera = True
-        low_preset = preset_text.lower()
-        if any(
-            tok in low_preset
-            for tok in ("alone", "one man", "two men", "three men", "if a penis", "photo 2")
-        ):
-            skip_partners = True
-        if "penis" in low_preset and any(t in low_preset for t in ("hips", "thigh", "attached")):
-            skip_partners = True
-        for act_id in acts:
-            piece = _frag(fr, "act.primary", act_id)
-            if isinstance(piece, str) and piece and _covered(preset_text, piece):
-                skip_acts.add(act_id)
-            elif act_id == "spreading" and "spread" in low_preset:
-                skip_acts.add(act_id)
-            elif (
-                act_id == "anal"
-                and "penis" in low_preset
-                and any(t in low_preset for t in ("anus", "anal"))
-            ):
-                skip_acts.add(act_id)
-            elif act_id == "vaginal" and "penis" in low_preset and "vagin" in low_preset:
-                skip_acts.add(act_id)
-            elif act_id == "masturbation" and "masturbat" in low_preset:
-                skip_acts.add(act_id)
-            elif act_id == "anal_gape" and any(
-                t in low_preset for t in ("dilated", "anal canal", "sphincter")
-            ):
-                skip_acts.add(act_id)
-            elif act_id in _PROLAPSE_IDS and "rosebud" in low_preset and "everted" in low_preset:
-                skip_acts.add(act_id)
-
-    on_back = pose_id in {"legs_spread", "lying_back", "missionary"}
-    if not preset_text and angle_id == "pov_45" and (on_back or not pose_changing):
-        chunks.append(
-            "New shot: she is lying on her back with her legs spread wide, knees bent and open, "
-            "photographed POV from a 45 degree angle so her face, breasts, genitals, asshole "
-            "and buttocks are all fully visible in one frame"
-        )
-        skip_pose = True
-        skip_camera = True
-        skip_acts.add("spreading")
-
+    pose_key = str(preset_id or "")
+    caption = preset_caption(pose_key)
     clothing = scene.get("clothing") or {}
+    fr = load_fragments("edit")
+
+    lines: list[str] = []
+    if extra_triggers:
+        trig = _join_unique(list(extra_triggers))
+        if trig:
+            lines.append(trig)
+
+    if pose_ref:
+        lines.append("Photo 1: identity, same face, skin, hair.")
+        if pose_key.startswith("prolapse") or "rosebud" in (preset_fragment(pose_key) or "").lower():
+            lines.append("Photo 2: pose and the rosebud on the anus. Keep the furniture. Do not copy her face.")
+        elif wants_penis or pose_key.startswith("anal_"):
+            lines.append("Photo 2: pose, camera, and the sex act. Copy any penis in the photo.")
+        elif override:
+            lines.append("Photo 2: keep this pose and furniture, same legs and hands.")
+        else:
+            lines.append("Photo 2: pose and camera. Keep this furniture.")
+    else:
+        lines.append(EDIT_IDENTITY_LOCK)
+
+    if caption:
+        lines.append(f"Pose: {caption}.")
+
     cloth = _frag(fr, "clothing.state", clothing.get("state"))
-    if isinstance(cloth, str) and cloth and not _covered(" ".join(chunks), cloth):
-        chunks.append(cloth)
+    if isinstance(cloth, str) and cloth:
+        lines.append(f"Outfit: {cloth}.")
     heels = _frag(fr, "clothing.heels", clothing.get("heels"))
     if isinstance(heels, str) and heels:
-        chunks.append(heels)
-    cloth_details = (clothing.get("details") or "").strip()
-    if cloth_details:
-        chunks.append(cloth_details)
+        lines.append(f"Heels: {heels}.")
 
-    if not skip_pose:
-        pose = _frag(fr, "position.pose", pose_id)
-        if isinstance(pose, str) and pose:
-            chunks.append(pose)
-    if pose_id in {"legs_spread", "missionary", "lying_back"}:
-        skip_acts.add("spreading")
-    if selected_prolapse & _PROLAPSE_IDS:
-        skip_acts.add("anal_gape")
-    if selected_prolapse & {"prolapse_creampie", "prolapse_fucking"}:
-        skip_acts.add("prolapse")
-
-    for act_id in acts:
-        if act_id in skip_acts:
-            continue
-        piece = _frag(fr, "act.primary", act_id)
-        if isinstance(piece, str) and piece and not _covered(" ".join(chunks), piece):
-            chunks.append(piece)
-
-    partners = scene.get("partners") or {}
-    pcount = _frag(fr, "partners.count", partners.get("count"))
-    so_far = " ".join(chunks).lower()
-    if (
-        not skip_partners
-        and isinstance(pcount, str)
-        and pcount
-        and not _covered(so_far, pcount)
-        and not ("alone" in so_far and "alone" in pcount.lower())
-    ):
-        chunks.append(pcount)
-
-    if not skip_camera:
-        angle = _frag(fr, "camera.angle", angle_id)
-        if isinstance(angle, str) and angle and not _covered(" ".join(chunks), angle):
-            chunks.append(angle)
-
-    finish = scene.get("finish") or {}
-    fx_ids = [x for x in (finish.get("effects") or []) if _tag_value(x) and x not in _FLUID_IDS]
-    fx = _frag(fr, "finish.effects", fx_ids)
-    if isinstance(fx, list):
-        for item in fx:
-            if item and not _covered(" ".join(chunks), item):
-                chunks.append(item)
-
-    feat_ids = [
-        x
-        for x in ((scene.get("features") or {}).get("extras") or [])
-        if _tag_value(x) and x not in _FLUID_IDS
-    ]
-    if (_selected_ids(scene, "act", "primary") | set(feat_ids)) & _PROLAPSE_IDS:
-        feat_ids = [x for x in feat_ids if x != "anal_gape"]
-    if any(x in feat_ids for x in ("prolapse_creampie", "prolapse_fucking")):
-        feat_ids = [x for x in feat_ids if x != "prolapse"]
-    feat_ids = [x for x in feat_ids if x not in skip_acts]
-    feats = _frag(fr, "features.extras", feat_ids)
-    if isinstance(feats, list):
-        for item in feats:
-            if item and not _covered(" ".join(chunks), item):
-                chunks.append(item)
-
-    hay = " ".join(chunks).lower()
-    penis_already = (
-        "penis" in hay
-        and any(t in hay for t in ("penetrat", "enter", "inside", "if a penis", "if one is there"))
-        and any(t in hay for t in ("hip", "thigh", "attached", "photo 2", "rosebud"))
+    cream = bool(
+        selected & {"prolapse_creampie", "creampie"}
+        or finish & {"cum_inside"}
     )
-    fluid_bits = _fluid_bits(scene)
-    if "pearly-white" in hay or "pearly white" in hay:
-        fluid_bits = []
-    extra_bits = [] if penis_already else _penetration_bits(scene)
-    extra_bits.extend(fluid_bits)
-    for bit in extra_bits:
-        if bit and not _covered(" ".join(chunks), bit):
-            chunks.append(bit)
-    if fluid_bits and not _covered(" ".join(chunks), SEMEN_LOCK):
-        chunks.append(SEMEN_LOCK)
+    if selected & _PROLAPSE_IDS:
+        lines.append("two openings: pussy on top, anus underneath, a strip of skin between them")
+        lines.append("Pussy: its own slit, labia visible, nothing coming out of it.")
+        anus = (
+            "Anus: she has a prolapsed anus, folded wrinkled rectal lining hanging from the "
+            "asshole, not a smooth ball, not a sphere"
+        )
+        if cream:
+            anus += ", a little white semen on the folds"
+        lines.append(anus + ".")
+    elif "anal_gape" in selected:
+        lines.append("Anus: anal gape, she has a gaping ass, huge gape.")
+    elif "vaginal_gape" in selected:
+        lines.append("Pussy: she has a gaping pussy.")
 
-    keep = scene.get("keep") or {}
-    keep_ids = [k for k in (keep.get("traits") or []) if _tag_value(k)]
-    skip_keep = {"face", "skin", "hair"}
-    if must_restage:
-        skip_keep.update({"body", "lighting", "setting"})
-    if _tag_value(clothing.get("state")):
-        skip_keep.add("outfit")
-    extra_keep = [k for k in keep_ids if k not in skip_keep]
-    keep_bits = _frag(fr, "keep.traits", extra_keep)
-    if isinstance(keep_bits, list) and keep_bits:
-        chunks.append("Also keep " + _join_unique(keep_bits))
+    if "prolapse_fucking" in selected:
+        lines.append("Penis: erect, going through the rosebud into the anus, hips attached.")
+    elif wants_penis and "anal" in selected:
+        lines.append("Penis: erect, in her anus, shaft visible, hips attached.")
+    elif wants_penis and "vaginal" in selected:
+        lines.append("Penis: erect, in her vagina, shaft visible, hips attached.")
 
-    instruction = scene.get("instruction") or {}
-    text = (instruction.get("text") or "").strip()
-    if text:
-        chunks.append(text)
+    if cream and not (selected & _PROLAPSE_IDS):
+        lines.append("Cum: pearly-white semen leaking out.")
+    if extras & {"cum_face"} or finish & {"cum_face"}:
+        lines.append("Cum: pearly-white semen on her face.")
+    if extras & {"cum_body"} or finish & {"cum_body"}:
+        lines.append("Cum: pearly-white semen on her body.")
 
-    extras = _filter_edit_triggers(" ".join(chunks), extra_triggers)
-    chunks.extend(extras)
-    chunks.append("Photoreal photograph")
+    partners = (scene.get("partners") or {}).get("count")
+    if not wants_penis and partners in {None, "solo", "keep", ""}:
+        if selected & _PROLAPSE_IDS or override:
+            lines.append("Alone, no penis.")
 
-    return _join_edit(chunks)
+    notes = (scene.get("instruction") or {}).get("text") or ""
+    if str(notes).strip():
+        lines.append(str(notes).strip())
+
+    return "\n".join(lines)
 
 
 def compose_undress_prompt(
