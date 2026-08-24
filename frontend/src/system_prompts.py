@@ -103,7 +103,9 @@ DRY_POSE_NEGATIVE = (
     "pearl, egg, orb, marble, blob on crotch, toy sitting on skin, sticker on crotch, "
     "gash, wound, knife cut, extra vagina, missing labia, "
     "fused pussy and anus, cloaca, one giant genital hole, "
-    "dildo, glass penis, detached cock, floating penis"
+    "dildo, glass penis, detached cock, floating penis, "
+    "sausage, bratwurst, wurst, kielbasa, hose, rubber toy, chocolate bar, "
+    "man sucking, men sucking, men eating"
 )
 
 # Only when the edit actually asks for cum.

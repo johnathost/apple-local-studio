@@ -355,13 +355,21 @@ def compose_edit_prompt(
         lines.append(pussy + ".")
 
     if "all_holes" in selected or pose_key == "lora_gangbang":
-        lines.append("the girl is turned with her ass to the camera in a half-side view")
-        lines.append("she's riding a man: he lies on his back under her, his cock in her pussy, his balls showing")
-        lines.append("a second nude man behind her, his cock in her asshole, fucking her in the ass")
-        lines.append("a third nude man beside her, she's sucking his cock, his cock in her mouth")
+        lines.append("the girl is turned with her ass to the camera in a half-side view, her face visible from the side")
         lines.append(
-            "three nude men, no shorts, cocks growing from their groins into her holes, "
-            "faces out of frame. she looks back over her shoulder"
+            "the first man lies on his back, she straddles him, "
+            "his erect penis in her pussy, his testicles visible"
+        )
+        lines.append(
+            "the second man stands behind her, his erect penis in her asshole"
+        )
+        lines.append(
+            "the third man stands beside her, she is sucking his erect penis"
+        )
+        lines.append(
+            "three completely nude men, no underwear, each erect penis attached to that man's hips. "
+            "Only the girl has a penis in her mouth. The men are fucking her, they are not sucking, "
+            "their mouths are closed, faces out of frame"
         )
     elif "prolapse_fucking" in selected:
         lines.append(
