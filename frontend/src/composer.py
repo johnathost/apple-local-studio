@@ -311,6 +311,13 @@ def compose_edit_prompt(
     pose_line = _frag(fr, "position.pose", pose)
     if isinstance(pose_line, str) and pose_line:
         lines.append(pose_line)
+    if str(pose) in _SPREAD_POSES:
+        lines.append(
+            "Her face and her breasts are in the photograph. "
+            "Do not crop her head or chest. "
+            "Do not hide her face behind a thigh. "
+            "Camera looks from her crotch toward her face."
+        )
 
     face_line = _frag(fr, "expression.face", face or "keep")
     if isinstance(face_line, str) and face_line:

@@ -428,8 +428,12 @@ function renderBuilder() {
     body.className = "group-body";
 
     for (const field of group.fields || []) {
+      if (!fieldVisible(field)) continue;
       const wrap = document.createElement("div");
-      if (field.type !== "pose_gallery") {
+      const hideLabel =
+        field.type === "pose_gallery" ||
+        ((group.fields || []).length === 1 && field.label === group.label);
+      if (!hideLabel) {
         const label = document.createElement("div");
         label.className = "field-label";
         label.textContent = field.label;
@@ -438,6 +442,13 @@ function renderBuilder() {
 
       if (field.type === "pose_gallery") {
         renderPoseGallery(wrap, field);
+      } else if (field.type === "choice" && (field.options || []).some((o) => o.group)) {
+        const poseBlock = renderStudioField(group, field);
+        if (poseBlock) {
+          poseBlock.querySelector(".studio-kicker")?.remove();
+          body.appendChild(poseBlock);
+        }
+        continue;
       } else if (field.type === "choice") {
         const chips = document.createElement("div");
         chips.className = "chips";
@@ -582,13 +593,9 @@ function syncStrengthChrome() {
 }
 
 function setPoseChrome() {
-  const wrap = $("#pose-wrap");
-  const poseMode = state.editKind === "pose" && !state.studioSimple;
-  wrap?.classList.toggle("hidden", !poseMode);
-  const has = Boolean(state.poseImage);
-  const label = $("#pose-label");
-  if (label) label.textContent = has ? state.poseImage.filename : "";
-  $("#btn-clear-pose")?.classList.toggle("hidden", !has || !poseMode);
+  $("#pose-wrap")?.classList.add("hidden");
+  $("#pose-label")?.classList.add("hidden");
+  $("#btn-clear-pose")?.classList.add("hidden");
   syncStrengthChrome();
 }
 
@@ -1180,10 +1187,8 @@ function applyModeChrome() {
   }
   const sys = $("#system-line");
   if (sys) {
-    sys.textContent =
-      (kind === "pose" && state.systemPrompts.lora) ||
-      state.systemPrompts[kind || state.mode] ||
-      "";
+    sys.textContent = "";
+    sys.classList.add("hidden");
   }
   const title = $("#builder-title");
   if (title) {
