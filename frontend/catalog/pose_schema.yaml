@@ -1,4 +1,4 @@
-# Pose restage scene builder. SNOFS + identity photo. No pose plates.
+# Pose restage scene builder. Identity photo + default NSFW LoRA. No pose plates.
 
 groups:
   - id: sex
@@ -9,12 +9,12 @@ groups:
         type: choice
         default: solo
         options:
-          - { id: solo, label: Showing off }
-          - { id: masturbation, label: Masturbating }
-          - { id: vaginal, label: Getting fucked }
-          - { id: anal, label: Anal }
-          - { id: oral, label: Blowjob }
-          - { id: gangbang, label: Gangbang }
+          - { id: solo, label: Showing off, icon: "🍑", blurb: Alone, legs open, nothing in her yet }
+          - { id: masturbation, label: Masturbating, icon: "🖐️", blurb: She's getting herself off for you }
+          - { id: vaginal, label: Getting fucked, icon: "🍆", blurb: A real cock in her pussy, hips attached }
+          - { id: anal, label: Anal, icon: "🍑", blurb: Cock in her ass, pussy empty in front of it }
+          - { id: oral, label: Blowjob, icon: "👄", blurb: His cock in her mouth, looking at you }
+          - { id: gangbang, label: Gangbang, icon: "🔥", blurb: Three men, all holes used }
 
   - id: position
     label: Pose
@@ -26,41 +26,49 @@ groups:
         options:
           - id: spread_heels
             label: Frog-leg
+            icon: "🦵"
             group: legs_spread
             group_label: Legs spread
             blurb: Heels planted, knees out, pussy in your face
           - id: spread_v
             label: Legs in a V
+            icon: "✌️"
             group: legs_spread
             group_label: Legs spread
             blurb: Ankles up, holes stacked, nowhere to hide
           - id: spread_held
             label: Holding open
+            icon: "👐"
             group: legs_spread
             group_label: Legs spread
             blurb: Hands on her thighs, pulling herself apart
           - id: spread_press
             label: Knees to chest
+            icon: "🙇"
             group: legs_spread
             group_label: Legs spread
             blurb: Folded in half, ass tilted, ready to be used
           - id: doggy_lookback
             label: Looking back
+            icon: "👀"
             group: all_fours
             group_label: All fours
             blurb: Ass to camera, eyes over her shoulder
           - id: doggy_chest
             label: Face down, ass up
+            icon: "🙏"
             group: all_fours
             group_label: All fours
             blurb: Chest in the sheets, hips high, presenting
           - id: doggy_crawl
             label: Crawling to you
+            icon: "🐾"
             group: all_fours
             group_label: All fours
             blurb: On all fours coming at the lens, tits hanging
           - id: doggy_present
             label: Wide-knee present
+            icon: "🍑"
             group: all_fours
             group_label: All fours
             blurb: Knees spread, back arched, both holes offered
@@ -74,14 +82,14 @@ groups:
         default: none
         show_if: { group: sex, field: category, equals: masturbation }
         options:
-          - { id: none, label: Just teasing }
-          - { id: fingers, label: Fingers / clit }
-          - { id: dildo_ride_pussy, label: Dildo · pussy }
-          - { id: dildo_ride_anal, label: Dildo · ass }
-          - { id: horse_ride_pussy, label: Horse cock · pussy }
-          - { id: horse_ride_anal, label: Horse cock · ass }
-          - { id: wand, label: Wand on her clit }
-          - { id: double, label: Both holes filled }
+          - { id: none, label: Just teasing, icon: "✨", blurb: Rubbing, no toy in her yet }
+          - { id: fingers, label: Fingers / clit, icon: "☝️", blurb: Two fingers in, thumb on her clit }
+          - { id: dildo_ride_pussy, label: Dildo · pussy, icon: "🍌", blurb: Sinking onto a thick toy }
+          - { id: dildo_ride_anal, label: Dildo · ass, icon: "🍑", blurb: Riding it with her asshole }
+          - { id: horse_ride_pussy, label: Horse cock · pussy, icon: "🐴", blurb: Stretched around a huge shaft }
+          - { id: horse_ride_anal, label: Horse cock · ass, icon: "🐴", blurb: That fat toy wrecking her ass }
+          - { id: wand, label: Wand on her clit, icon: "⚡", blurb: Hitachi mashed against her clit }
+          - { id: double, label: Both holes filled, icon: "2️⃣", blurb: A toy in her pussy and her ass }
 
   - id: expression
     label: Edit expression
@@ -91,12 +99,12 @@ groups:
         type: choice
         default: keep
         options:
-          - { id: keep, label: Keep original }
-          - { id: happy, label: Happy }
-          - { id: sex_face, label: Sex face }
-          - { id: tongue_out, label: Tongue out }
-          - { id: pain, label: Pain }
-          - { id: ahegao, label: Ahegao }
+          - { id: keep, label: Keep original, icon: "😐", blurb: Don't touch the face from the photo }
+          - { id: happy, label: Happy, icon: "😊", blurb: Flushed smile, she's into it }
+          - { id: sex_face, label: Sex face, icon: "🤤", blurb: Mouth open, heavy eyelids, gone }
+          - { id: tongue_out, label: Tongue out, icon: "😛", blurb: Panting, tongue on her lip }
+          - { id: pain, label: Pain, icon: "😣", blurb: It hurts so good, wincing }
+          - { id: ahegao, label: Ahegao, icon: "😵", blurb: Eyes rolled, tongue out, ruined }
 
   - id: pussy
     label: Pussy
@@ -106,11 +114,11 @@ groups:
         type: multi
         default: []
         options:
-          - { id: puffy, label: Puffy }
-          - { id: open, label: Spread open }
-          - { id: used, label: Used }
-          - { id: gaping, label: Gaping }
-          - { id: innie, label: Tight innie }
+          - { id: puffy, label: Puffy, icon: "🌸", blurb: Swollen lips, used and flushed }
+          - { id: open, label: Spread open, icon: "💋", blurb: Labia parted, you can see in }
+          - { id: used, label: Used, icon: "💦", blurb: Loose, wet, well-fucked }
+          - { id: gaping, label: Gaping, icon: "⭕", blurb: The hole stays open }
+          - { id: innie, label: Tight innie, icon: "🌷", blurb: Neat slit, barely showing }
 
   - id: asshole
     label: Asshole
@@ -120,11 +128,11 @@ groups:
         type: choice
         default: natural
         options:
-          - { id: natural, label: Keep / natural }
-          - { id: used, label: Used sphincter }
-          - { id: winking, label: Winking }
-          - { id: gaping, label: Gaping }
-          - { id: prolapse, label: Prolapse }
+          - { id: natural, label: Keep / natural, icon: "🍑", blurb: Leave her ass as-is }
+          - { id: used, label: Used sphincter, icon: "💫", blurb: Puffy rim, recently stretched }
+          - { id: winking, label: Winking, icon: "😉", blurb: The hole flexes at the camera }
+          - { id: gaping, label: Gaping, icon: "🕳️", blurb: Open dark circle, used asshole }
+          - { id: prolapse, label: Prolapse, icon: "🌹", blurb: Rosebud hanging out of her ass }
 
   - id: extras
     label: Filth
@@ -134,16 +142,16 @@ groups:
         type: multi
         default: []
         options:
-          - { id: wet_body, label: Sweaty }
-          - { id: dripping, label: Dripping wet }
-          - { id: squirting, label: Squirting }
-          - { id: drool, label: Drooling }
-          - { id: hard_nipples, label: Hard nipples }
-          - { id: creampie, label: Creampie }
-          - { id: anal_creampie, label: Ass creampie }
-          - { id: prolapse_creampie, label: Prolapse leaking }
-          - { id: cum_face, label: Facial }
-          - { id: cum_tits, label: Cum on tits }
+          - { id: wet_body, label: Sweaty, icon: "🥵", blurb: Shiny skin, she worked for it }
+          - { id: dripping, label: Dripping wet, icon: "💧", blurb: Glossy pussy, strings of wet }
+          - { id: squirting, label: Squirting, icon: "💦", blurb: She's making a mess }
+          - { id: drool, label: Drooling, icon: "🤤", blurb: Spit on her tongue and chin }
+          - { id: hard_nipples, label: Hard nipples, icon: "🍒", blurb: Tight, sticking out }
+          - { id: creampie, label: Creampie, icon: "🥛", blurb: Pussy full, white cum leaking }
+          - { id: anal_creampie, label: Ass creampie, icon: "🍑", blurb: Cum dripping from her ass }
+          - { id: prolapse_creampie, label: Prolapse leaking, icon: "🌹", blurb: Cream on the rosebud }
+          - { id: cum_face, label: Facial, icon: "😌", blurb: White streaks across her face }
+          - { id: cum_tits, label: Cum on tits, icon: "🍈", blurb: Glazed nipples, messy chest }
 
   - id: clothing
     label: Outfit
@@ -153,29 +161,29 @@ groups:
         type: choice
         default: nude
         options:
-          - { id: keep, label: Keep original }
-          - { id: nude, label: Nude }
-          - { id: lingerie, label: Lingerie }
-          - { id: crotchless, label: Crotchless }
-          - { id: thong_aside, label: Thong pulled aside }
-          - { id: fishnets, label: Fishnets }
-          - { id: latex, label: Latex }
-          - { id: pantyhose, label: Pantyhose }
-          - { id: garter, label: Garter belt }
-          - { id: wet_shirt, label: Wet shirt }
-          - { id: collar, label: Collar only }
-          - { id: dress_hiked, label: Dress hiked }
+          - { id: keep, label: Keep original, icon: "👕", blurb: Don't change what she's wearing }
+          - { id: nude, label: Nude, icon: "✨", blurb: Nothing on, all of her out }
+          - { id: lingerie, label: Lingerie, icon: "👙", blurb: Tiny set, barely covering }
+          - { id: crotchless, label: Crotchless, icon: "🧵", blurb: Panties with the good part missing }
+          - { id: thong_aside, label: Thong pulled aside, icon: "🎀", blurb: Strip of fabric, pussy out }
+          - { id: fishnets, label: Fishnets, icon: "🕸️", blurb: Ripped mesh, crotch open }
+          - { id: latex, label: Latex, icon: "🖤", blurb: Shiny black, cut out at the holes }
+          - { id: pantyhose, label: Pantyhose, icon: "🧦", blurb: Ripped open at the crotch }
+          - { id: garter, label: Garter belt, icon: "🔗", blurb: Stockings, no panties }
+          - { id: wet_shirt, label: Wet shirt, icon: "💧", blurb: Soaked tee, nipples showing, no bottoms }
+          - { id: collar, label: Collar only, icon: "⛓️", blurb: Nude except the collar }
+          - { id: dress_hiked, label: Dress hiked, icon: "👗", blurb: Skirt up, no panties }
 
       - id: heels
         label: Heels
         type: choice
         default: none
         options:
-          - { id: none, label: Barefoot }
-          - { id: black, label: Black stilettos }
-          - { id: red, label: Red heels }
-          - { id: platforms, label: Platforms }
-          - { id: boots, label: Thigh boots }
+          - { id: none, label: Barefoot, icon: "🦶", blurb: No shoes }
+          - { id: black, label: Black stilettos, icon: "👠", blurb: Classic fuck-me heels }
+          - { id: red, label: Red heels, icon: "👠", blurb: Loud red, still on }
+          - { id: platforms, label: Platforms, icon: "👠", blurb: Thick sole, extra height }
+          - { id: boots, label: Thigh boots, icon: "👢", blurb: Shiny boots up the thigh }
 
 engine_defaults:
   width: 1024

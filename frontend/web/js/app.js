@@ -152,6 +152,58 @@ function groupedOptions(field) {
   return groups;
 }
 
+function renderOptCard(opt, { active, multi, conflict, onClick }) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className =
+    "pose-pick" +
+    (multi ? " multi" : "") +
+    (active ? " active" : "") +
+    (conflict ? " conflict" : "");
+  if (opt.icon) {
+    const icon = document.createElement("span");
+    icon.className = "pose-pick-icon";
+    icon.textContent = opt.icon;
+    icon.setAttribute("aria-hidden", "true");
+    btn.appendChild(icon);
+  }
+  const copy = document.createElement("span");
+  copy.className = "pose-pick-copy";
+  const title = document.createElement("span");
+  title.className = "pose-pick-title";
+  title.textContent = opt.label;
+  copy.appendChild(title);
+  if (opt.blurb) {
+    const blurb = document.createElement("span");
+    blurb.className = "pose-pick-blurb";
+    blurb.textContent = opt.blurb;
+    copy.appendChild(blurb);
+  }
+  btn.appendChild(copy);
+  btn.addEventListener("click", onClick);
+  return btn;
+}
+
+function renderOptGrid(field, group, { current, selected, onPick }) {
+  const n = (field.options || []).length;
+  const grid = document.createElement("div");
+  grid.className = "pose-grid" + (n > 6 ? " dense" : "");
+  for (const opt of field.options || []) {
+    const active = selected ? selected.has(opt.id) : current === opt.id;
+    const conflict =
+      !active && optionBlocked(group.id, field.id, opt.id);
+    grid.appendChild(
+      renderOptCard(opt, {
+        active,
+        multi: field.type === "multi",
+        conflict,
+        onClick: () => onPick(opt),
+      })
+    );
+  }
+  return grid;
+}
+
 function renderStudioField(group, field) {
   if (!fieldVisible(field)) return null;
   const wrap = document.createElement("div");
@@ -176,24 +228,15 @@ function renderStudioField(group, field) {
       const grid = document.createElement("div");
       grid.className = "pose-grid";
       for (const opt of g.options) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "pose-pick" + (current === opt.id ? " active" : "");
-        const title = document.createElement("span");
-        title.className = "pose-pick-title";
-        title.textContent = opt.label;
-        btn.appendChild(title);
-        if (opt.blurb) {
-          const blurb = document.createElement("span");
-          blurb.className = "pose-pick-blurb";
-          blurb.textContent = opt.blurb;
-          btn.appendChild(blurb);
-        }
-        btn.addEventListener("click", () => {
-          setSceneValue(group.id, field.id, opt.id);
-          renderSceneStudio();
-        });
-        grid.appendChild(btn);
+        grid.appendChild(
+          renderOptCard(opt, {
+            active: current === opt.id,
+            onClick: () => {
+              setSceneValue(group.id, field.id, opt.id);
+              renderSceneStudio();
+            },
+          })
+        );
       }
       cat.appendChild(grid);
       cats.appendChild(cat);
@@ -202,46 +245,39 @@ function renderStudioField(group, field) {
     return wrap;
   }
 
-  const chips = document.createElement("div");
-  chips.className = "chips";
   if (field.type === "choice") {
     const current = getSceneValue(group.id, field.id);
-    for (const opt of field.options || []) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "chip" + (current === opt.id ? " active" : "");
-      btn.textContent = opt.label;
-      if (optionBlocked(group.id, field.id, opt.id) && current !== opt.id) {
-        btn.classList.add("conflict");
-      }
-      btn.addEventListener("click", () => {
-        if (opt.id !== "keep" && current === opt.id && field.id === "face") {
-          setSceneValue(group.id, field.id, "keep");
-        } else {
-          setSceneValue(group.id, field.id, opt.id);
-        }
-        renderSceneStudio();
-      });
-      chips.appendChild(btn);
-    }
-  } else if (field.type === "multi") {
-    const selected = new Set(getSceneValue(group.id, field.id) || []);
-    for (const opt of field.options || []) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "chip multi" + (selected.has(opt.id) ? " active" : "");
-      btn.textContent = opt.label;
-      btn.addEventListener("click", () => {
-        const cur = new Set(getSceneValue(group.id, field.id) || []);
-        if (cur.has(opt.id)) cur.delete(opt.id);
-        else cur.add(opt.id);
-        setSceneValue(group.id, field.id, [...cur]);
-        renderSceneStudio();
-      });
-      chips.appendChild(btn);
-    }
+    wrap.appendChild(
+      renderOptGrid(field, group, {
+        current,
+        onPick: (opt) => {
+          if (opt.id !== "keep" && current === opt.id && field.id === "face") {
+            setSceneValue(group.id, field.id, "keep");
+          } else {
+            setSceneValue(group.id, field.id, opt.id);
+          }
+          renderSceneStudio();
+        },
+      })
+    );
+    return wrap;
   }
-  wrap.appendChild(chips);
+
+  if (field.type === "multi") {
+    const selected = new Set(getSceneValue(group.id, field.id) || []);
+    wrap.appendChild(
+      renderOptGrid(field, group, {
+        selected,
+        onPick: (opt) => {
+          const cur = new Set(getSceneValue(group.id, field.id) || []);
+          if (cur.has(opt.id)) cur.delete(opt.id);
+          else cur.add(opt.id);
+          setSceneValue(group.id, field.id, [...cur]);
+          renderSceneStudio();
+        },
+      })
+    );
+  }
   return wrap;
 }
 
@@ -271,31 +307,9 @@ function renderSceneStudio() {
       if (field.type === "choice" || field.type === "multi") fields.push({ group, field });
     }
   }
-  const skip = new Set();
-  const pairWith = {
-    "pussy.look": "asshole.look",
-    "clothing.state": "clothing.heels",
-  };
-  for (let i = 0; i < fields.length; i++) {
-    const key = `${fields[i].group.id}.${fields[i].field.id}`;
-    if (skip.has(key)) continue;
-    const mateId = pairWith[key];
-    const node = renderStudioField(fields[i].group, fields[i].field);
-    if (!node) continue;
-    if (mateId) {
-      const mate = fields.find((f) => `${f.group.id}.${f.field.id}` === mateId);
-      const mateNode = mate ? renderStudioField(mate.group, mate.field) : null;
-      if (mateNode) {
-        skip.add(mateId);
-        const split = document.createElement("div");
-        split.className = "studio-split";
-        split.appendChild(node);
-        split.appendChild(mateNode);
-        root.appendChild(split);
-        continue;
-      }
-    }
-    root.appendChild(node);
+  for (const { group, field } of fields) {
+    const node = renderStudioField(group, field);
+    if (node) root.appendChild(node);
   }
 
   const foot = document.createElement("div");
@@ -428,95 +442,33 @@ function renderBuilder() {
     body.className = "group-body";
 
     for (const field of group.fields || []) {
-      if (!fieldVisible(field)) continue;
-      const wrap = document.createElement("div");
-      const hideLabel =
-        field.type === "pose_gallery" ||
-        ((group.fields || []).length === 1 && field.label === group.label);
-      if (!hideLabel) {
+      if (field.type === "pose_gallery") {
+        const wrap = document.createElement("div");
+        renderPoseGallery(wrap, field);
+        body.appendChild(wrap);
+        continue;
+      }
+      if (field.type === "text") {
+        const wrap = document.createElement("div");
         const label = document.createElement("div");
         label.className = "field-label";
         label.textContent = field.label;
         wrap.appendChild(label);
-      }
-
-      if (field.type === "pose_gallery") {
-        renderPoseGallery(wrap, field);
-      } else if (field.type === "choice" && (field.options || []).some((o) => o.group)) {
-        const poseBlock = renderStudioField(group, field);
-        if (poseBlock) {
-          poseBlock.querySelector(".studio-kicker")?.remove();
-          body.appendChild(poseBlock);
-        }
-        continue;
-      } else if (field.type === "choice") {
-        const chips = document.createElement("div");
-        chips.className = "chips";
-        for (const opt of field.options || []) {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "chip";
-          btn.textContent = opt.label;
-          btn.dataset.value = opt.id;
-          const selected = getSceneValue(group.id, field.id) === opt.id;
-          if (selected) btn.classList.add("active");
-          else if (optionBlocked(group.id, field.id, opt.id)) {
-            btn.classList.add("conflict");
-            btn.title = "Conflicts with the current scene — click to switch";
-          }
-          btn.addEventListener("click", () => {
-            setSceneValue(group.id, field.id, opt.id);
-            chips.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
-            btn.classList.add("active");
-            btn.classList.remove("conflict");
-          });
-          chips.appendChild(btn);
-        }
-        wrap.appendChild(chips);
-      } else if (field.type === "multi") {
-        const chips = document.createElement("div");
-        chips.className = "chips";
-        const selected = new Set(getSceneValue(group.id, field.id) || []);
-        for (const opt of field.options || []) {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "chip multi";
-          btn.textContent = opt.label;
-          if (selected.has(opt.id)) btn.classList.add("active");
-          else if (optionBlocked(group.id, field.id, opt.id)) {
-            btn.classList.add("conflict");
-            btn.title = "Conflicts with the current scene — click to switch";
-          }
-          btn.addEventListener("click", () => {
-            const cur = new Set(getSceneValue(group.id, field.id) || []);
-            if (opt.id === "none") {
-              cur.clear();
-            } else {
-              cur.delete("none");
-              if (cur.has(opt.id)) cur.delete(opt.id);
-              else cur.add(opt.id);
-            }
-            setSceneValue(group.id, field.id, [...cur]);
-            chips.querySelectorAll(".chip").forEach((c) => {
-              const id = c.dataset.value;
-              c.classList.toggle("active", cur.has(id));
-              c.classList.toggle("conflict", !cur.has(id) && optionBlocked(group.id, field.id, id));
-            });
-          });
-          btn.dataset.value = opt.id;
-          chips.appendChild(btn);
-        }
-        wrap.appendChild(chips);
-      } else if (field.type === "text") {
         const input = document.createElement("input");
         input.type = "text";
         input.placeholder = field.placeholder || "";
         input.value = getSceneValue(group.id, field.id) || "";
         input.addEventListener("input", () => setSceneValue(group.id, field.id, input.value));
         wrap.appendChild(input);
+        body.appendChild(wrap);
+        continue;
       }
-
-      body.appendChild(wrap);
+      const block = renderStudioField(group, field);
+      if (!block) continue;
+      if ((group.fields || []).length === 1 || field.label === group.label) {
+        block.querySelector(".studio-kicker")?.remove();
+      }
+      body.appendChild(block);
     }
 
     details.appendChild(body);

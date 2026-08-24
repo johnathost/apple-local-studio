@@ -202,11 +202,14 @@ button.home-card:focus-visible {
   grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
+.pose-grid.dense {
+  grid-template-columns: 1fr 1fr 1fr;
+}
 .pose-pick {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: flex-start;
-  gap: 2px;
+  gap: 8px;
   text-align: left;
   padding: 8px 9px;
   border-radius: 10px;
@@ -223,6 +226,26 @@ button.home-card:focus-visible {
   background: linear-gradient(165deg, rgba(255, 77, 109, 0.22), rgba(192, 132, 252, 0.1));
   box-shadow: 0 0 0 1px rgba(255, 77, 109, 0.25);
 }
+.pose-pick.multi.active {
+  border-color: rgba(192, 132, 252, 0.7);
+  background: linear-gradient(165deg, rgba(192, 132, 252, 0.2), rgba(255, 77, 109, 0.08));
+  box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.25);
+}
+.pose-pick.conflict { opacity: 0.45; }
+.pose-pick-icon {
+  flex: 0 0 auto;
+  font-size: 1.2rem;
+  line-height: 1.2;
+  width: 1.4em;
+  text-align: center;
+  filter: grayscale(0.1);
+}
+.pose-pick-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
 .pose-pick-title {
   font-size: 0.8rem;
   font-weight: 700;
@@ -235,6 +258,7 @@ button.home-card:focus-visible {
   font-weight: 400;
 }
 .pose-pick.active .pose-pick-blurb { color: #ffc1cc; }
+.pose-pick.multi.active .pose-pick-blurb { color: #e9d5ff; }
 .studio-extras {
   display: flex;
   flex-wrap: wrap;
@@ -960,5 +984,6 @@ textarea { line-height: 1.4; }
     grid-template-columns: 1fr;
   }
   .studio-split,
-  .pose-grid { grid-template-columns: 1fr; }
+  .pose-grid,
+  .pose-grid.dense { grid-template-columns: 1fr; }
 }
