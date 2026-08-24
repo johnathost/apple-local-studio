@@ -68,8 +68,8 @@ SYSTEM_EDIT_LORA = (
 SYSTEM_EDIT_POSE = (
     "System: Two reference photos. "
     "Image 1 is WHO: keep this person's face, skin, hair, and nails. "
-    "Image 2 is the pose and the genitals: copy body position, camera, and crotch from image 2. "
-    "Copy image 2's vulva: mons, labia, a natural cleft above a separate anus. "
+    "Image 2 is the pose and the sex: copy body position, camera, and crotch from image 2. "
+    "Copy her spread pussy and her asshole from image 2 — pussy above, asshole below. "
     "Do not copy image 2's face, hair, or identity. "
     "Photoreal, no text, no watermark. "
     f"{SEX_SCENE_LOCK}"
@@ -81,7 +81,7 @@ SYSTEM_EDIT_POSE_OVERRIDE = (
     "Photo 2 is the pose: keep that furniture, legs, hands, and camera. "
     "Two openings. Pussy on top. Prolapsed anus below. "
     "The prolapse is folded wrinkled flesh, not a smooth pink ball. "
-    "If a penis is requested, draw a real skin-colored cock attached to male hips, not a toy. "
+    "If she's getting fucked, draw a real cock in her, attached to a man's hips, not a toy. "
     "Photoreal, no text, no watermark."
 )
 

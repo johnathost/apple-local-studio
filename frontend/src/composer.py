@@ -277,19 +277,19 @@ def compose_edit_prompt(
                     "Do not copy photo 2's face or nails."
                 )
         elif pose_key.startswith("anal_"):
-            lines.append("Photo 2: pose, camera, and the sex act. Copy the penis in the photo.")
+            lines.append("Photo 2: pose and the fuck. Copy the cock in her ass from the photo.")
         elif override and wants_penis:
             lines.append(
-                "Photo 2: pose and legs. There is no penis in photo 2; add a real one."
+                "Photo 2: pose and legs. There is no cock in photo 2; she's getting fucked — add a real one."
             )
         elif override:
             lines.append("Photo 2: pose and legs.")
         elif wants_penis:
-            lines.append("Photo 2: pose, camera, and the sex act. Copy any penis in the photo.")
+            lines.append("Photo 2: pose, camera, and the fuck. Copy the cock in the photo.")
         else:
             lines.append(
                 "Photo 2: pose, camera, and crotch. "
-                "Copy the vulva from photo 2 — it sits above the anus, not on the buttocks."
+                "Copy her spread pussy and her asshole from photo 2. Pussy above, asshole below."
             )
     else:
         lines.append(EDIT_IDENTITY_LOCK)
@@ -316,72 +316,73 @@ def compose_edit_prompt(
         or finish & {"cum_inside"}
     )
     if selected & _PROLAPSE_IDS:
-        lines.append("two openings: pussy on top, anus underneath, a strip of skin between them")
-        lines.append("Pussy: its own slit, labia visible, nothing coming out of it.")
+        lines.append("two holes: her pussy on top, her asshole underneath, skin between them")
+        lines.append("Pussy: spread pussy, labia, nothing coming out of it.")
         anus = (
-            "Anus: she has a prolapsed anus, folded wrinkled rectal lining hanging from the "
-            "asshole, not a smooth ball, not a sphere"
+            "Asshole: she has a prolapsed asshole, rosebud, folded wet rectal lining "
+            "hanging out of her ass"
         )
         if cream:
-            anus += ", a little white semen on the folds"
+            anus += ", cum smeared on the folds"
         lines.append(anus + ".")
     elif "anal_gape" in selected:
-        anus = "Anus: anal gape, she has a gaping ass, huge gape"
+        anus = "Asshole: anal gape, she has a gaping ass, huge gape, used asshole"
         if cream:
-            anus += ", a little white semen in the gape"
+            anus += ", cum leaking out of her ass"
         lines.append(anus + ".")
     elif "vaginal_gape" in selected:
-        pussy = "Pussy: she has a gaping pussy, she is spreading her pussy"
+        pussy = "Pussy: she has a gaping pussy, she is spreading her pussy open"
         if cream:
-            pussy += ", white semen inside the gape leaking out"
+            pussy += ", cum leaking out of her pussy"
         lines.append(pussy + ".")
     elif "spreading" in selected or pose_key.startswith("spread_"):
         lines.append(
-            "two openings: pussy on top toward the belly, anus underneath toward the seat, "
-            "a strip of perineum skin between them"
+            "she's spreading her legs, showing her pussy and her asshole, "
+            "two holes: pussy toward her belly, asshole toward the seat, skin between them"
         )
         if lora_dir:
             pussy = (
-                "Pussy: mons, outer labia, inner lips, clitoral hood, a natural cleft. "
-                "Anus: its own pucker below the perineum"
+                "her pussy spread open, labia, clit, a wet hole. "
+                "her asshole is a separate pucker right below"
             )
         else:
             pussy = (
-                "Pussy: copy photo 2's vulva — mons, outer labia, inner lips, clitoral hood, "
-                "a natural cleft"
+                "copy her spread pussy from photo 2: labia, clit, wet hole, "
+                "her asshole showing just below"
             )
         if cream:
-            pussy += ". White semen in the cleft leaking out"
+            pussy += ", cum leaking out of her pussy"
         lines.append(pussy + ".")
 
     if "all_holes" in selected or pose_key == "lora_gangbang":
-        lines.append("the girl is turned with her ass to the camera")
-        lines.append("all three men are penetrating the girl")
-        lines.append("oral, anal and vaginal sex")
+        lines.append("the girl is turned with her ass to the camera in a half-side view")
+        lines.append("she's riding a man: he lies on his back under her, his cock in her pussy, his balls showing")
+        lines.append("a second nude man behind her, his cock in her asshole, fucking her in the ass")
+        lines.append("a third nude man beside her, she's sucking his cock, his cock in her mouth")
         lines.append(
-            "three separate men: their torsos, hips, and thighs in frame, faces out of frame. "
-            "She looks back over her shoulder so her face is visible"
+            "three nude men, no shorts, cocks growing from their groins into her holes, "
+            "faces out of frame. she looks back over her shoulder"
         )
     elif "prolapse_fucking" in selected:
         lines.append(
-            "Penis: a real skin-colored erect cock, glans and shaft, attached to a man's hips "
-            "and thighs, going through the rosebud into the anus. Not a dildo, not glass, not a toy."
+            "a man is fucking her prolapsed asshole, a real cock through the rosebud "
+            "into her ass, his hips and thighs attached"
         )
     elif wants_penis and "anal" in selected:
         lines.append(
-            "Penis: a real skin-colored erect cock, glans and shaft, attached to a man's hips, "
-            "in her anus. Not a dildo, not a toy."
+            "a man is fucking her in the ass, a real cock in her asshole, "
+            "his hips and thighs in frame, her pussy empty above it"
         )
     elif wants_penis and "vaginal" in selected:
         lines.append(
-            "Penis: a real skin-colored erect cock, glans and shaft, attached to a man's hips, "
-            "in her vagina. Not a dildo, not a toy."
+            "a man is fucking her pussy, a real cock in her cunt, "
+            "his hips and thighs in frame"
         )
 
     if extras & {"cum_face"} or finish & {"cum_face"}:
-        lines.append("Cum: pearly-white semen on her face.")
+        lines.append("cum on her face, a facial, white streaks")
     if extras & {"cum_body"} or finish & {"cum_body"}:
-        lines.append("Cum: pearly-white semen on her body.")
+        lines.append("cum on her tits and body")
 
     partners = (scene.get("partners") or {}).get("count")
     if not wants_penis and partners in {None, "solo", "keep", ""}:
