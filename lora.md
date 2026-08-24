@@ -1,4 +1,133 @@
-# Lora Models
+# Master Lora
+
+### SNOFS (Sex, Nudes, Other Fun Stuff)
+
+Description:
+
+```plaintext
+Want to support my work or help fund the training of this dataset on other models? Join the Patreon in my profile, and if you do - thank you!
+Krea 2 V1.3D:
+
+Alright, alright. I figured out a way to greatly restore texture back. It wasn't more training or different settings, and that's all I'm going to say about it. I deserve to have some trade secrets, no? I made it version 1.3D because the D stands for detail. It was actually try F, as in I was totally...frustrated...with how many lengthy tries it took.
+
+Anyways, I had versions that took it further but it tended to have more broken anatomy. So, the same rules still apply if you want something to look like a photo:
+
+Be sure to mention that it's a photo/photograph in the prompt. Do NOT use "photorealistic" or any other term that doesn't actually mean a photo. Krea 2 was trained on a ton of artwork so using any of those types of terms will yeet it back to bad texture.
+
+Some rare prompts might still want to go over to the anime-side, but I still have the photo slider directly on SNOFS Krea. Simply set it to somewhere around .5-2 on the strength and you're probably golden. This was trained on SNOFS 1.2 so I'll be putting out an updated version at some point:
+https://civitai.red/models/2823820/photodetail-slider-for-snofs-krea
+
+The same goes for some specific terms. When in doubt, use the words listed below instead of their synonyms.
+
+My two-stage sampler is still handy for multiple reasons:
+https://github.com/Auryg/Krea-2-Two-Stage-Sampler
+
+The idea for the two-stage sampler that you can generate without the turbo lora for the first bit, which helps with variation and prompt adherence, and then bump to a second stage with the turbo lora to keep things fast. For the three-stage variation, you can then bump back to doing it without the turbo lora for the last bit if you want to use a negative prompt. You can also generate at a lower resolution to start and then bump it up.
+
+Also, please, for the love of god try SNOFS by itself before you go adding a bunch of other general NSFW loras or models to it that screw up anatomy.
+Ideogram:
+
+Ideogram model has been updated, and is available here: https://civitai.red/models/2781404/sex-nudes-other-fun-stuff-ideogram-snofs
+General Information:
+
+SNOFS was trained on natural language (or JSON, for Ideogram), not tags. It will work best if you use full sentences to describe what you want.
+
+Not using ComfyUI/your inference software doesn't support lokr? I've put up a merged version here. You can also use the merged base model to train off of: https://civitai.red/models/2416142/snofs-sex-nudes-and-other-fun-stuff-flux-2-klein-9b-base-and-distilled
+
+Here's a list of some of the terms that work well:
+
+    anus
+
+    blowjob
+
+    boudoir
+
+    condoms
+
+    deepthroat
+
+    braless
+
+    cowgirl position
+
+    cum
+
+    cunnilingus (be specific and maybe put kissing in the negative prompt)
+
+    deepthroat
+
+    dildo
+
+    doggystyle position
+
+    fingering (anal and vaginal)
+
+    hand in panties
+
+    handjob
+
+    hitachi magic wand
+
+    implied blowjob
+
+    ipcam / nightvision ipcam
+
+    masturbating (might want to put penis in negative prompt, or specify what she's rubbing for women)
+
+    massage
+
+    missionary position
+
+    naked, nude, etc.
+
+    penis
+
+    pregnant (and can specify trimester)
+
+    prone position
+
+    reverse cowgirl position
+
+    sex
+
+    sheer
+
+    snapchat (and caption/text/etc)
+
+    selfie (and mirror selfie)
+
+    spooning position
+
+    strap-on dildo
+
+    tentacles
+
+    licking testicles
+
+    undressing
+
+    vagina
+
+    wet clothes
+
+Depending on the version, the following might work:
+
+    anal sex
+
+    anilingus
+
+But also keep in mind that it was trained on stuff like "her panties are pulled down to her thighs," not "panty pull."
+
+These models are under the following license:
+
+https://huggingface.co/Ashen3/SNOFS
+
+Flux 2 Klein 9b V1.4:
+
+Additional training. Some of the training was done using https://github.com/BuffaloBuffaloBuffaloBuffalo/ai-toolkit-perceptual , training against depth. Considering how much of SNOFS is two people intermingled with close skin colors, it seemed like a novel idea. It did seem to rapidly help with that sort of thing. On the downside, it seemed to create a bit of a texture issue on very close up images. I did some more training after to try to bring that back and was somewhat successful, but I think I'd need to increase the weight decay to really make that happen. Since everything else was in a good state I decided to release as-is. If you do have that texture issue, try adding "goosebumps" as a negative prompt.
+```
+
+# Other Lora Models
 
 #### Huge Gape - Vaginal | For Flux 2.0 Klein 9B
 - URL: https://civitai.red/models/2437614/huge-gape-vaginal-or-for-flux-20-klein-9b
