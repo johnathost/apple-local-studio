@@ -13,7 +13,6 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from src.catalog_loader import (
-    bundled_pose_ref,
     catalog_mode,
     default_scene,
     engine_defaults,
@@ -23,13 +22,10 @@ from src.catalog_loader import (
     reload_catalogs,
     scenes_public,
 )
-from src.composer import compose_prompt, retarget_pose_for_extras, scene_tags, wants_genital_override
+from src.composer import compose_prompt, scene_tags, wants_genital_override
 from src.recipe import clamp_takes, keep_frames, lora_files_for_job, plan_recipe
 from src.constraints import (
-    apply_edit_preset,
     blocked_options,
-    preset_director,
-    preset_loras,
     sanitize_scene,
 )
 from src.models import (
@@ -94,36 +90,19 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
             scene[k] = v
 
     winner = (req.winner or "").strip() or None
-    if mode == "pose":
-        preset_id = (scene.get("pose") or {}).get("scene") or (scene.get("preset") or {}).get(
-            "scene"
-        )
-        if preset_id:
-            scene = apply_edit_preset(scene, preset_id)
-        scene, retargeted = retarget_pose_for_extras(scene)
-    else:
-        retargeted = []
-
     scene, dropped = sanitize_scene(scene, winner=winner)
-    dropped = list(retargeted) + list(dropped)
 
     # Undress is a clothing-only Klein edit. Pose/body LoRAs melt identity.
     max_loras = req.max_loras
     if mode == "undress" and max_loras is None:
         max_loras = int(engine_defaults(mode).get("max_loras", 0))
 
-    pose_id = (scene.get("pose") or {}).get("scene")
-    has_pose_plate = bundled_pose_ref(pose_id)
-    # Pose plates already show spread legs/pussy. Spreading LoRAs melt the hole.
-    # Cum LoRAs on a copied pussy became a white egg — fluid is prompt-only.
-    skip_groups = {"spreading", "cum"} if mode == "pose" and has_pose_plate else None
     default_ids = (
         [str(x) for x in (engine_defaults(mode).get("default_loras") or []) if x]
         if mode == "pose"
         else []
     )
-    pins = [{"id": i} for i in preset_loras(pose_id)]
-    needed = len(default_ids) + len(pins) + len(req.manual_loras or [])
+    needed = len(default_ids) + len(req.manual_loras or [])
     if needed and max_loras is not None and int(max_loras) < needed:
         max_loras = needed
     elif needed and max_loras is None:
@@ -132,8 +111,7 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
         scene,
         on_disk=set(engine.list_lora_files()),
         max_loras=max_loras,
-        manual=[m.model_dump() for m in req.manual_loras] + pins,
-        skip_groups=skip_groups,
+        manual=[m.model_dump() for m in req.manual_loras],
         defaults=default_ids,
     )
     triggers: list[str] = []
@@ -151,7 +129,7 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
         extra_triggers=triggers if req.include_triggers else None,
         raw_override=req.raw_prompt,
         mode=mode,
-        pose_ref=has_pose_plate and mode == "pose",
+        pose_ref=False,
     )
     return ComposeResponse(
         prompt=prompt,
@@ -227,7 +205,10 @@ def api_recipe(req: RecipeRequest) -> JobResponse:
         raise HTTPException(400, f"Identity image not found: {identity}")
     try:
         plan = plan_recipe(
-            undress=req.undress, scene_id=req.scene_id, extras=req.extras
+            undress=req.undress,
+            scene=req.scene or None,
+            scene_id=req.scene_id,
+            extras=req.extras,
         )
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
@@ -249,6 +230,7 @@ def api_recipe(req: RecipeRequest) -> JobResponse:
             "max_loras": req.max_loras,
             "manual_loras": [m.model_dump() for m in req.manual_loras],
             "notes": req.notes,
+            "scene": req.scene or {},
             "retry_step": req.retry_step,
             "keep_steps": keep_frames(req.keep_steps),
             "takes": clamp_takes(req.takes),
@@ -268,7 +250,7 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             max_loras=req.max_loras,
             include_triggers=req.include_triggers,
             winner=req.winner,
-            pose_ref=True,
+            pose_ref=False,
         )
     )
     prompt = (req.prompt or composed.prompt or "").strip()
@@ -296,23 +278,7 @@ def api_generate(req: GenerateRequest) -> JobResponse:
 
     pose_name = Path(req.pose_path).name if req.pose_path else ""
     if pose_name:
-        if cat != "pose":
-            raise HTTPException(400, "Pose reference is only used in pose edit")
-        path = UPLOADS_DIR / pose_name
-        if not path.is_file():
-            raise HTTPException(400, f"Pose reference not found: {pose_name}")
-        if pose_name not in ref_images:
-            ref_images.append(pose_name)
-    elif cat == "pose" and preset_director((composed.scene.get("pose") or {}).get("scene")) != "lora":
-        pose_id = (composed.scene.get("pose") or {}).get("scene")
-        plate = pose_plate_bytes(pose_id)
-        if plate is not None:
-            raw, suffix = plate
-            dest = UPLOADS_DIR / f"pose-ref-{Path(str(pose_id)).name}{suffix}"
-            if not dest.is_file() or dest.stat().st_size != len(raw):
-                dest.write_bytes(raw)
-            if dest.name not in ref_images:
-                ref_images.append(dest.name)
+        raise HTTPException(400, "Pose reference photos are retired — SNOFS invents the pose")
 
     image_strength = req.image_strength
     if cat in {"undress", "pose"}:

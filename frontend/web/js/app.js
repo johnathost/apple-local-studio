@@ -34,14 +34,7 @@ const state = {
   elapsedTimer: null,
 };
 
-const GENITAL_EXTRAS = new Set([
-  "creampie",
-  "vaginal_gape",
-  "anal_gape",
-  "prolapse",
-  "prolapse_creampie",
-  "prolapse_fucking",
-]);
+const GENITAL_EXTRAS = new Set();
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -115,53 +108,74 @@ function currentStudioScene() {
   return (state.scenes.scenes || []).find((s) => s.id === id || s.plate === id) || null;
 }
 
-function extraLabel(id) {
-  const hit = (state.scenes.extras || []).find((e) => e.id === id);
-  return hit?.label || id;
-}
-
-function pruneStudioExtra() {
-  const scene = currentStudioScene();
-  const extras = getSceneValue("features", "extras");
-  if (!Array.isArray(extras) || !extras.length) return;
-  const allowed = new Set(scene?.compatible_extras || []);
-  const next = extras.filter((id) => allowed.has(id));
-  if (next.length !== extras.length) {
-    if (!state.scene.features) state.scene.features = {};
-    state.scene.features.extras = next;
-  }
+function optionLabel(groupId, fieldId, value) {
+  const group = (state.schema?.groups || []).find((g) => g.id === groupId);
+  const field = (group?.fields || []).find((f) => f.id === fieldId);
+  const opt = (field?.options || []).find((o) => o.id === value);
+  return opt?.label || value || "—";
 }
 
 function directorText() {
-  const extras = getSceneValue("features", "extras") || [];
-  const scene = currentStudioScene();
   const face = state.refImage ? "your photo" : "need a photo";
-  let crotch = "this plate + SNOFS";
-  if (scene?.director === "lora") crotch = "SNOFS (no plate)";
-  else if (extras.some((e) => String(e).startsWith("prolapse"))) crotch = "prolapse plate";
-  else if (extras.includes("vaginal_gape")) crotch = "gape LoRA (pose from plate)";
-  const extraBit = extras.length ? extras.map(extraLabel).join(", ") : "none";
-  const name = scene?.label || getSceneValue("pose", "scene") || "—";
+  const place = optionLabel("setting", "place", getSceneValue("setting", "place"));
+  const pose = optionLabel("position", "pose", getSceneValue("position", "pose"));
+  const sex = optionLabel("sex", "category", getSceneValue("sex", "category"));
   const plan = studioPlan().join(" → ") || "—";
-  return `Face = ${face} · Scene = ${name} · Crotch = ${crotch} · Extra = ${extraBit} · ${plan}`;
+  return `Face = ${face} · ${place} · ${pose} · ${sex} · SNOFS · ${plan}`;
 }
 
 function studioPlan() {
-  const extras = [...(getSceneValue("features", "extras") || [])];
-  const genital = extras.filter((e) => GENITAL_EXTRAS.has(e));
-  const rest = extras.filter((e) => !GENITAL_EXTRAS.has(e));
   const steps = [];
   if (state.undressFirst) steps.push("Undress");
-  const scene = currentStudioScene();
-  if (scene || genital.length) {
-    let label = scene?.label || "Pose";
-    if (genital[0]) label += " · " + extraLabel(genital[0]);
-    steps.push(label);
-    for (const e of genital.slice(1).concat(rest)) steps.push(extraLabel(e));
-  } else {
-    for (const e of extras) steps.push(extraLabel(e));
+  const place = optionLabel("setting", "place", getSceneValue("setting", "place"));
+  const pose = optionLabel("position", "pose", getSceneValue("position", "pose"));
+  const sex = optionLabel("sex", "category", getSceneValue("sex", "category"));
+  steps.push([place, pose, sex].filter(Boolean).join(" · ") || "Pose");
+  return steps;
+}
+
+function renderStudioField(group, field) {
+  const wrap = document.createElement("div");
+  const kicker = document.createElement("p");
+  kicker.className = "studio-kicker";
+  kicker.textContent = field.label || group.label;
+  wrap.appendChild(kicker);
+  const chips = document.createElement("div");
+  chips.className = "chips";
+  if (field.type === "choice") {
+    for (const opt of field.options || []) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chip" + (getSceneValue(group.id, field.id) === opt.id ? " active" : "");
+      btn.textContent = opt.label;
+      if (optionBlocked(group.id, field.id, opt.id) && getSceneValue(group.id, field.id) !== opt.id) {
+        btn.classList.add("conflict");
+      }
+      btn.addEventListener("click", () => {
+        setSceneValue(group.id, field.id, opt.id);
+        renderSceneStudio();
+      });
+      chips.appendChild(btn);
+    }
+  } else if (field.type === "multi") {
+    const selected = new Set(getSceneValue(group.id, field.id) || []);
+    for (const opt of field.options || []) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chip multi" + (selected.has(opt.id) ? " active" : "");
+      btn.textContent = opt.label;
+      btn.addEventListener("click", () => {
+        const cur = new Set(getSceneValue(group.id, field.id) || []);
+        if (cur.has(opt.id)) cur.delete(opt.id);
+        else cur.add(opt.id);
+        setSceneValue(group.id, field.id, [...cur]);
+        renderSceneStudio();
+      });
+      chips.appendChild(btn);
+    }
   }
-  return steps.slice(0, 4);
+  wrap.appendChild(chips);
+  return wrap;
 }
 
 function renderSceneStudio() {
@@ -171,26 +185,6 @@ function renderSceneStudio() {
     return;
   }
   root.classList.remove("hidden");
-  pruneStudioExtra();
-  const selectedExtras = getSceneValue("features", "extras") || [];
-  const scene = currentStudioScene();
-  const allowed = new Set(scene?.compatible_extras || []);
-  const chips = (state.scenes.extras || []).filter((e) => allowed.has(e.id));
-
-  const cats = [];
-  const seen = new Set();
-  for (const s of state.scenes.scenes || []) {
-    const key = s.category || "scenes";
-    if (!seen.has(key)) {
-      seen.add(key);
-      cats.push({
-        id: key,
-        label: s.category_label || key,
-        scenes: (state.scenes.scenes || []).filter((x) => (x.category || "scenes") === key),
-      });
-    }
-  }
-
   root.innerHTML = "";
   const dir = document.createElement("p");
   dir.className = "director-line";
@@ -204,51 +198,12 @@ function renderSceneStudio() {
     .join(" · ");
   root.appendChild(dir);
 
-  const sk = document.createElement("p");
-  sk.className = "studio-kicker";
-  sk.textContent = "Scene";
-  root.appendChild(sk);
-
-  const current = getSceneValue("pose", "scene");
-  for (const cat of cats) {
-    const section = document.createElement("div");
-    section.className = "pose-cat";
-    const heading = document.createElement("div");
-    heading.className = "pose-cat-label";
-    heading.textContent = cat.label;
-    section.appendChild(heading);
-    const list = document.createElement("div");
-    list.className = "pose-cat-list";
-    for (const s of cat.scenes) {
-      const row = document.createElement("button");
-      row.type = "button";
-      row.className =
-        "pose-row" +
-        (s.plate === current || s.id === current ? " active" : "") +
-        (s.director === "lora" ? " lora" : "");
-      const title = document.createElement("span");
-      title.className = "pose-row-title";
-      title.textContent = s.label;
-      row.appendChild(title);
-      if (s.image_url) {
-        const img = document.createElement("img");
-        img.className = "pose-row-thumb";
-        img.src = s.image_url;
-        img.alt = s.label;
-        row.appendChild(img);
-      } else {
-        const badge = document.createElement("span");
-        badge.className = "pose-row-badge";
-        badge.textContent = "LoRA";
-        row.appendChild(badge);
+  for (const group of state.schema?.groups || []) {
+    for (const field of group.fields || []) {
+      if (field.type === "choice" || field.type === "multi") {
+        root.appendChild(renderStudioField(group, field));
       }
-      row.addEventListener("click", () => {
-        setSceneValue("pose", "scene", s.plate || s.id);
-      });
-      list.appendChild(row);
     }
-    section.appendChild(list);
-    root.appendChild(section);
   }
 
   const undressRow = document.createElement("label");
@@ -261,39 +216,12 @@ function renderSceneStudio() {
   root.appendChild(undressRow);
   const takesRow = document.createElement("label");
   takesRow.className = "toggle";
-  takesRow.innerHTML = `<input type="checkbox" id="studio-takes" ${state.twoTakes ? "checked" : ""} /> Two takes on the last step`;
+  takesRow.innerHTML = `<input type="checkbox" id="studio-takes" ${state.twoTakes ? "checked" : ""} /> Two takes`;
   takesRow.querySelector("input").addEventListener("change", (e) => {
     state.twoTakes = e.target.checked;
     renderSceneStudio();
   });
   root.appendChild(takesRow);
-
-  const ek = document.createElement("p");
-  ek.className = "studio-kicker";
-  ek.textContent = "Extras (one Klein step each; first genital extra rides with the pose)";
-  root.appendChild(ek);
-  const extras = document.createElement("div");
-  extras.className = "studio-extras";
-  if (!chips.length) {
-    extras.innerHTML = `<span class="muted">No extras for this scene.</span>`;
-  } else {
-    for (const opt of chips) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "chip" + (selectedExtras.includes(opt.id) ? " active" : "");
-      btn.textContent = opt.label;
-      btn.addEventListener("click", () => {
-        const cur = [...(getSceneValue("features", "extras") || [])];
-        const i = cur.indexOf(opt.id);
-        if (i >= 0) cur.splice(i, 1);
-        else cur.push(opt.id);
-        setSceneValue("features", "extras", cur);
-        renderSceneStudio();
-      });
-      extras.appendChild(btn);
-    }
-  }
-  root.appendChild(extras);
 
   const loraK = document.createElement("p");
   loraK.className = "studio-kicker";
@@ -357,11 +285,6 @@ function setSceneValue(groupId, fieldId, value) {
   if (!state.scene[groupId]) state.scene[groupId] = {};
   state.scene[groupId][fieldId] = value;
   state.winner = `${groupId}.${fieldId}`;
-  if (groupId === "pose" && fieldId === "scene") {
-    pruneStudioExtra();
-    renderBuilder();
-    renderSceneStudio();
-  }
   // Sync notes quick box into style.notes
   if (groupId === "style" && fieldId === "notes") {
     const nq = $("#notes-quick");
@@ -386,14 +309,16 @@ function renderBuilder() {
   const keptOpen = new Set(openGroupIds());
   root.innerHTML = "";
   const defaultOpen = new Set([
-    "pose",
-    "features",
-    "clothing",
-    "preset",
-    "subject",
-    "keep",
-    "body",
+    "setting",
+    "sex",
     "position",
+    "expression",
+    "pussy",
+    "asshole",
+    "extras",
+    "clothing",
+    "subject",
+    "body",
     "act",
     "camera",
   ]);
@@ -1162,9 +1087,10 @@ function applyModeChrome() {
   }
   const sys = $("#system-line");
   if (sys) {
-    const lora = currentStudioScene()?.director === "lora";
     sys.textContent =
-      (lora && state.systemPrompts.lora) || state.systemPrompts[kind || state.mode] || "";
+      (kind === "pose" && state.systemPrompts.lora) ||
+      state.systemPrompts[kind || state.mode] ||
+      "";
   }
   const title = $("#builder-title");
   if (title) {
@@ -1194,7 +1120,7 @@ function applyModeChrome() {
       kind === "undress"
         ? "Undress → same person, same pose"
         : kind === "pose"
-          ? "Your photo + a scene. SNOFS on by default. Pin a second LoRA if you need it."
+          ? "Your photo + a scene. SNOFS invents the pose. No reference plates."
           : "Scene composer → mflux · private local gen";
   }
   const sl = $("#eng-strength");
@@ -1347,18 +1273,11 @@ async function generateRecipe() {
     alert("Need a source photo.");
     return;
   }
-  const extras = getSceneValue("features", "extras") || [];
-  const sceneId = getSceneValue("pose", "scene") || null;
-  if (!state.undressFirst && !sceneId && !extras.length) {
-    alert("Pick a scene, undress first, or an extra.");
-    return;
-  }
   const plan = studioPlan();
   const body = {
     identity: state.refImage.filename,
     undress: !!state.undressFirst,
-    scene_id: sceneId,
-    extras,
+    scene: state.scene || {},
     width: Number($("#eng-width").value) || 1024,
     height: Number($("#eng-height").value) || 576,
     steps: Number($("#eng-steps").value) || 4,
@@ -1455,7 +1374,7 @@ async function generate() {
     mode: catalogMode(),
     winner: state.winner,
     image_paths: state.refImage ? [state.refImage.filename] : [],
-    pose_path: state.editKind === "pose" && state.poseImage ? state.poseImage.filename : null,
+    pose_path: null,
     image_strength:
       state.mode === "gen" && state.refImage
         ? Number($("#eng-strength")?.value || 0.55)

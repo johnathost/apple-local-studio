@@ -5,8 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
-from src.catalog_loader import bundled_pose_ref, load_fragments
-from src.constraints import apply_edit_preset, preset_caption, preset_director, preset_fragment
+from src.catalog_loader import load_fragments
 from src.system_prompts import EDIT_IDENTITY_LOCK, SEMEN_LOCK
 
 # FK_allholes training caption (lora.md), first scene only — not the all-fours add-on.
@@ -100,6 +99,29 @@ FEATURE_TAGS: dict[str, list[str]] = {
     "cum_face": ["finish:cum_face"],
     "cum_body": ["finish:cum_body"],
     "wet": ["finish:wet"],
+    "wet_body": ["finish:wet"],
+}
+
+_SEX_TAGS: dict[str, list[str]] = {
+    "solo": ["partners:solo"],
+    "vaginal": ["act:vaginal", "partners:one_man"],
+    "anal": ["act:anal", "partners:one_man"],
+    "oral": ["act:oral", "partners:one_man"],
+    "gangbang": ["act:all_holes", "act:anal", "act:vaginal", "act:oral", "partners:three_men"],
+    "toys": ["act:dildo", "partners:solo"],
+}
+
+_PUSSY_TAGS: dict[str, list[str]] = {
+    "puffy": ["act:spreading"],
+    "open": ["act:spreading"],
+    "used": ["act:spreading"],
+    "gaping": ["act:vaginal_gape", "act:spreading"],
+}
+
+_ASSHOLE_TAGS: dict[str, list[str]] = {
+    "used": ["act:anal_gape"],
+    "gaping": ["act:anal_gape"],
+    "prolapse": ["act:prolapse"],
 }
 
 
@@ -151,7 +173,26 @@ def scene_tags(scene: dict[str, Any]) -> set[str]:
     if _tag_value(clothing.get("heels")):
         tags.add(f"clothing.heels:{clothing['heels']}")
 
+    sex = (scene.get("sex") or {}).get("category")
+    if _tag_value(sex):
+        for tag in _SEX_TAGS.get(str(sex), []):
+            tags.add(tag)
+
+    for look in _selected_ids(scene, "pussy", "look"):
+        for tag in _PUSSY_TAGS.get(look, []):
+            tags.add(tag)
+
+    ass_look = (scene.get("asshole") or {}).get("look")
+    if _tag_value(ass_look):
+        for tag in _ASSHOLE_TAGS.get(str(ass_look), []):
+            tags.add(tag)
+
     for feat in (scene.get("features") or {}).get("extras") or []:
+        if not _tag_value(feat):
+            continue
+        for tag in FEATURE_TAGS.get(str(feat), []):
+            tags.add(tag)
+    for feat in (scene.get("extras") or {}).get("effects") or []:
         if not _tag_value(feat):
             continue
         for tag in FEATURE_TAGS.get(str(feat), []):
@@ -175,74 +216,28 @@ def _selected_ids(scene: dict[str, Any], group: str, key: str) -> set[str]:
     return set()
 
 
-_PENIS_ACTS = {
-    "vaginal",
-    "anal",
-    "oral",
-    "deepthroat",
-    "all_holes",
-    "titfuck",
-    "prolapse_fucking",
-}
-_PROLAPSE_IDS = {"prolapse", "prolapse_creampie", "prolapse_fucking"}
-
-
-# Extras that need a plate which already shows that crotch. Klein cannot invent
-# a second hole onto a spreading-pussy crop in 4 distilled steps.
-_PLATE_FOR_EXTRA = {
-    "prolapse_fucking": "prolapse_chair_tight",
-    "prolapse_creampie": "prolapse_chair_tight",
-    "prolapse": "prolapse_chair_tight",
-}
-
-
 def retarget_pose_for_extras(scene: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
-    """If extras disagree with the selected plate, switch to a matching one.
-
-    Photo 2 must already contain the genitals we want. Identity stays Photo 1.
-    Furniture is not sacred.
-    """
-    current = str((scene.get("pose") or {}).get("scene") or "")
-    requested = _selected_ids(scene, "features", "extras") | _selected_ids(scene, "act", "primary")
-    donor = None
-    for extra, plate in _PLATE_FOR_EXTRA.items():
-        if extra in requested:
-            donor = plate
-            break
-    if not donor or donor == current or current.startswith("prolapse"):
-        return scene, []
-    if not bundled_pose_ref(donor):
-        return scene, []
-    extras_keep = scene.get("features")
-    out = deepcopy(scene)
-    out.setdefault("pose", {})["scene"] = donor
-    out = apply_edit_preset(out, donor)
-    if isinstance(extras_keep, dict):
-        out["features"] = extras_keep
-    return out, [f"using {donor} so the reference already shows that crotch"]
+    """Plates are retired. Identity + SNOFS invent the crotch."""
+    return scene, []
 
 
 def wants_genital_override(scene: dict[str, Any]) -> bool:
-    """True when extras ask for crotch anatomy the pose plate does not show."""
-    extras = _selected_ids(scene, "features", "extras")
-    acts = _selected_ids(scene, "act", "primary")
-    requested = extras | acts
-    if not (requested & (_PROLAPSE_IDS | {"anal_gape", "vaginal_gape"})):
-        return False
-    preset_id = (scene.get("pose") or {}).get("scene") or (scene.get("preset") or {}).get(
-        "scene"
-    ) or ""
-    preset = (preset_fragment(str(preset_id)) or "").lower()
-    pid = str(preset_id)
-    if requested & _PROLAPSE_IDS and (
-        "rosebud" in preset or "prolapse" in preset or pid.startswith("prolapse")
-    ):
-        return False
-    if "anal_gape" in requested and (
-        "gape" in preset or "dilated" in preset or pid.startswith("anal_")
-    ):
-        return False
-    return True
+    return False
+
+
+def _gangbang_lines(pose: str) -> list[str]:
+    if pose == "all_fours":
+        return [
+            "one girl and three men. all three men are penetrating the girl. "
+            "oral, anal and vaginal sex.",
+            "she is on all fours looking at the camera.",
+            "one man is behind her, his penis penetrating her anus, "
+            "his upper body and face out of frame.",
+            "another man is under her, his penis in her vagina.",
+            "the third man is in front of her, she holds his penis in her mouth, "
+            "performing oral sex, his face out of frame.",
+        ]
+    return [GANGBANG_LORA_PROMPT]
 
 
 def compose_edit_prompt(
@@ -252,24 +247,19 @@ def compose_edit_prompt(
     raw_override: str | None = None,
     pose_ref: bool = False,
 ) -> str:
-    """Short labeled caption. Klein 4-step follows triggers + Field: fact, not essays."""
+    """SNOFS-style sentences from the scene builder. No Photo 2."""
+    del pose_ref  # plates retired
     if raw_override and raw_override.strip():
         return raw_override.strip()
 
-    extras = _selected_ids(scene, "features", "extras")
-    acts = _selected_ids(scene, "act", "primary")
-    finish = _selected_ids(scene, "finish", "effects")
-    selected = extras | acts
-    override = wants_genital_override(scene)
-    wants_penis = bool(selected & _PENIS_ACTS)
-    preset_id = (scene.get("pose") or {}).get("scene") or (scene.get("preset") or {}).get("scene")
-    pose_key = str(preset_id or "")
-    director = preset_director(pose_key)
-    lora_dir = director == "lora"
-    use_plate = bool(pose_ref) and director != "lora"
-    caption = preset_caption(pose_key)
-    clothing = scene.get("clothing") or {}
     fr = load_fragments("edit")
+    clothing = scene.get("clothing") or {}
+    pose = (scene.get("position") or {}).get("pose") or "legs_spread"
+    sex = (scene.get("sex") or {}).get("category") or "solo"
+    extras = _selected_ids(scene, "extras", "effects") | _selected_ids(scene, "features", "extras")
+    pussy = _selected_ids(scene, "pussy", "look")
+    ass = (scene.get("asshole") or {}).get("look") or "natural"
+    face = (scene.get("expression") or {}).get("face")
 
     lines: list[str] = []
     if extra_triggers:
@@ -277,159 +267,50 @@ def compose_edit_prompt(
         if trig:
             lines.append(trig)
 
-    # LoRA test: fire the catalog caption, don't mix in our labeled pose essay.
-    if pose_key == "lora_gangbang" and not use_plate:
-        bits = list(lines)
-        bits.append(EDIT_IDENTITY_LOCK)
-        bits.append(GANGBANG_LORA_PROMPT)
-        notes = (scene.get("instruction") or {}).get("text") or ""
-        if str(notes).strip():
-            bits.append(str(notes).strip())
-        return "\n".join(bits)
+    lines.append(EDIT_IDENTITY_LOCK)
+    lines.append("If the photo is a portrait or headshot, invent a full body in this pose. Keep the face.")
 
-    if use_plate:
-        lines.append("Photo 1: identity, same face, skin, hair.")
-        if pose_key.startswith("prolapse") or "rosebud" in (preset_fragment(pose_key) or "").lower():
-            if wants_penis:
-                lines.append(
-                    "Photo 2: pose and crotch — copy the rosebud on the anus. "
-                    "There is no penis in photo 2; add a real one. "
-                    "Do not copy photo 2's face or nails."
-                )
-            else:
-                lines.append(
-                    "Photo 2: pose and crotch — copy the rosebud on the anus. "
-                    "Do not copy photo 2's face or nails."
-                )
-        elif pose_key.startswith("anal_"):
-            lines.append("Photo 2: pose and the fuck. Copy the cock in her ass from the photo.")
-        elif override and wants_penis:
-            lines.append(
-                "Photo 2: pose and legs. There is no cock in photo 2; she's getting fucked — add a real one."
-            )
-        elif override:
-            lines.append("Photo 2: pose and legs.")
-        elif wants_penis:
-            lines.append("Photo 2: pose, camera, and the fuck. Copy the cock in the photo.")
-        else:
-            lines.append(
-                "Photo 2: pose, camera, and crotch. "
-                "Copy her spread pussy and her asshole from photo 2. Pussy above, asshole below."
-            )
-    else:
-        lines.append(EDIT_IDENTITY_LOCK)
-        if pose_key == "lora_gangbang":
-            lines.append(
-                "white bed, tight crop on her ass and the sex. "
-                "not a wide group photo, male upper bodies and faces out of frame"
-            )
-        elif lora_dir or not use_plate:
-            lines.append(
-                "Plain white seamless studio background, white void, no room, no furniture."
-            )
-            lines.append(
-                "If the photo is a portrait or headshot, invent a full body in this pose. Keep the face."
-            )
+    place = _frag(fr, "setting.place", (scene.get("setting") or {}).get("place"))
+    if isinstance(place, str) and place:
+        lines.append(place)
 
-    if caption:
-        lines.append(f"Pose: {caption}.")
+    pose_line = _frag(fr, "position.pose", pose)
+    if isinstance(pose_line, str) and pose_line:
+        lines.append(pose_line)
+
+    face_line = _frag(fr, "expression.face", face)
+    if isinstance(face_line, str) and face_line:
+        lines.append(face_line)
 
     cloth = _frag(fr, "clothing.state", clothing.get("state"))
     if isinstance(cloth, str) and cloth:
-        lines.append(f"Outfit: {cloth}.")
+        lines.append(cloth)
     heels = _frag(fr, "clothing.heels", clothing.get("heels"))
     if isinstance(heels, str) and heels:
-        lines.append(f"Heels: {heels}.")
+        lines.append(heels)
 
-    cream = bool(
-        selected & {"prolapse_creampie", "creampie"}
-        or finish & {"cum_inside"}
-    )
-    if selected & _PROLAPSE_IDS:
-        lines.append("two holes: her pussy on top, her asshole underneath, skin between them")
-        lines.append("Pussy: spread pussy, labia, nothing coming out of it.")
-        anus = (
-            "Asshole: she has a prolapsed asshole, rosebud, folded wet rectal lining "
-            "hanging out of her ass"
-        )
-        if cream:
-            anus += ", cum smeared on the folds"
-        lines.append(anus + ".")
-    elif "anal_gape" in selected:
-        anus = "Asshole: anal gape, she has a gaping ass, huge gape, used asshole"
-        if cream:
-            anus += ", cum leaking out of her ass"
-        lines.append(anus + ".")
-    elif "vaginal_gape" in selected:
-        pussy = "Pussy: she has a gaping pussy, she is spreading her pussy open"
-        if cream:
-            pussy += ", cum leaking out of her pussy"
-        lines.append(pussy + ".")
-    elif "spreading" in selected or pose_key.startswith("spread_"):
-        lines.append(
-            "she's spreading her legs, showing her pussy and her asshole, "
-            "two holes: pussy toward her belly, asshole toward the seat, skin between them"
-        )
-        if lora_dir:
-            pussy = (
-                "her pussy spread open, labia, clit, a wet hole. "
-                "her asshole is a separate pucker right below"
-            )
-        else:
-            pussy = (
-                "copy her spread pussy from photo 2: labia, clit, wet hole, "
-                "her asshole showing just below"
-            )
-        if cream:
-            pussy += ", cum leaking out of her pussy"
-        lines.append(pussy + ".")
+    if sex == "gangbang":
+        lines.extend(_gangbang_lines(str(pose)))
+    else:
+        sex_line = _frag(fr, "sex.category", sex)
+        if isinstance(sex_line, str) and sex_line:
+            lines.append(sex_line)
 
-    if "all_holes" in selected or pose_key == "lora_gangbang":
-        # Match FK_allholes training caption / Civitai example, not a wide lineup.
-        lines.append("one girl and three men, all three men are penetrating the girl")
-        lines.append("oral, anal and vaginal sex")
-        lines.append(
-            "the girl is turned with her ass to the camera in a half-side view, "
-            "her face partially visible from the side"
-        )
-        lines.append(
-            "the first man is lying on his back, she is straddling him, "
-            "he is covered by her upper body, his penis in her vagina, his testicles visible, "
-            "his face not visible"
-        )
-        lines.append(
-            "the second man is standing behind her, upper body and face out of frame, "
-            "his penis penetrating her anus"
-        )
-        lines.append(
-            "the third man is standing next to her, she holds his penis in her mouth, "
-            "performing oral sex, his face out of frame"
-        )
-    elif "prolapse_fucking" in selected:
-        lines.append(
-            "a man is fucking her prolapsed asshole, a real cock through the rosebud "
-            "into her ass, his hips and thighs attached"
-        )
-    elif wants_penis and "anal" in selected:
-        lines.append(
-            "a man is fucking her in the ass, a real cock in her asshole, "
-            "his hips and thighs in frame, her pussy empty above it"
-        )
-    elif wants_penis and "vaginal" in selected:
-        lines.append(
-            "a man is fucking her pussy, a real cock in her cunt, "
-            "his hips and thighs in frame"
-        )
+    pussy_bits = _frag(fr, "pussy.look", sorted(pussy))
+    if isinstance(pussy_bits, list):
+        lines.extend(pussy_bits)
+    elif isinstance(pussy_bits, str) and pussy_bits:
+        lines.append(pussy_bits)
 
-    if extras & {"cum_face"} or finish & {"cum_face"}:
-        lines.append("cum on her face, a facial, white streaks")
-    if extras & {"cum_body"} or finish & {"cum_body"}:
-        lines.append("cum on her tits and body")
+    ass_line = _frag(fr, "asshole.look", ass)
+    if isinstance(ass_line, str) and ass_line:
+        lines.append(ass_line)
 
-    partners = (scene.get("partners") or {}).get("count")
-    if not wants_penis and partners in {None, "solo", "keep", ""}:
-        if selected & _PROLAPSE_IDS or override:
-            lines.append("Alone, no penis.")
+    extra_bits = _frag(fr, "extras.effects", sorted(extras))
+    if isinstance(extra_bits, list):
+        lines.extend(extra_bits)
+    elif isinstance(extra_bits, str) and extra_bits:
+        lines.append(extra_bits)
 
     notes = (scene.get("instruction") or {}).get("text") or ""
     if str(notes).strip():

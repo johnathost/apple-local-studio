@@ -1,4 +1,49 @@
-# Edit-mode fragments. Pose/act/crotch copy is labeled in composer.py, not here.
+# SNOFS wants full sentences and these words, not tags.
+# photograph — never photorealistic.
+
+setting.place:
+  bedroom: >-
+    in a bedroom, rumpled sheets on a bed, pillows, warm lamp light
+  office: >-
+    in an office, a desk and an office chair, window blinds, overhead light
+
+position.pose:
+  legs_spread: >-
+    she is lying on her back with her legs spread wide toward the camera
+  all_fours: >-
+    she is on all fours looking at the camera, her ass raised, vagina and anus visible
+
+expression.face:
+  neutral: "neutral expression"
+  happy: "she is smiling, happy"
+  sex_face: "sex face, mouth open, heavy eyelids"
+  tongue_out: "her tongue is out"
+  pain: "pained expression, wincing"
+
+pussy.look:
+  puffy: "her vagina is puffy and swollen"
+  open: "her vagina is open, labia spread"
+  used: "her vagina looks used, well-fucked, loose and wet"
+  gaping: "she has a gaping vagina, vaginal gape, the hole is open"
+
+asshole.look:
+  natural: ""
+  used: "her anus is a used sphincter, puffy rim"
+  gaping: "anal gape, she has a gaping anus, used asshole"
+  prolapse: "she has a prolapsed anus, anal prolapse, rosebud of folded rectal lining hanging out"
+
+sex.category:
+  solo: "she is alone, no partner in the frame"
+  vaginal: "vaginal sex, a man's penis is penetrating her vagina, his hips and thighs attached"
+  anal: "anal sex, a man's penis is penetrating her anus, his hips and thighs attached, her vagina empty in front of it"
+  oral: "blowjob, she is sucking a man's penis, his hips in frame"
+  gangbang: "gangbang, sex with three men"
+  toys: "she is using a dildo, inserting a dildo into her vagina"
+
+extras.effects:
+  wet_body: "her skin is wet and shiny with sweat"
+  creampie: "her vagina is filled with cum, a creampie leaking from her vagina, thick opaque white semen"
+  prolapse_creampie: "cum leaking from her prolapsed anus, creampie smeared on the rosebud, thick opaque white semen"
 
 clothing.state:
   keep: ""

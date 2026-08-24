@@ -63,6 +63,7 @@ class PromoteRequest(BaseModel):
 class RecipeRequest(BaseModel):
     identity: str
     undress: bool = False
+    scene: dict[str, Any] = Field(default_factory=dict)
     scene_id: str | None = None
     extras: list[str] = Field(default_factory=list)
     width: int | None = None

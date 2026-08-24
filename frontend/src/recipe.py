@@ -2,123 +2,52 @@
 
 from __future__ import annotations
 
-import os
 import random
 import uuid
 from pathlib import Path
 from typing import Any
 
 from src.catalog_loader import (
-    bundled_pose_ref,
     catalog_mode,
     default_scene,
     engine_defaults,
     engine_mode,
-    pose_plate_bytes,
-    scenes_public,
 )
-from src.composer import _PLATE_FOR_EXTRA, wants_genital_override
-from src.constraints import preset_director
+from src.composer import wants_genital_override
 from src.imageutil import sniffed_image_suffix
 
 
 MAX_STEPS = 4
 MAX_TAKES = 2
 
-GENITAL_EXTRAS = {
-    "creampie",
-    "vaginal_gape",
-    "anal_gape",
-    "prolapse",
-    "prolapse_creampie",
-    "prolapse_fucking",
-}
-
-_LABELS = {
-    "undress": "Undress",
-    "pose": "Pose",
-    "creampie": "Creampie",
-    "vaginal_gape": "Vaginal gape",
-    "anal_gape": "Anal gape",
-    "prolapse": "Anal prolapse",
-    "prolapse_creampie": "Prolapse creampie",
-    "prolapse_fucking": "Prolapse fucking",
-    "cum_face": "Cum on face",
-    "cum_body": "Cum on body",
-    "wet": "Wet",
-    "masturbation": "Masturbation",
-}
-
-
-def _extra_label(extra_id: str) -> str:
-    for item in scenes_public().get("extras") or []:
-        if item.get("id") == extra_id:
-            return str(item.get("label") or extra_id)
-    return _LABELS.get(extra_id, extra_id)
-
-
-def _scene_label(scene_id: str | None) -> str:
-    if not scene_id:
-        return "Pose"
-    for item in scenes_public().get("scenes") or []:
-        if item.get("id") == scene_id or item.get("plate") == scene_id:
-            return str(item.get("label") or scene_id)
-    return scene_id
-
-
 def plan_recipe(
     *,
     undress: bool,
-    scene_id: str | None,
-    extras: list[str] | None,
+    scene: dict[str, Any] | None = None,
+    scene_id: str | None = None,
+    extras: list[str] | None = None,
     max_steps: int = MAX_STEPS,
 ) -> list[dict[str, Any]]:
-    """Ordered steps. First genital extra rides with the pose; the rest follow."""
-    extras = [str(x) for x in (extras or []) if x]
-    genital = [e for e in extras if e in GENITAL_EXTRAS]
-    rest = [e for e in extras if e not in GENITAL_EXTRAS]
-    pose_id = (scene_id or "").strip() or None
-    if genital:
-        donor = _PLATE_FOR_EXTRA.get(genital[0])
-        if donor and bundled_pose_ref(donor):
-            pose_id = donor
-
+    """Undress (optional) then one SNOFS pose job with the full scene builder."""
+    del scene_id, extras  # plates / extra-steps retired
     steps: list[dict[str, Any]] = []
     if undress:
-        steps.append({"kind": "undress", "label": "Undress", "pose_id": None, "extras": []})
-
-    if pose_id or genital:
-        first_g = genital[0] if genital else None
-        pose_extras = [first_g] if first_g else []
-        label = _scene_label(pose_id)
-        if first_g:
-            label = f"{label} · {_extra_label(first_g)}"
+        steps.append({"kind": "undress", "label": "Undress", "scene": {}})
+    pose_scene = dict(scene or {})
+    if pose_scene or not undress:
+        sex = ((pose_scene.get("sex") or {}).get("category") or "solo")
+        pose = ((pose_scene.get("position") or {}).get("pose") or "pose")
+        place = ((pose_scene.get("setting") or {}).get("place") or "")
+        bits = [str(x) for x in (place, pose, sex) if x]
         steps.append(
             {
                 "kind": "pose",
-                "label": label,
-                "pose_id": pose_id,
-                "extras": pose_extras,
+                "label": " · ".join(bits) or "Pose",
+                "scene": pose_scene,
             }
         )
-        follow = genital[1:] + rest
-    else:
-        follow = extras
-
-    for extra in follow:
-        if len(steps) >= max_steps:
-            break
-        steps.append(
-            {
-                "kind": "extra",
-                "label": _extra_label(extra),
-                "pose_id": pose_id,
-                "extras": [extra],
-            }
-        )
-
     if not steps:
-        raise ValueError("Recipe is empty — pick undress, a scene, or an extra")
+        raise ValueError("Recipe is empty — pick undress or a pose")
     return steps[:max_steps]
 
 
@@ -220,23 +149,6 @@ def lora_files_for_job(composed: Any) -> list[dict[str, Any]]:
     return out
 
 
-def _ensure_plate(pose_id: str | None, ref_images: list[str]) -> list[str]:
-    if not pose_id:
-        return ref_images
-    plate = pose_plate_bytes(pose_id)
-    if plate is None:
-        return ref_images
-    uploads = Path(os.environ.get("STUDIO_UPLOADS_DIR", "/data/uploads"))
-    uploads.mkdir(parents=True, exist_ok=True)
-    raw, suffix = plate
-    dest = uploads / f"pose-ref-{Path(pose_id).name}{suffix}"
-    if not dest.is_file() or dest.stat().st_size != len(raw):
-        dest.write_bytes(raw)
-    if dest.name not in ref_images:
-        ref_images.append(dest.name)
-    return ref_images
-
-
 def build_step_job(
     step: dict[str, Any],
     *,
@@ -256,28 +168,24 @@ def build_step_job(
     from src.server import _compose
 
     kind = step["kind"]
-    pose_id = step.get("pose_id")
-    extras = list(step.get("extras") or [])
     if kind == "undress":
         mode = "undress"
         scene = default_scene("undress")
         include_triggers = False
     else:
         mode = "pose"
-        scene = default_scene("pose")
-        if pose_id:
-            scene.setdefault("pose", {})["scene"] = pose_id
-        scene.setdefault("features", {})["extras"] = extras
+        scene = dict(step.get("scene") or default_scene("pose"))
+        if notes and str(notes).strip():
+            scene.setdefault("instruction", {})["text"] = str(notes).strip()
         include_triggers = True
 
-    lora_only = preset_director(pose_id) == "lora"
     composed = _compose(
         ComposeRequest(
             scene=scene,
             raw_prompt=notes if kind == "undress" else None,
             mode=mode,
             include_triggers=include_triggers,
-            pose_ref=mode == "pose" and not lora_only,
+            pose_ref=False,
             max_loras=max_loras,
             manual_loras=[]
             if kind == "undress"
@@ -294,8 +202,6 @@ def build_step_job(
     eng = engine_mode(mode)
     defaults = engine_defaults(cat)
     refs = [Path(identity).name]
-    if eng == "edit" and mode == "pose" and not lora_only:
-        refs = _ensure_plate(composed.scene.get("pose", {}).get("scene") or pose_id, refs)
 
     return {
         "prompt": prompt,

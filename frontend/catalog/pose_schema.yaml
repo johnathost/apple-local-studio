@@ -1,33 +1,94 @@
-# Pose restage: categories from pose_plates.json (legs spread, prolapse, anal sex, masturbation).
+# Pose restage scene builder. SNOFS + identity photo. No pose plates.
 
 groups:
-  - id: pose
+  - id: setting
+    label: Scene
+    fields:
+      - id: place
+        label: Where
+        type: choice
+        default: bedroom
+        options:
+          - { id: bedroom, label: Bedroom }
+          - { id: office, label: Office }
+
+  - id: sex
+    label: Sex
+    fields:
+      - id: category
+        label: Category
+        type: choice
+        default: solo
+        options:
+          - { id: solo, label: Solo }
+          - { id: vaginal, label: Vaginal sex }
+          - { id: anal, label: Anal sex }
+          - { id: oral, label: Oral }
+          - { id: gangbang, label: Gangbang }
+          - { id: toys, label: Toys / dildos }
+
+  - id: position
     label: Pose
     fields:
-      - id: scene
-        label: Pose
-        type: pose_gallery
-        default: spread_frog
+      - id: pose
+        label: Body
+        type: choice
+        default: legs_spread
+        options:
+          - { id: legs_spread, label: Lay back, legs spread }
+          - { id: all_fours, label: On all fours, looking at camera }
 
-  - id: features
-    label: Pose features
+  - id: expression
+    label: Expression
     fields:
-      - id: extras
-        label: Features
+      - id: face
+        label: Face
+        type: choice
+        default: sex_face
+        options:
+          - { id: neutral, label: Neutral }
+          - { id: happy, label: Happy }
+          - { id: sex_face, label: Sex face }
+          - { id: tongue_out, label: Tongue out }
+          - { id: pain, label: Pain }
+
+  - id: pussy
+    label: Pussy
+    fields:
+      - id: look
+        label: Pussy
         type: multi
         default: []
         options:
-          - { id: spreading, label: Spreading / exposing }
-          - { id: vaginal_gape, label: Vaginal gape }
-          - { id: anal_gape, label: Anal gape }
-          - { id: prolapse, label: Anal prolapse }
-          - { id: prolapse_creampie, label: Anal prolapse creampie }
-          - { id: prolapse_fucking, label: Anal prolapse fucking }
-          - { id: masturbation, label: Masturbation }
-          - { id: creampie, label: Creampie }
-          - { id: cum_face, label: Cum on face }
-          - { id: cum_body, label: Cum on body }
-          - { id: wet, label: Very wet }
+          - { id: puffy, label: Puffy }
+          - { id: open, label: Open }
+          - { id: used, label: Used }
+          - { id: gaping, label: Gaping }
+
+  - id: asshole
+    label: Asshole
+    fields:
+      - id: look
+        label: Asshole
+        type: choice
+        default: natural
+        options:
+          - { id: natural, label: Natural }
+          - { id: used, label: Used sphincter }
+          - { id: gaping, label: Gaping }
+          - { id: prolapse, label: Prolapse }
+
+  - id: extras
+    label: More
+    fields:
+      - id: effects
+        label: Effects
+        type: multi
+        default: []
+        options:
+          - { id: wet_body, label: Wet body }
+          - { id: creampie, label: Pussy filled with creampie }
+          - { id: prolapse_creampie, label: Prolapse creampie leaking }
 
   - id: clothing
     label: Clothing
@@ -35,7 +96,7 @@ groups:
       - id: state
         label: Outfit
         type: choice
-        default: keep
+        default: nude
         options:
           - { id: keep, label: Keep original }
           - { id: nude, label: Nude }
@@ -62,5 +123,4 @@ engine_defaults:
   max_loras: 2
   guidance: 2.0
   image_strength: null
-  # Always-on pose prior. Specialists are pins / extra chips, not auto stack.
   default_loras: [snofs]

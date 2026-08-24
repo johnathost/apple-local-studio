@@ -60,7 +60,7 @@ def load_schema(mode: str = "gen") -> dict[str, Any]:
     data["presets"] = extra.get("edit_presets") or {}
     data["sanitize_order"] = extra.get("sanitize_order") or []
     if kind == "pose":
-        data["pose_categories"] = pose_categories_public()
+        data["pose_categories"] = []
     return data
 
 

@@ -123,11 +123,11 @@ def preset_fragment(preset_id: str | None) -> str:
 
 
 def preset_director(preset_id: str | None) -> str:
-    """plate (copy Photo 2) or lora (one identity pic + LoRA)."""
+    """Pose edit is always SNOFS / identity. Plates are retired."""
     if not preset_id or preset_id == "none":
-        return "plate"
+        return "lora"
     entry = (load_constraints().get("edit_presets") or {}).get(preset_id) or {}
-    return str(entry.get("director") or "plate").strip().lower() or "plate"
+    return str(entry.get("director") or "lora").strip().lower() or "lora"
 
 
 def preset_loras(preset_id: str | None) -> list[str]:
