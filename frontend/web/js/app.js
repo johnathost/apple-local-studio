@@ -131,6 +131,30 @@ function studioPlan() {
   return steps;
 }
 
+const EXCLUSIVE_MULTI = {
+  "pussy.look": [
+    ["innie", "outie"],
+    ["shaved", "bush"],
+  ],
+  "asshole.look": [["tight", "gaping", "prolapse", "plug"]],
+};
+
+function toggleMultiValue(groupId, fieldId, optId) {
+  const cur = new Set(getSceneValue(groupId, fieldId) || []);
+  if (cur.has(optId)) {
+    cur.delete(optId);
+  } else {
+    cur.add(optId);
+    for (const pack of EXCLUSIVE_MULTI[`${groupId}.${fieldId}`] || []) {
+      if (!pack.includes(optId)) continue;
+      for (const other of pack) {
+        if (other !== optId) cur.delete(other);
+      }
+    }
+  }
+  setSceneValue(groupId, fieldId, [...cur]);
+}
+
 function fieldVisible(field) {
   const show = field?.show_if;
   if (!show) return true;
@@ -269,10 +293,7 @@ function renderStudioField(group, field) {
       renderOptGrid(field, group, {
         selected,
         onPick: (opt) => {
-          const cur = new Set(getSceneValue(group.id, field.id) || []);
-          if (cur.has(opt.id)) cur.delete(opt.id);
-          else cur.add(opt.id);
-          setSceneValue(group.id, field.id, [...cur]);
+          toggleMultiValue(group.id, field.id, opt.id);
           renderSceneStudio();
         },
       })

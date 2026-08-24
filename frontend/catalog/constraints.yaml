@@ -4,6 +4,7 @@ sanitize_order:
   - sex.category
   - position.pose
   - toys.use
+  - pussy.look
   - asshole.look
   - extras.effects
 
@@ -35,23 +36,6 @@ on_select:
         replace_with: fingers
 
   extras.effects:
-    prolapse_creampie:
-      - field: asshole.look
-        replace_if_in: [natural, used, winking, gaping]
-        replace_with: prolapse
-
-  asshole.look:
-    natural:
-      - field: extras.effects
-        drop: [prolapse_creampie]
-    used:
-      - field: extras.effects
-        drop: [prolapse_creampie]
-    winking:
-      - field: extras.effects
-        drop: [prolapse_creampie]
-    gaping:
-      - field: extras.effects
-        drop: [prolapse_creampie]
+    prolapse_creampie: []
 
 edit_presets: {}

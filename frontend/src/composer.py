@@ -106,6 +106,16 @@ FEATURE_TAGS: dict[str, list[str]] = {
     "hard_nipples": ["body.nipples:erect"],
     "anal_creampie": ["finish:cum_inside", "act:anal"],
     "cum_tits": ["finish:cum_body"],
+    "cum_ass": ["finish:cum_body"],
+    "cum_thighs": ["finish:cum_inside"],
+    "cum_mouth": ["finish:cum_face"],
+    "smeared_makeup": ["finish:sloppy"],
+    "afterglow": ["finish:wet"],
+    "hickeys": ["finish:wet"],
+    "handprints": ["finish:wet"],
+    "spit_tits": ["finish:sloppy"],
+    "oiled": ["finish:wet"],
+    "condom": ["finish:cum_body"],
 }
 
 _SEX_TAGS: dict[str, list[str]] = {
@@ -135,6 +145,9 @@ _PUSSY_TAGS: dict[str, list[str]] = {
     "open": ["act:spreading"],
     "used": ["act:spreading"],
     "gaping": ["act:vaginal_gape", "act:spreading"],
+    "outie": ["act:spreading"],
+    "clit": ["act:spreading"],
+    "creamy": ["finish:wet"],
 }
 
 _ASSHOLE_TAGS: dict[str, list[str]] = {
@@ -142,6 +155,8 @@ _ASSHOLE_TAGS: dict[str, list[str]] = {
     "winking": ["act:anal_gape"],
     "gaping": ["act:anal_gape"],
     "prolapse": ["act:prolapse"],
+    "puffy_rim": ["act:anal_gape"],
+    "cheeks_spread": ["act:spreading"],
 }
 
 
@@ -208,9 +223,8 @@ def scene_tags(scene: dict[str, Any]) -> set[str]:
         for tag in _PUSSY_TAGS.get(look, []):
             tags.add(tag)
 
-    ass_look = (scene.get("asshole") or {}).get("look")
-    if _tag_value(ass_look):
-        for tag in _ASSHOLE_TAGS.get(str(ass_look), []):
+    for look in _selected_ids(scene, "asshole", "look"):
+        for tag in _ASSHOLE_TAGS.get(look, []):
             tags.add(tag)
 
     toy = (scene.get("toys") or {}).get("use")
@@ -257,6 +271,11 @@ def wants_genital_override(scene: dict[str, Any]) -> bool:
 
 
 def _gangbang_lines(pose: str) -> list[str]:
+    if pose == "keep":
+        return [
+            "gangbang, sex with three men, all three men are penetrating her.",
+            "keep her original pose and camera. the men fit around her as she already is.",
+        ]
     if pose in _DOGGY_POSES:
         return [
             "one girl and three men. all three men are penetrating the girl. "
@@ -296,7 +315,7 @@ def compose_edit_prompt(
     sex = (scene.get("sex") or {}).get("category") or "solo"
     extras = _selected_ids(scene, "extras", "effects") | _selected_ids(scene, "features", "extras")
     pussy = _selected_ids(scene, "pussy", "look")
-    ass = (scene.get("asshole") or {}).get("look") or "natural"
+    ass = _selected_ids(scene, "asshole", "look")
     face = (scene.get("expression") or {}).get("face")
 
     lines: list[str] = []
@@ -306,7 +325,10 @@ def compose_edit_prompt(
             lines.append(trig)
 
     lines.append(EDIT_IDENTITY_LOCK)
-    lines.append("If the photo is a portrait or headshot, invent a full body in this pose. Keep the face.")
+    if str(pose) == "keep":
+        lines.append("Keep her original pose and camera. Do not invent a new body position.")
+    else:
+        lines.append("If the photo is a portrait or headshot, invent a full body in this pose. Keep the face.")
 
     pose_line = _frag(fr, "position.pose", pose)
     if isinstance(pose_line, str) and pose_line:
@@ -348,9 +370,14 @@ def compose_edit_prompt(
     elif isinstance(pussy_bits, str) and pussy_bits:
         lines.append(pussy_bits)
 
-    ass_line = _frag(fr, "asshole.look", ass)
-    if isinstance(ass_line, str) and ass_line:
-        lines.append(ass_line)
+    if "prolapse_creampie" in extras:
+        ass = set(ass)
+        ass.add("prolapse")
+    ass_bits = _frag(fr, "asshole.look", sorted(ass))
+    if isinstance(ass_bits, list):
+        lines.extend(ass_bits)
+    elif isinstance(ass_bits, str) and ass_bits:
+        lines.append(ass_bits)
 
     extra_bits = _frag(fr, "extras.effects", sorted(extras))
     if isinstance(extra_bits, list):

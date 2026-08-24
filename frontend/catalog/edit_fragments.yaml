@@ -1,6 +1,10 @@
 # SNOFS wants full sentences. photograph — never photorealistic.
 
 position.pose:
+  keep: >-
+    keep her original pose, body position, and camera from the photo.
+    Do not restage her. Do not lay her down or put her on all fours
+    unless she already is.
   spread_heels: >-
     she is lying on her back in a frog-leg pose, knees bent out, heels planted.
     Camera between her knees looking toward her face so you see her face,
@@ -53,13 +57,25 @@ pussy.look:
   used: "her vagina looks used, well-fucked, loose and wet"
   gaping: "she has a gaping vagina, vaginal gape, the hole is open"
   innie: "a tight innie vagina, neat labia"
+  outie: "she has meaty outie labia, thick outer lips"
+  clit: "her clitoris is prominent and sticking out"
+  shaved: "her vagina is shaved smooth, no pubic hair"
+  bush: "she has a full bush of pubic hair"
+  creamy: "her vagina is creamy with arousal, wet discharge, not semen"
+  pierced: "she has a clit hood piercing, a small ring"
 
 asshole.look:
   natural: ""
-  used: "her anus is a used sphincter, puffy rim"
+  tight: "her anus is a tight small pucker, clenched"
+  puffy_rim: "her anus has a puffy swollen rim, not gaping"
+  used: "her anus is a used sphincter, recently stretched"
   winking: "her anus is winking, the sphincter flexing"
   gaping: "anal gape, she has a gaping anus, used asshole"
   prolapse: "she has a prolapsed anus, anal prolapse, rosebud of folded rectal lining hanging out"
+  plug: "a jewel butt plug is seated in her anus"
+  cheeks_spread: "she is spreading her ass cheeks with her hands"
+  spanked: "her buttocks are red with spank marks"
+  hairy: "she has hair around her anus"
 
 sex.category:
   solo: "she is alone, no partner in the frame, showing herself off"
@@ -90,6 +106,16 @@ extras.effects:
   prolapse_creampie: "cum leaking from her prolapsed anus, creampie smeared on the rosebud, thick opaque white semen"
   cum_face: "cum on her face, a facial, white streaks"
   cum_tits: "cum on her breasts, glazed nipples"
+  cum_ass: "cum on her ass and lower back, white glaze"
+  cum_thighs: "thick opaque white cum running down her inner thighs"
+  cum_mouth: "cum in her mouth, on her tongue, dripping from her lips"
+  smeared_makeup: "smeared makeup, mascara tracks, wrecked lipstick"
+  afterglow: "just-fucked afterglow, flushed chest, messy hair, puffy mouth"
+  hickeys: "hickeys and bite marks on her neck and breasts"
+  handprints: "red handprints on her ass"
+  spit_tits: "spit on her breasts, sloppy and wet"
+  oiled: "her skin is oiled and shiny, baby-oil sheen, not sweat"
+  condom: "a used condom resting on her belly"
 
 clothing.state:
   keep: ""

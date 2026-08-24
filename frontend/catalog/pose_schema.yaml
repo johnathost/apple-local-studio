@@ -24,6 +24,12 @@ groups:
         type: choice
         default: spread_heels
         options:
+          - id: keep
+            label: Keep original
+            icon: "🧍"
+            group: original
+            group_label: Original
+            blurb: Don't change how she's standing or sitting
           - id: spread_heels
             label: Frog-leg
             icon: "🦵"
@@ -119,20 +125,31 @@ groups:
           - { id: used, label: Used, icon: "💦", blurb: Loose, wet, well-fucked }
           - { id: gaping, label: Gaping, icon: "⭕", blurb: The hole stays open }
           - { id: innie, label: Tight innie, icon: "🌷", blurb: Neat slit, barely showing }
+          - { id: outie, label: Outie / meaty, icon: "🍖", blurb: Thick outer lips, meaty labia }
+          - { id: clit, label: Clit out, icon: "💧", blurb: Prominent clit, sticking out }
+          - { id: shaved, label: Shaved, icon: "✨", blurb: Smooth, no hair }
+          - { id: bush, label: Bush, icon: "🌿", blurb: Full pubic hair }
+          - { id: creamy, label: Creamy, icon: "🤍", blurb: Aroused cream, not cum }
+          - { id: pierced, label: Pierced, icon: "💍", blurb: Clit hood ring }
 
   - id: asshole
     label: Asshole
     fields:
       - id: look
         label: Asshole
-        type: choice
-        default: natural
+        type: multi
+        default: []
         options:
-          - { id: natural, label: Keep / natural, icon: "🍑", blurb: Leave her ass as-is }
-          - { id: used, label: Used sphincter, icon: "💫", blurb: Puffy rim, recently stretched }
+          - { id: tight, label: Tight pucker, icon: "🔹", blurb: Small, clenched, neat }
+          - { id: puffy_rim, label: Puffy rim, icon: "🍩", blurb: Swollen ring, not a gape }
+          - { id: used, label: Used sphincter, icon: "💫", blurb: Recently stretched }
           - { id: winking, label: Winking, icon: "😉", blurb: The hole flexes at the camera }
           - { id: gaping, label: Gaping, icon: "🕳️", blurb: Open dark circle, used asshole }
           - { id: prolapse, label: Prolapse, icon: "🌹", blurb: Rosebud hanging out of her ass }
+          - { id: plug, label: Plug, icon: "💎", blurb: Jewel plug sitting in her ass }
+          - { id: cheeks_spread, label: Cheeks spread, icon: "👐", blurb: Hands pulling her ass open }
+          - { id: spanked, label: Spanked, icon: "🖐️", blurb: Red handprints on her cheeks }
+          - { id: hairy, label: Hairy, icon: "🌿", blurb: Hair around the hole }
 
   - id: extras
     label: Filth
@@ -152,6 +169,16 @@ groups:
           - { id: prolapse_creampie, label: Prolapse leaking, icon: "🌹", blurb: Cream on the rosebud }
           - { id: cum_face, label: Facial, icon: "😌", blurb: White streaks across her face }
           - { id: cum_tits, label: Cum on tits, icon: "🍈", blurb: Glazed nipples, messy chest }
+          - { id: cum_ass, label: Cum on ass, icon: "🍑", blurb: Glaze on her cheeks and back }
+          - { id: cum_thighs, label: Cum down thighs, icon: "🥛", blurb: White streaks running down }
+          - { id: cum_mouth, label: Mouthful, icon: "👅", blurb: Cum on her tongue, dripping lips }
+          - { id: smeared_makeup, label: Smeared makeup, icon: "💄", blurb: Mascara tracks, wrecked lipstick }
+          - { id: afterglow, label: Just fucked, icon: "😵‍💫", blurb: Flushed chest, messy hair, puffy mouth }
+          - { id: hickeys, label: Hickeys, icon: "💋", blurb: Bite marks on neck and tits }
+          - { id: handprints, label: Handprints, icon: "✋", blurb: Red prints on her ass }
+          - { id: spit_tits, label: Spit on tits, icon: "💦", blurb: Sloppy spit on her chest }
+          - { id: oiled, label: Oiled, icon: "✨", blurb: Baby-oil shine, not sweat }
+          - { id: condom, label: Used condom, icon: "🎗️", blurb: Used condom on her belly }
 
   - id: clothing
     label: Outfit
