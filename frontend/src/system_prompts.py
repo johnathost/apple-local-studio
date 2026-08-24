@@ -26,7 +26,10 @@ SEX_SCENE_LOCK = (
 
 # Short identity lock for the user-facing edit prompt. Pose/camera are NOT locked.
 EDIT_IDENTITY_LOCK = (
-    "Same person as the photo: same face, same skin complexion, same hair. Do not swap identity."
+    "This is the same woman as the reference photograph. Copy her face exactly: "
+    "same face shape, same eyes, same nose, same mouth, same jaw, same hair, "
+    "same skin, same age, same makeup. Do not beautify. Do not change ethnicity. "
+    "Do not give her a different person's face."
 )
 
 SYSTEM_GEN = (
@@ -56,10 +59,13 @@ SYSTEM_EDIT = (
 # Do NOT say "no extra limbs / no floating penis" — gangbang needs extra male bodies.
 # SNOFS: photograph, never photorealistic. Natural-language sex terms.
 SYSTEM_EDIT_LORA = (
-    "System: One reference photo is WHO: keep this person's face, skin, hair, and nails. "
-    "Invent the rest of the body and the requested pose. "
+    "System: One reference photo is WHO. Copy her face exactly from that photograph. "
+    "Same face, hair, eyes, nose, mouth, jaw, skin, age, tattoos, and nails. "
+    "Do not swap identity. Do not beautify. Do not change ethnicity. "
+    "You may change pose, clothing, and the sex act below the neck. "
     "Keep her original facial expression unless the edit asks to change it. "
-    "If the photo is a portrait or headshot, create a full body in this pose. "
+    "If the photo is a portrait or headshot, extend the crop to a full body in this pose "
+    "but do not redraw the face. "
     "Follow the sex act in the edit request. Men are separate people with their own hips and legs. "
     "A photograph, no text, no watermark."
 )
@@ -100,6 +106,10 @@ QUALITY_NEGATIVE = (
 # Pose/undress skip QUALITY_NEGATIVE (deformed/grotesque fights gape).
 # Dry pose: no cum/semen tokens at all (they leak into a pearl on the mons).
 DRY_POSE_NEGATIVE = (
+    "different person, different face, swapped face, celebrity face, "
+    "generic pornstar face, beauty filter, instagram face, doll face, airbrushed, "
+    "younger, older, different eye color, different nose, different jaw, "
+    "different hair color, different ethnicity, "
     "pearl, egg, orb, marble, blob on crotch, toy sitting on skin, sticker on crotch, "
     "gash, wound, knife cut, extra vagina, missing labia, "
     "fused pussy and anus, cloaca, one giant genital hole, "
@@ -110,6 +120,8 @@ DRY_POSE_NEGATIVE = (
 
 # Only when the edit actually asks for cum.
 SEMEN_NEGATIVE = (
+    "different person, different face, swapped face, celebrity face, "
+    "generic pornstar face, beauty filter, instagram face, doll face, airbrushed, "
     "yellow cum, yellow semen, golden cum, orange cum, honey-colored semen, "
     "urine, piss, cheddar, yellow fluid leaking from pussy, yellow fluid leaking from anus, "
     "fused pussy and anus, cloaca, one giant genital hole, extra vagina, "

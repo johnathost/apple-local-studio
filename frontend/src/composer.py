@@ -328,7 +328,10 @@ def compose_edit_prompt(
     if str(pose) == "keep":
         lines.append("Keep her original pose and camera. Do not invent a new body position.")
     else:
-        lines.append("If the photo is a portrait or headshot, invent a full body in this pose. Keep the face.")
+        lines.append(
+            "If the photo is a portrait or headshot, extend the crop to a full body in this pose. "
+            "Do not redraw her face."
+        )
 
     pose_line = _frag(fr, "position.pose", pose)
     if isinstance(pose_line, str) and pose_line:
@@ -388,6 +391,10 @@ def compose_edit_prompt(
     notes = (scene.get("instruction") or {}).get("text") or ""
     if str(notes).strip():
         lines.append(str(notes).strip())
+
+    lines.append(
+        "Her face must match the reference photograph. Same person, not a lookalike."
+    )
 
     return "\n".join(lines)
 
