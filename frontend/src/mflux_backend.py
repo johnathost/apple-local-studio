@@ -258,6 +258,7 @@ class MfluxBackend:
         self._lora_sig: tuple | None = None
         self._quantize: int | None = None
         self._last_used = 0.0
+        self._last_load_s = 0.0
         self._available: bool | None = None
         self._jobs: queue.Queue[tuple[Any, tuple, dict, queue.Queue] | None] = queue.Queue()
         self._mlx_thread = threading.Thread(
@@ -366,7 +367,10 @@ class MfluxBackend:
                 "pip install mflux"
             )
 
-        sig = (tuple(lora_paths), tuple(lora_scales))
+        sig = (
+            tuple(Path(p).name for p in lora_paths),
+            tuple(round(float(s), 2) for s in lora_scales),
+        )
         if (
             self._model is not None
             and self._mode == mode
@@ -374,9 +378,11 @@ class MfluxBackend:
             and self._quantize == quantize
         ):
             self._last_used = time.time()
+            self._last_load_s = 0.0
             return self._model
 
         self._model = None
+        t0 = time.time()
         local = resolve_local_model_path()
         if local is None:
             raise MfluxBackendError(
@@ -420,6 +426,8 @@ class MfluxBackend:
         self._lora_sig = sig
         self._quantize = quantize
         self._last_used = time.time()
+        self._last_load_s = time.time() - t0
+        logger.info("mflux loaded in %.1fs mode=%s quantize=%s loras=%s", self._last_load_s, mode, quantize, sig[0])
         return self._model
 
     def generate(
@@ -431,7 +439,7 @@ class MfluxBackend:
         height: int = 576,
         steps: int = 4,
         seed: int | None = None,
-        quantize: int = 8,
+        quantize: int = 4,
         lora_paths: list[str] | None = None,
         lora_scales: list[float] | None = None,
         image_paths: list[str] | None = None,
@@ -487,8 +495,12 @@ class MfluxBackend:
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         if image_paths:
-            snap_src = image_paths[-1] if pose_ref else image_paths[0]
-            width, height = _snap_edit_size(snap_src, width, height)
+            sys_mode = (system_mode or mode or "").strip().lower()
+            if pose_ref:
+                width, height = _snap_edit_size(image_paths[-1], width, height)
+            elif sys_mode != "pose":
+                # LoRA pose restage keeps requested W/H so a portrait can become a scene.
+                width, height = _snap_edit_size(image_paths[0], width, height)
 
         with self._lock:
             need_load = (
@@ -511,6 +523,16 @@ class MfluxBackend:
                 lora_paths=lora_paths,
                 lora_scales=lora_scales,
             )
+            load_s = float(getattr(self, "_last_load_s", 0) or 0)
+            if need_load and load_s:
+                _emit(
+                    on_progress,
+                    {
+                        "phase": "load",
+                        "progress": 0.18,
+                        "message": f"Loaded weights in {load_s:.0f}s",
+                    },
+                )
             _emit(on_progress, {"phase": "encode", "progress": 0.22, "message": "Encoding prompt…"})
 
             tap = _StepProgress(lambda p: _emit(on_progress, p), steps)

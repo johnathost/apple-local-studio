@@ -18,6 +18,7 @@ from src.catalog_loader import (
     scenes_public,
 )
 from src.composer import _PLATE_FOR_EXTRA, wants_genital_override
+from src.constraints import preset_director
 from src.imageutil import sniffed_image_suffix
 
 
@@ -268,13 +269,14 @@ def build_step_job(
         scene.setdefault("features", {})["extras"] = extras
         include_triggers = True
 
+    lora_only = preset_director(pose_id) == "lora"
     composed = _compose(
         ComposeRequest(
             scene=scene,
             raw_prompt=notes if kind == "undress" else None,
             mode=mode,
             include_triggers=include_triggers,
-            pose_ref=mode == "pose",
+            pose_ref=mode == "pose" and not lora_only,
             max_loras=max_loras,
         )
     )
@@ -286,7 +288,7 @@ def build_step_job(
     eng = engine_mode(mode)
     defaults = engine_defaults(cat)
     refs = [Path(identity).name]
-    if eng == "edit" and mode == "pose":
+    if eng == "edit" and mode == "pose" and not lora_only:
         refs = _ensure_plate(composed.scene.get("pose", {}).get("scene") or pose_id, refs)
 
     return {
@@ -344,6 +346,24 @@ def run_recipe(job: Any, *, generate_fn: Any, on_inner_progress: Any) -> None:
     current = identity
     klein_done = 0
 
+    # One LoRA stack for the whole recipe. Undress (0 LoRAs) → pose (1–2)
+    # used to full-reload 9B in between and that is the 10-minute tax.
+    job_kw = dict(
+        width=int(req.get("width") or 1024),
+        height=int(req.get("height") or 576),
+        steps=int(req.get("steps") or 4),
+        seed=None,
+        quantize=int(req.get("quantize") or 4),
+        guidance=req.get("guidance"),
+        max_loras=req.get("max_loras"),
+        notes=req.get("notes"),
+    )
+    payloads = [build_step_job(step, identity=identity, **job_kw) for step in run_plan]
+    sticky = next((p.get("loras") for p in payloads if p.get("loras") and p.get("system_mode") != "undress"), None)
+    if sticky:
+        for p in payloads:
+            p["loras"] = sticky
+
     for i, step in enumerate(run_plan):
         slot = start + i
         n_takes = klein_counts[i]
@@ -353,18 +373,9 @@ def run_recipe(job: Any, *, generate_fn: Any, on_inner_progress: Any) -> None:
             frames[slot]["status"] = "running"
             _publish_frames(job, frames)
 
-        payload = build_step_job(
-            step,
-            identity=current,
-            width=int(req.get("width") or 1024),
-            height=int(req.get("height") or 576),
-            steps=int(req.get("steps") or 4),
-            seed=None,
-            quantize=int(req.get("quantize") or 4),
-            guidance=req.get("guidance"),
-            max_loras=req.get("max_loras"),
-            notes=req.get("notes"),
-        )
+        payload = dict(payloads[i])
+        refs = [current] + [r for r in (payload.get("ref_images") or [])[1:]]
+        payload["ref_images"] = refs
         seeds = take_seeds(req.get("seed"), n_takes)
         rolled: list[dict[str, Any]] = []
         last_path: Path | None = None

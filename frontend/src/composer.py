@@ -6,7 +6,7 @@ from copy import deepcopy
 from typing import Any
 
 from src.catalog_loader import bundled_pose_ref, load_fragments
-from src.constraints import apply_edit_preset, preset_caption, preset_fragment
+from src.constraints import apply_edit_preset, preset_caption, preset_director, preset_fragment
 from src.system_prompts import EDIT_IDENTITY_LOCK, SEMEN_LOCK
 
 
@@ -250,6 +250,8 @@ def compose_edit_prompt(
     wants_penis = bool(selected & _PENIS_ACTS)
     preset_id = (scene.get("pose") or {}).get("scene") or (scene.get("preset") or {}).get("scene")
     pose_key = str(preset_id or "")
+    lora_dir = preset_director(pose_key) == "lora"
+    use_plate = bool(pose_ref) and not lora_dir
     caption = preset_caption(pose_key)
     clothing = scene.get("clothing") or {}
     fr = load_fragments("edit")
@@ -260,7 +262,7 @@ def compose_edit_prompt(
         if trig:
             lines.append(trig)
 
-    if pose_ref:
+    if use_plate:
         lines.append("Photo 1: identity, same face, skin, hair.")
         if pose_key.startswith("prolapse") or "rosebud" in (preset_fragment(pose_key) or "").lower():
             if wants_penis:
@@ -291,6 +293,13 @@ def compose_edit_prompt(
             )
     else:
         lines.append(EDIT_IDENTITY_LOCK)
+        if lora_dir or not use_plate:
+            lines.append(
+                "Plain white seamless studio background, white void, no room, no furniture."
+            )
+            lines.append(
+                "If the photo is a portrait or headshot, invent a full body in this pose. Keep the face."
+            )
 
     if caption:
         lines.append(f"Pose: {caption}.")
@@ -331,15 +340,29 @@ def compose_edit_prompt(
             "two openings: pussy on top toward the belly, anus underneath toward the seat, "
             "a strip of perineum skin between them"
         )
-        pussy = (
-            "Pussy: copy photo 2's vulva — mons, outer labia, inner lips, clitoral hood, "
-            "a natural cleft"
-        )
+        if lora_dir:
+            pussy = (
+                "Pussy: mons, outer labia, inner lips, clitoral hood, a natural cleft. "
+                "Anus: its own pucker below the perineum"
+            )
+        else:
+            pussy = (
+                "Pussy: copy photo 2's vulva — mons, outer labia, inner lips, clitoral hood, "
+                "a natural cleft"
+            )
         if cream:
             pussy += ". White semen in the cleft leaking out"
         lines.append(pussy + ".")
 
-    if "prolapse_fucking" in selected:
+    if "all_holes" in selected or pose_key == "lora_gangbang":
+        lines.append("the girl is turned with her ass to the camera")
+        lines.append("all three men are penetrating the girl")
+        lines.append("oral, anal and vaginal sex")
+        lines.append(
+            "three separate men: their torsos, hips, and thighs in frame, faces out of frame. "
+            "She looks back over her shoulder so her face is visible"
+        )
+    elif "prolapse_fucking" in selected:
         lines.append(
             "Penis: a real skin-colored erect cock, glans and shaft, attached to a man's hips "
             "and thighs, going through the rosebud into the anus. Not a dildo, not glass, not a toy."

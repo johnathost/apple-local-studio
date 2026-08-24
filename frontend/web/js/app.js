@@ -28,7 +28,7 @@ const state = {
   studioSimple: true,
   showPrompt: false,
   undressFirst: false,
-  twoTakes: true,
+  twoTakes: false,
   shoot: null, // { identity, recipe, frames, selected, subjectIndex }
   jobStartedAt: null,
   elapsedTimer: null,
@@ -137,7 +137,8 @@ function directorText() {
   const scene = currentStudioScene();
   const face = state.refImage ? "your photo" : "need a photo";
   let crotch = "this plate";
-  if (extras.some((e) => String(e).startsWith("prolapse"))) crotch = "prolapse plate";
+  if (scene?.director === "lora") crotch = "LoRA (no plate)";
+  else if (extras.some((e) => String(e).startsWith("prolapse"))) crotch = "prolapse plate";
   else if (extras.includes("vaginal_gape")) crotch = "gape LoRA (pose from plate)";
   const extraBit = extras.length ? extras.map(extraLabel).join(", ") : "none";
   const name = scene?.label || getSceneValue("pose", "scene") || "—";
@@ -221,18 +222,28 @@ function renderSceneStudio() {
     for (const s of cat.scenes) {
       const row = document.createElement("button");
       row.type = "button";
-      row.className = "pose-row" + (s.plate === current || s.id === current ? " active" : "");
+      row.className =
+        "pose-row" +
+        (s.plate === current || s.id === current ? " active" : "") +
+        (s.director === "lora" ? " lora" : "");
       const title = document.createElement("span");
       title.className = "pose-row-title";
       title.textContent = s.label;
-      const img = document.createElement("img");
-      img.className = "pose-row-thumb";
-      img.src = s.image_url;
-      img.alt = s.label;
       row.appendChild(title);
-      row.appendChild(img);
+      if (s.image_url) {
+        const img = document.createElement("img");
+        img.className = "pose-row-thumb";
+        img.src = s.image_url;
+        img.alt = s.label;
+        row.appendChild(img);
+      } else {
+        const badge = document.createElement("span");
+        badge.className = "pose-row-badge";
+        badge.textContent = "LoRA";
+        row.appendChild(badge);
+      }
       row.addEventListener("click", () => {
-        setSceneValue("pose", "scene", s.plate);
+        setSceneValue("pose", "scene", s.plate || s.id);
       });
       list.appendChild(row);
     }
@@ -1103,7 +1114,11 @@ function applyModeChrome() {
     }
   }
   const sys = $("#system-line");
-  if (sys) sys.textContent = state.systemPrompts[kind || state.mode] || "";
+  if (sys) {
+    const lora = currentStudioScene()?.director === "lora";
+    sys.textContent =
+      (lora && state.systemPrompts.lora) || state.systemPrompts[kind || state.mode] || "";
+  }
   const title = $("#builder-title");
   if (title) {
     title.textContent =

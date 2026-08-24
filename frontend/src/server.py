@@ -25,12 +25,13 @@ from src.catalog_loader import (
 )
 from src.composer import compose_prompt, retarget_pose_for_extras, scene_tags, wants_genital_override
 from src.recipe import clamp_takes, keep_frames, lora_files_for_job, plan_recipe
-from src.constraints import apply_edit_preset, blocked_options, sanitize_scene
-from src.system_prompts import SYSTEM_EDIT, SYSTEM_EDIT_POSE, SYSTEM_GEN, SYSTEM_UNDRESS
-from src.engine import engine
-from src.imageutil import MAX_IMAGE_BYTES, sniffed_image_suffix
-from src.jobs import Job, jobs
-from src.lora_match import list_catalog, match_loras
+from src.constraints import (
+    apply_edit_preset,
+    blocked_options,
+    preset_director,
+    preset_loras,
+    sanitize_scene,
+)
 from src.models import (
     ComposeRequest,
     ComposeResponse,
@@ -39,6 +40,17 @@ from src.models import (
     PromoteRequest,
     RecipeRequest,
 )
+from src.system_prompts import (
+    SYSTEM_EDIT,
+    SYSTEM_EDIT_LORA,
+    SYSTEM_EDIT_POSE,
+    SYSTEM_GEN,
+    SYSTEM_UNDRESS,
+)
+from src.engine import engine
+from src.imageutil import MAX_IMAGE_BYTES, sniffed_image_suffix
+from src.jobs import Job, jobs
+from src.lora_match import list_catalog, match_loras
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
@@ -101,15 +113,20 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
         max_loras = int(engine_defaults(mode).get("max_loras", 0))
 
     pose_id = (scene.get("pose") or {}).get("scene")
-    has_pose_plate = bool(req.pose_ref) or bundled_pose_ref(pose_id)
+    has_pose_plate = bundled_pose_ref(pose_id)
     # Pose plates already show spread legs/pussy. Spreading LoRAs melt the hole.
     # Cum LoRAs on a copied pussy became a white egg — fluid is prompt-only.
     skip_groups = {"spreading", "cum"} if mode == "pose" and has_pose_plate else None
+    pins = [{"id": i} for i in preset_loras(pose_id)]
+    if pins and max_loras is not None and int(max_loras) < len(pins):
+        max_loras = len(pins)
+    elif pins and max_loras is None:
+        max_loras = max(len(pins), int(engine_defaults(mode).get("max_loras", 2)))
     matched = match_loras(
         scene,
         on_disk=set(engine.list_lora_files()),
         max_loras=max_loras,
-        manual=[m.model_dump() for m in req.manual_loras],
+        manual=[m.model_dump() for m in req.manual_loras] + pins,
         skip_groups=skip_groups,
     )
     triggers: list[str] = []
@@ -179,6 +196,7 @@ def api_defaults(mode: str = "gen") -> dict[str, Any]:
             "gen": SYSTEM_GEN,
             "edit": SYSTEM_EDIT,
             "pose": SYSTEM_EDIT_POSE,
+            "lora": SYSTEM_EDIT_LORA,
             "undress": SYSTEM_UNDRESS,
         },
     }
@@ -277,7 +295,7 @@ def api_generate(req: GenerateRequest) -> JobResponse:
             raise HTTPException(400, f"Pose reference not found: {pose_name}")
         if pose_name not in ref_images:
             ref_images.append(pose_name)
-    elif cat == "pose":
+    elif cat == "pose" and preset_director((composed.scene.get("pose") or {}).get("scene")) != "lora":
         pose_id = (composed.scene.get("pose") or {}).get("scene")
         plate = pose_plate_bytes(pose_id)
         if plate is not None:

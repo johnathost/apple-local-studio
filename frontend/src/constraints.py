@@ -122,6 +122,21 @@ def preset_fragment(preset_id: str | None) -> str:
     return str(frag).strip()
 
 
+def preset_director(preset_id: str | None) -> str:
+    """plate (copy Photo 2) or lora (one identity pic + LoRA)."""
+    if not preset_id or preset_id == "none":
+        return "plate"
+    entry = (load_constraints().get("edit_presets") or {}).get(preset_id) or {}
+    return str(entry.get("director") or "plate").strip().lower() or "plate"
+
+
+def preset_loras(preset_id: str | None) -> list[str]:
+    if not preset_id or preset_id == "none":
+        return []
+    entry = (load_constraints().get("edit_presets") or {}).get(preset_id) or {}
+    return [str(x) for x in (entry.get("loras") or []) if x]
+
+
 def preset_caption(preset_id: str | None) -> str:
     """One-line pose caption for Klein. Falls back to the fragment's first sentence."""
     if not preset_id or preset_id == "none":

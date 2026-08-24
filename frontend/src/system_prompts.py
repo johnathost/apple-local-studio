@@ -52,6 +52,18 @@ SYSTEM_EDIT = (
     f"{SEX_SCENE_LOCK}"
 )
 
+# Pose with no plate: LoRA + text invent the body. Portrait → full scene on white.
+# Do NOT say "no extra limbs / no floating penis" here — gangbang LoRAs need
+# extra male bodies, and that lock glues cocks onto her torso.
+SYSTEM_EDIT_LORA = (
+    "System: One reference photo is WHO: keep this person's face, skin, hair, and nails. "
+    "Invent the rest of the body and the requested pose. "
+    "Plain white seamless studio background, white void, no room, no furniture. "
+    "If the photo is a portrait or headshot, create a full body in this pose on that white background. "
+    "Follow the sex act in the edit request. Men are separate people with their own hips and legs. "
+    "Photoreal, no text, no watermark."
+)
+
 # Used when a pose plate is passed as the second reference image.
 SYSTEM_EDIT_POSE = (
     "System: Two reference photos. "
@@ -124,6 +136,8 @@ def with_system_prompt(
             system = SYSTEM_EDIT_POSE_OVERRIDE
         elif pose_ref:
             system = SYSTEM_EDIT_POSE
+        elif m == "pose":
+            system = SYSTEM_EDIT_LORA
         else:
             system = SYSTEM_EDIT
     else:

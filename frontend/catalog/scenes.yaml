@@ -53,3 +53,7 @@ scenes:
   - { id: anal_cowgirl, label: Cowgirl · anal, plate: anal_cowgirl, category: anal_sex, compatible_extras: *anal }
 
   - { id: masturbate_bed, label: On back · masturbating, plate: masturbate_bed, category: masturbation, compatible_extras: [wet, cum_face, creampie] }
+
+  # LoRA-only tests: no Photo 2. Identity + one LoRA + white void.
+  - { id: lora_gangbang, label: Gangbang · LoRA test, director: lora, category: lora_test, category_label: LoRA tests, compatible_extras: [] }
+  - { id: lora_spread_holes, label: Spread · two holes LoRA test, director: lora, category: lora_test, category_label: LoRA tests, compatible_extras: [] }

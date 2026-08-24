@@ -417,3 +417,36 @@ edit_presets:
       on her pussy masturbating. Camera from between her knees looking at her
       body and face. Pussy in the lower center, breasts and face above.
       She is alone, no partner in frame.
+
+  lora_gangbang:
+    label: Gangbang · LoRA test
+    director: lora
+    loras: [all_holes_gangbang]
+    apply:
+      position: { pose: cowgirl }
+      act: { primary: [all_holes] }
+      camera: { angle: from_behind }
+      partners: { count: three_men }
+      clothing: { state: keep }
+    caption: >-
+      the girl is turned with her ass to the camera, all holes filled,
+      all three men are penetrating the girl, white seamless studio
+    fragment: >-
+      All holes filled. Three men. The girl is turned with her ass to the camera.
+
+  lora_spread_holes:
+    label: Spread · two holes LoRA test
+    director: lora
+    loras: [spreading_legs_pussy]
+    apply:
+      position: { pose: legs_spread }
+      act: { primary: [spreading] }
+      camera: { angle: genital_focus }
+      partners: { count: solo }
+      clothing: { state: keep }
+    caption: >-
+      on her back, legs spread wide, camera at the crotch, pussy above a
+      separate anus, white seamless studio
+    fragment: >-
+      She is on her back with her legs spread. Pussy and anus both visible
+      and separate. White seamless background.
