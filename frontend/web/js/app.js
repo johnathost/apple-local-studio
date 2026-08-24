@@ -116,43 +116,110 @@ function optionLabel(groupId, fieldId, value) {
 }
 
 function directorText() {
-  const face = state.refImage ? "your photo" : "need a photo";
-  const place = optionLabel("setting", "place", getSceneValue("setting", "place"));
+  const face = state.refImage ? "her" : "need a photo";
   const pose = optionLabel("position", "pose", getSceneValue("position", "pose"));
   const sex = optionLabel("sex", "category", getSceneValue("sex", "category"));
-  const plan = studioPlan().join(" → ") || "—";
-  return `Face = ${face} · ${place} · ${pose} · ${sex} · SNOFS · ${plan}`;
+  return `${face} · ${pose} · ${sex}`;
 }
 
 function studioPlan() {
   const steps = [];
   if (state.undressFirst) steps.push("Undress");
-  const place = optionLabel("setting", "place", getSceneValue("setting", "place"));
   const pose = optionLabel("position", "pose", getSceneValue("position", "pose"));
   const sex = optionLabel("sex", "category", getSceneValue("sex", "category"));
-  steps.push([place, pose, sex].filter(Boolean).join(" · ") || "Pose");
+  steps.push([pose, sex].filter(Boolean).join(" · ") || "Pose");
   return steps;
 }
 
+function fieldVisible(field) {
+  const show = field?.show_if;
+  if (!show) return true;
+  return getSceneValue(show.group, show.field) === show.equals;
+}
+
+function groupedOptions(field) {
+  const groups = [];
+  const map = new Map();
+  for (const opt of field.options || []) {
+    const gid = opt.group || "_";
+    if (!map.has(gid)) {
+      const g = { id: gid, label: opt.group_label || field.label, options: [] };
+      map.set(gid, g);
+      groups.push(g);
+    }
+    map.get(gid).options.push(opt);
+  }
+  return groups;
+}
+
 function renderStudioField(group, field) {
+  if (!fieldVisible(field)) return null;
   const wrap = document.createElement("div");
+  wrap.className = "studio-section";
   const kicker = document.createElement("p");
   kicker.className = "studio-kicker";
   kicker.textContent = field.label || group.label;
   wrap.appendChild(kicker);
+
+  const grouped = (field.options || []).some((o) => o.group);
+  if (field.type === "choice" && grouped) {
+    const cats = document.createElement("div");
+    cats.className = "pose-cats";
+    const current = getSceneValue(group.id, field.id);
+    for (const g of groupedOptions(field)) {
+      const cat = document.createElement("div");
+      cat.className = "pose-cat";
+      const heading = document.createElement("div");
+      heading.className = "pose-cat-label";
+      heading.textContent = g.label;
+      cat.appendChild(heading);
+      const grid = document.createElement("div");
+      grid.className = "pose-grid";
+      for (const opt of g.options) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "pose-pick" + (current === opt.id ? " active" : "");
+        const title = document.createElement("span");
+        title.className = "pose-pick-title";
+        title.textContent = opt.label;
+        btn.appendChild(title);
+        if (opt.blurb) {
+          const blurb = document.createElement("span");
+          blurb.className = "pose-pick-blurb";
+          blurb.textContent = opt.blurb;
+          btn.appendChild(blurb);
+        }
+        btn.addEventListener("click", () => {
+          setSceneValue(group.id, field.id, opt.id);
+          renderSceneStudio();
+        });
+        grid.appendChild(btn);
+      }
+      cat.appendChild(grid);
+      cats.appendChild(cat);
+    }
+    wrap.appendChild(cats);
+    return wrap;
+  }
+
   const chips = document.createElement("div");
   chips.className = "chips";
   if (field.type === "choice") {
+    const current = getSceneValue(group.id, field.id);
     for (const opt of field.options || []) {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "chip" + (getSceneValue(group.id, field.id) === opt.id ? " active" : "");
+      btn.className = "chip" + (current === opt.id ? " active" : "");
       btn.textContent = opt.label;
-      if (optionBlocked(group.id, field.id, opt.id) && getSceneValue(group.id, field.id) !== opt.id) {
+      if (optionBlocked(group.id, field.id, opt.id) && current !== opt.id) {
         btn.classList.add("conflict");
       }
       btn.addEventListener("click", () => {
-        setSceneValue(group.id, field.id, opt.id);
+        if (opt.id !== "keep" && current === opt.id && field.id === "face") {
+          setSceneValue(group.id, field.id, "keep");
+        } else {
+          setSceneValue(group.id, field.id, opt.id);
+        }
         renderSceneStudio();
       });
       chips.appendChild(btn);
@@ -198,14 +265,41 @@ function renderSceneStudio() {
     .join(" · ");
   root.appendChild(dir);
 
+  const fields = [];
   for (const group of state.schema?.groups || []) {
     for (const field of group.fields || []) {
-      if (field.type === "choice" || field.type === "multi") {
-        root.appendChild(renderStudioField(group, field));
-      }
+      if (field.type === "choice" || field.type === "multi") fields.push({ group, field });
     }
   }
+  const skip = new Set();
+  const pairWith = {
+    "pussy.look": "asshole.look",
+    "clothing.state": "clothing.heels",
+  };
+  for (let i = 0; i < fields.length; i++) {
+    const key = `${fields[i].group.id}.${fields[i].field.id}`;
+    if (skip.has(key)) continue;
+    const mateId = pairWith[key];
+    const node = renderStudioField(fields[i].group, fields[i].field);
+    if (!node) continue;
+    if (mateId) {
+      const mate = fields.find((f) => `${f.group.id}.${f.field.id}` === mateId);
+      const mateNode = mate ? renderStudioField(mate.group, mate.field) : null;
+      if (mateNode) {
+        skip.add(mateId);
+        const split = document.createElement("div");
+        split.className = "studio-split";
+        split.appendChild(node);
+        split.appendChild(mateNode);
+        root.appendChild(split);
+        continue;
+      }
+    }
+    root.appendChild(node);
+  }
 
+  const foot = document.createElement("div");
+  foot.className = "studio-foot";
   const undressRow = document.createElement("label");
   undressRow.className = "toggle";
   undressRow.innerHTML = `<input type="checkbox" id="studio-undress" ${state.undressFirst ? "checked" : ""} /> Undress first`;
@@ -213,7 +307,7 @@ function renderSceneStudio() {
     state.undressFirst = e.target.checked;
     renderSceneStudio();
   });
-  root.appendChild(undressRow);
+  foot.appendChild(undressRow);
   const takesRow = document.createElement("label");
   takesRow.className = "toggle";
   takesRow.innerHTML = `<input type="checkbox" id="studio-takes" ${state.twoTakes ? "checked" : ""} /> Two takes`;
@@ -221,7 +315,8 @@ function renderSceneStudio() {
     state.twoTakes = e.target.checked;
     renderSceneStudio();
   });
-  root.appendChild(takesRow);
+  foot.appendChild(takesRow);
+  root.appendChild(foot);
 
   const loraK = document.createElement("p");
   loraK.className = "studio-kicker";
@@ -271,13 +366,10 @@ function renderSceneStudio() {
 
   const plan = studioPlan();
   const planEl = document.createElement("p");
-  planEl.className = "director-line";
-  planEl.textContent =
-    plan.length === 0
-      ? "Pick a scene or undress."
-      : state.twoTakes
-        ? `This will run ${plan.length} step${plan.length === 1 ? "" : "s"}: ${plan.join(" → ")}. Last step: 2 takes, you pick.`
-        : `This will run ${plan.length} step${plan.length === 1 ? "" : "s"}: ${plan.join(" → ")}`;
+  planEl.className = "studio-plan";
+  planEl.textContent = state.twoTakes
+    ? `${plan.join(" → ")} · 2 takes`
+    : plan.join(" → ");
   root.appendChild(planEl);
 }
 
@@ -309,9 +401,9 @@ function renderBuilder() {
   const keptOpen = new Set(openGroupIds());
   root.innerHTML = "";
   const defaultOpen = new Set([
-    "setting",
     "sex",
     "position",
+    "toys",
     "expression",
     "pussy",
     "asshole",
@@ -583,6 +675,7 @@ async function runCompose() {
       focused.id !== "prompt-out";
     if (JSON.stringify(state.scene) !== prevScene && !typing) {
       renderBuilder();
+      renderSceneStudio();
     }
     renderLoras();
     renderLoraPicker();
@@ -1120,7 +1213,7 @@ function applyModeChrome() {
       kind === "undress"
         ? "Undress → same person, same pose"
         : kind === "pose"
-          ? "Your photo + a scene. SNOFS invents the pose. No reference plates."
+          ? "Your photo. Pick a pose and extras."
           : "Scene composer → mflux · private local gen";
   }
   const sl = $("#eng-strength");

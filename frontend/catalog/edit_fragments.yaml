@@ -1,59 +1,107 @@
-# SNOFS wants full sentences and these words, not tags.
-# photograph — never photorealistic.
-
-setting.place:
-  bedroom: >-
-    in a bedroom, rumpled sheets on a bed, pillows, warm lamp light
-  office: >-
-    in an office, a desk and an office chair, window blinds, overhead light
+# SNOFS wants full sentences. photograph — never photorealistic.
 
 position.pose:
+  spread_heels: >-
+    she is lying on her back in a frog-leg pose, knees bent out, heels planted,
+    her vagina and anus aimed at the camera
+  spread_v: >-
+    she is on her back with both legs up in a wide V, ankles high, spreading
+    herself, vagina and anus fully visible
+  spread_held: >-
+    she is on her back holding her thighs open with both hands, pulling her
+    vagina open toward the camera
+  spread_press: >-
+    she is folded with her knees to her chest, ass tilted up, presenting her
+    vagina and anus stacked for sex
+  doggy_lookback: >-
+    she is on all fours in doggystyle, ass to the camera, looking back over
+    her shoulder at the viewer, vagina and anus visible
+  doggy_chest: >-
+    she is face down, ass up, chest in the sheets, hips high, presenting her
+    anus and vagina to the camera
+  doggy_crawl: >-
+    she is on all fours crawling toward the camera, looking at the viewer,
+    breasts hanging, her ass and vagina visible behind her
+  doggy_present: >-
+    she is on all fours with her knees spread wide, back arched hard,
+    offering her anus and vagina to the camera from behind
   legs_spread: >-
     she is lying on her back with her legs spread wide toward the camera
   all_fours: >-
     she is on all fours looking at the camera, her ass raised, vagina and anus visible
 
 expression.face:
-  neutral: "neutral expression"
-  happy: "she is smiling, happy"
-  sex_face: "sex face, mouth open, heavy eyelids"
-  tongue_out: "her tongue is out"
-  pain: "pained expression, wincing"
+  keep: "keep her original facial expression from the photo, do not change how her face looks"
+  happy: "she is smiling, flushed and happy"
+  sex_face: "sex face, mouth open, heavy eyelids, lost in it"
+  tongue_out: "her tongue is out, panting"
+  pain: "pained pleasure, wincing, it hurts so good"
+  ahegao: "ahegao, eyes rolled back, tongue out, ruined with pleasure"
+  neutral: "keep her original facial expression from the photo"
 
 pussy.look:
   puffy: "her vagina is puffy and swollen"
-  open: "her vagina is open, labia spread"
+  open: "her vagina is spread open, labia parted"
   used: "her vagina looks used, well-fucked, loose and wet"
   gaping: "she has a gaping vagina, vaginal gape, the hole is open"
+  innie: "a tight innie vagina, neat labia"
 
 asshole.look:
   natural: ""
   used: "her anus is a used sphincter, puffy rim"
+  winking: "her anus is winking, the sphincter flexing"
   gaping: "anal gape, she has a gaping anus, used asshole"
   prolapse: "she has a prolapsed anus, anal prolapse, rosebud of folded rectal lining hanging out"
 
 sex.category:
-  solo: "she is alone, no partner in the frame"
+  solo: "she is alone, no partner in the frame, showing herself off"
+  masturbation: "she is alone, masturbating"
   vaginal: "vaginal sex, a man's penis is penetrating her vagina, his hips and thighs attached"
   anal: "anal sex, a man's penis is penetrating her anus, his hips and thighs attached, her vagina empty in front of it"
   oral: "blowjob, she is sucking a man's penis, his hips in frame"
   gangbang: "gangbang, sex with three men"
-  toys: "she is using a dildo, inserting a dildo into her vagina"
+
+toys.use:
+  none: ""
+  fingers: "she is rubbing her clitoris and fingering her vagina"
+  dildo_ride_pussy: "she is riding a thick dildo with her vagina, sinking down on it"
+  dildo_ride_anal: "she is riding a dildo with her anus, the toy stretching her ass"
+  horse_ride_pussy: "she is riding an oversized horse-cock dildo, her vagina stretched around the huge shaft"
+  horse_ride_anal: "she is riding an oversized horse-cock dildo anally, her anus stretched around the huge shaft"
+  wand: "she is pressing a hitachi magic wand to her clitoris"
+  double: "she has a dildo in her vagina and another in her anus, both holes filled with toys"
 
 extras.effects:
   wet_body: "her skin is wet and shiny with sweat"
+  dripping: "her vagina is dripping wet, glossy with arousal"
+  squirting: "she is squirting, clear wet spray from her vagina"
+  drool: "spit and drool on her tongue and chin"
+  hard_nipples: "her nipples are hard and erect"
   creampie: "her vagina is filled with cum, a creampie leaking from her vagina, thick opaque white semen"
+  anal_creampie: "cum leaking from her anus, anal creampie, thick opaque white semen"
   prolapse_creampie: "cum leaking from her prolapsed anus, creampie smeared on the rosebud, thick opaque white semen"
+  cum_face: "cum on her face, a facial, white streaks"
+  cum_tits: "cum on her breasts, glazed nipples"
 
 clothing.state:
   keep: ""
   nude: "she is nude"
-  lingerie: "she is wearing lingerie"
+  lingerie: "she is wearing tiny lingerie, pussy barely covered"
+  crotchless: "she is wearing crotchless panties, her vagina and anus exposed"
+  thong_aside: "her thong is pulled aside, vagina out"
+  fishnets: "she is wearing ripped fishnet stockings, crotch exposed"
+  latex: "she is wearing shiny black latex, cut out over her vagina and anus"
+  pantyhose: "she is wearing pantyhose ripped open at the crotch"
+  garter: "she is wearing a garter belt and stockings, no panties"
+  wet_shirt: "she is wearing a soaked thin shirt, nipples visible, no bottoms"
+  collar: "she is nude except for a collar"
+  dress_hiked: "her dress is hiked up around the waist, no panties"
   partially: "she is partially clothed, intimate areas exposed"
-  dress_hiked: "her dress is hiked up around the waist"
 
 clothing.heels:
   none: ""
-  black: "wearing black high heels"
+  black: "wearing black stiletto heels"
   red: "wearing red high heels"
+  platforms: "wearing platform heels"
+  boots: "wearing shiny thigh-high boots"
   blue: "wearing blue high heels"

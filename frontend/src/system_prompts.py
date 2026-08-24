@@ -57,8 +57,8 @@ SYSTEM_EDIT = (
 # SNOFS: photograph, never photorealistic. Natural-language sex terms.
 SYSTEM_EDIT_LORA = (
     "System: One reference photo is WHO: keep this person's face, skin, hair, and nails. "
-    "Invent the rest of the body, the room, and the requested pose. "
-    "Put her in the place described in the edit request. "
+    "Invent the rest of the body and the requested pose. "
+    "Keep her original facial expression unless the edit asks to change it. "
     "If the photo is a portrait or headshot, create a full body in this pose. "
     "Follow the sex act in the edit request. Men are separate people with their own hips and legs. "
     "A photograph, no text, no watermark."

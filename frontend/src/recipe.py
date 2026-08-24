@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import random
 import uuid
 from pathlib import Path
@@ -37,8 +38,7 @@ def plan_recipe(
     if pose_scene or not undress:
         sex = ((pose_scene.get("sex") or {}).get("category") or "solo")
         pose = ((pose_scene.get("position") or {}).get("pose") or "pose")
-        place = ((pose_scene.get("setting") or {}).get("place") or "")
-        bits = [str(x) for x in (place, pose, sex) if x]
+        bits = [str(x) for x in (pose, sex) if x]
         steps.append(
             {
                 "kind": "pose",

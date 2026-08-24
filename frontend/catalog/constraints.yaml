@@ -3,34 +3,41 @@
 sanitize_order:
   - sex.category
   - position.pose
+  - toys.use
   - asshole.look
   - extras.effects
 
 on_select:
   sex.category:
     solo:
-      - field: extras.effects
-        drop: []
-    toys:
-      - field: extras.effects
-        drop: []
+      - field: toys.use
+        replace_if_in: [fingers, dildo_ride_pussy, dildo_ride_anal, horse_ride_pussy, horse_ride_anal, wand, double]
+        replace_with: none
     vaginal:
-      - field: extras.effects
-        drop: []
+      - field: toys.use
+        replace_if_in: [fingers, dildo_ride_pussy, dildo_ride_anal, horse_ride_pussy, horse_ride_anal, wand, double]
+        replace_with: none
     anal:
-      - field: extras.effects
-        drop: []
+      - field: toys.use
+        replace_if_in: [fingers, dildo_ride_pussy, dildo_ride_anal, horse_ride_pussy, horse_ride_anal, wand, double]
+        replace_with: none
     oral:
-      - field: extras.effects
-        drop: []
+      - field: toys.use
+        replace_if_in: [fingers, dildo_ride_pussy, dildo_ride_anal, horse_ride_pussy, horse_ride_anal, wand, double]
+        replace_with: none
     gangbang:
-      - field: extras.effects
-        drop: []
+      - field: toys.use
+        replace_if_in: [fingers, dildo_ride_pussy, dildo_ride_anal, horse_ride_pussy, horse_ride_anal, wand, double]
+        replace_with: none
+    masturbation:
+      - field: toys.use
+        replace_if_in: [none]
+        replace_with: fingers
 
   extras.effects:
     prolapse_creampie:
       - field: asshole.look
-        replace_if_in: [natural, used, gaping]
+        replace_if_in: [natural, used, winking, gaping]
         replace_with: prolapse
 
   asshole.look:
@@ -38,6 +45,9 @@ on_select:
       - field: extras.effects
         drop: [prolapse_creampie]
     used:
+      - field: extras.effects
+        drop: [prolapse_creampie]
+    winking:
       - field: extras.effects
         drop: [prolapse_creampie]
     gaping:

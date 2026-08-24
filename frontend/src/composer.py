@@ -100,15 +100,34 @@ FEATURE_TAGS: dict[str, list[str]] = {
     "cum_body": ["finish:cum_body"],
     "wet": ["finish:wet"],
     "wet_body": ["finish:wet"],
+    "dripping": ["finish:wet", "act:spreading"],
+    "squirting": ["finish:wet"],
+    "drool": ["finish:sloppy"],
+    "hard_nipples": ["body.nipples:erect"],
+    "anal_creampie": ["finish:cum_inside", "act:anal"],
+    "cum_tits": ["finish:cum_body"],
 }
 
 _SEX_TAGS: dict[str, list[str]] = {
     "solo": ["partners:solo"],
+    "masturbation": ["partners:solo", "act:masturbation"],
     "vaginal": ["act:vaginal", "partners:one_man"],
     "anal": ["act:anal", "partners:one_man"],
     "oral": ["act:oral", "partners:one_man"],
     "gangbang": ["act:all_holes", "act:anal", "act:vaginal", "act:oral", "partners:three_men"],
     "toys": ["act:dildo", "partners:solo"],
+}
+
+_SPREAD_POSES = {"spread_heels", "spread_v", "spread_held", "spread_press", "legs_spread"}
+_DOGGY_POSES = {"doggy_lookback", "doggy_chest", "doggy_crawl", "doggy_present", "all_fours"}
+_TOY_TAGS: dict[str, list[str]] = {
+    "fingers": ["act:masturbation"],
+    "dildo_ride_pussy": ["act:dildo", "act:masturbation"],
+    "dildo_ride_anal": ["act:dildo", "act:masturbation", "act:anal"],
+    "horse_ride_pussy": ["act:dildo", "act:masturbation"],
+    "horse_ride_anal": ["act:dildo", "act:masturbation", "act:anal"],
+    "wand": ["act:masturbation"],
+    "double": ["act:dildo", "act:masturbation"],
 }
 
 _PUSSY_TAGS: dict[str, list[str]] = {
@@ -120,6 +139,7 @@ _PUSSY_TAGS: dict[str, list[str]] = {
 
 _ASSHOLE_TAGS: dict[str, list[str]] = {
     "used": ["act:anal_gape"],
+    "winking": ["act:anal_gape"],
     "gaping": ["act:anal_gape"],
     "prolapse": ["act:prolapse"],
 }
@@ -145,8 +165,14 @@ def scene_tags(scene: dict[str, Any]) -> set[str]:
         tags.add("body:emphasis")
 
     position = scene.get("position") or {}
-    if _tag_value(position.get("pose")):
-        tags.add(f"position:{position['pose']}")
+    pose_id = str(position.get("pose") or "")
+    if _tag_value(pose_id):
+        tags.add(f"position:{pose_id}")
+        if pose_id in _SPREAD_POSES:
+            tags.add("position:legs_spread")
+        if pose_id in _DOGGY_POSES:
+            tags.add("position:all_fours")
+            tags.add("position:doggy")
 
     act = scene.get("act") or {}
     for a in act.get("primary") or []:
@@ -185,6 +211,11 @@ def scene_tags(scene: dict[str, Any]) -> set[str]:
     ass_look = (scene.get("asshole") or {}).get("look")
     if _tag_value(ass_look):
         for tag in _ASSHOLE_TAGS.get(str(ass_look), []):
+            tags.add(tag)
+
+    toy = (scene.get("toys") or {}).get("use")
+    if _tag_value(toy):
+        for tag in _TOY_TAGS.get(str(toy), []):
             tags.add(tag)
 
     for feat in (scene.get("features") or {}).get("extras") or []:
@@ -226,18 +257,25 @@ def wants_genital_override(scene: dict[str, Any]) -> bool:
 
 
 def _gangbang_lines(pose: str) -> list[str]:
-    if pose == "all_fours":
+    if pose in _DOGGY_POSES:
         return [
             "one girl and three men. all three men are penetrating the girl. "
             "oral, anal and vaginal sex.",
-            "she is on all fours looking at the camera.",
+            "she is on all fours, ass toward the camera.",
             "one man is behind her, his penis penetrating her anus, "
             "his upper body and face out of frame.",
             "another man is under her, his penis in her vagina.",
             "the third man is in front of her, she holds his penis in her mouth, "
             "performing oral sex, his face out of frame.",
         ]
-    return [GANGBANG_LORA_PROMPT]
+    return [
+        "the image shows one girl and three men. all three men are penetrating the girl. "
+        "oral, anal and vaginal sex.",
+        "she is on her back with her legs spread toward the camera.",
+        "one man is between her legs, his penis in her vagina, hips and thighs attached.",
+        "another man is at her anus, his penis penetrating her ass.",
+        "the third man is at her mouth, she is sucking his penis, his face out of frame.",
+    ]
 
 
 def compose_edit_prompt(
@@ -270,15 +308,11 @@ def compose_edit_prompt(
     lines.append(EDIT_IDENTITY_LOCK)
     lines.append("If the photo is a portrait or headshot, invent a full body in this pose. Keep the face.")
 
-    place = _frag(fr, "setting.place", (scene.get("setting") or {}).get("place"))
-    if isinstance(place, str) and place:
-        lines.append(place)
-
     pose_line = _frag(fr, "position.pose", pose)
     if isinstance(pose_line, str) and pose_line:
         lines.append(pose_line)
 
-    face_line = _frag(fr, "expression.face", face)
+    face_line = _frag(fr, "expression.face", face or "keep")
     if isinstance(face_line, str) and face_line:
         lines.append(face_line)
 
@@ -295,6 +329,11 @@ def compose_edit_prompt(
         sex_line = _frag(fr, "sex.category", sex)
         if isinstance(sex_line, str) and sex_line:
             lines.append(sex_line)
+
+    toy = (scene.get("toys") or {}).get("use")
+    toy_line = _frag(fr, "toys.use", toy)
+    if isinstance(toy_line, str) and toy_line:
+        lines.append(toy_line)
 
     pussy_bits = _frag(fr, "pussy.look", sorted(pussy))
     if isinstance(pussy_bits, list):
