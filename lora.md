@@ -1,6 +1,8 @@
 # Master Lora
 
 ### SNOFS (Sex, Nudes, Other Fun Stuff)
+- URL: https://civitai.red/models/1972981/snofs-sex-nudes-other-fun-stuff
+- Filename: ``klein_snofs_v1_4.safetensors``
 
 Description:
 
