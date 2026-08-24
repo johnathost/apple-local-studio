@@ -48,20 +48,21 @@ SYSTEM_EDIT = (
     "System: Restage the source photograph. "
     "Keep the same adult's face, hair, and skin (man or woman). "
     "Change pose, camera, and the requested anatomy to match the edit request. "
-    "Photoreal, natural skin, no text, no watermark. "
+    "This is a photograph, natural skin, no text, no watermark. "
     f"{SEX_SCENE_LOCK}"
 )
 
 # Pose with no plate: LoRA + text invent the body. Portrait → full scene on white.
 # Do NOT say "no extra limbs / no floating penis" here — gangbang LoRAs need
 # extra male bodies, and that lock glues cocks onto her torso.
+# SNOFS: say photograph, never photorealistic. Natural-language sex terms.
 SYSTEM_EDIT_LORA = (
     "System: One reference photo is WHO: keep this person's face, skin, hair, and nails. "
     "Invent the rest of the body and the requested pose. "
     "Plain white seamless studio background, white void, no room, no furniture. "
     "If the photo is a portrait or headshot, create a full body in this pose on that white background. "
     "Follow the sex act in the edit request. Men are separate people with their own hips and legs. "
-    "Photoreal, no text, no watermark."
+    "A photograph, no text, no watermark."
 )
 
 # Used when a pose plate is passed as the second reference image.
@@ -71,7 +72,7 @@ SYSTEM_EDIT_POSE = (
     "Image 2 is the pose and the sex: copy body position, camera, and crotch from image 2. "
     "Copy her spread pussy and her asshole from image 2 — pussy above, asshole below. "
     "Do not copy image 2's face, hair, or identity. "
-    "Photoreal, no text, no watermark. "
+    "A photograph, no text, no watermark. "
     f"{SEX_SCENE_LOCK}"
 )
 
@@ -82,7 +83,7 @@ SYSTEM_EDIT_POSE_OVERRIDE = (
     "Two openings. Pussy on top. Prolapsed anus below. "
     "The prolapse is folded wrinkled flesh, not a smooth pink ball. "
     "If she's getting fucked, draw a real cock in her, attached to a man's hips, not a toy. "
-    "Photoreal, no text, no watermark."
+    "A photograph, no text, no watermark."
 )
 
 # Used as CFG negative when guidance > 1 (mflux only encodes a negative then).

@@ -249,9 +249,10 @@ def build_step_job(
     guidance: float | None,
     max_loras: int | None,
     notes: str | None,
+    manual_loras: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Compose a single Klein job request (same shape as /api/generate)."""
-    from src.models import ComposeRequest
+    from src.models import ComposeRequest, LoraPin
     from src.server import _compose
 
     kind = step["kind"]
@@ -278,6 +279,11 @@ def build_step_job(
             include_triggers=include_triggers,
             pose_ref=mode == "pose" and not lora_only,
             max_loras=max_loras,
+            manual_loras=[]
+            if kind == "undress"
+            else [
+                LoraPin(**m) if isinstance(m, dict) else m for m in (manual_loras or [])
+            ],
         )
     )
     prompt = (composed.prompt or "").strip()
@@ -357,12 +363,19 @@ def run_recipe(job: Any, *, generate_fn: Any, on_inner_progress: Any) -> None:
         guidance=req.get("guidance"),
         max_loras=req.get("max_loras"),
         notes=req.get("notes"),
+        manual_loras=list(req.get("manual_loras") or []),
     )
     payloads = [build_step_job(step, identity=identity, **job_kw) for step in run_plan]
-    sticky = next((p.get("loras") for p in payloads if p.get("loras") and p.get("system_mode") != "undress"), None)
+    # Keep SNOFS (and any extra pin) sticky across pose steps so Metal does
+    # not reload 9B. Do not stamp that stack onto undress — SNOFS restages.
+    sticky = next(
+        (p.get("loras") for p in payloads if p.get("loras") and p.get("system_mode") != "undress"),
+        None,
+    )
     if sticky:
         for p in payloads:
-            p["loras"] = sticky
+            if p.get("system_mode") != "undress":
+                p["loras"] = sticky
 
     for i, step in enumerate(run_plan):
         slot = start + i

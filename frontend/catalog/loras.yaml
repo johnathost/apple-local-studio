@@ -4,8 +4,23 @@
 # tags: extra scoring overlap. conflicts drop the entry.
 # exclusive_group: only the highest-scoring member of a group is stacked.
 # auto: false → manual pin only.
+# Pose edit always loads `snofs` (pose_schema default_loras). Pose specialists
+# stay manual so SNOFS is tried alone first; pin a second LoRA if needed.
 
 loras:
+  # Master NSFW prior. Not tag-matched — pinned via engine_defaults.default_loras.
+  - id: snofs
+    name: SNOFS (Sex, Nudes, Other Fun Stuff)
+    file: klein_snofs_v1_4.safetensors
+    default_scale: 1.0
+    priority: 1000
+    auto: false
+    exclusive_group: nsfw_base
+    prompt_trigger: "photograph"
+    triggers:
+      - "photograph"
+    conflicts: []
+
   - id: huge_gape_vaginal
     name: Huge Gape - Vaginal
     file: HugeGape_Vagina_Light_v2.safetensors
@@ -30,6 +45,7 @@ loras:
     default_scale: 0.85
     priority: 100
     exclusive_group: pose
+    auto: false
     require_all:
       - act:vaginal
     require_any:
@@ -94,6 +110,7 @@ loras:
     default_scale: 0.85
     priority: 95
     exclusive_group: pose
+    auto: false
     require_all:
       - act:anal
     require_any:
@@ -119,6 +136,7 @@ loras:
     default_scale: 0.85
     priority: 100
     exclusive_group: pose
+    auto: false
     require_all:
       - partners:two_men
       - act:anal
@@ -189,6 +207,7 @@ loras:
     default_scale: 0.85
     priority: 100
     exclusive_group: pose
+    auto: false
     require_all:
       - act:anal
     require_any:
@@ -367,6 +386,7 @@ loras:
     default_scale: 0.8
     priority: 80
     exclusive_group: pose
+    auto: false
     require_all:
       - act:dildo
     tags:
@@ -428,6 +448,7 @@ loras:
     default_scale: 0.85
     priority: 90
     exclusive_group: pose
+    auto: false
     require_all:
       - act:titfuck
     tags:
@@ -481,6 +502,7 @@ loras:
     file: SEXGOD_FemaleMasturbation_Klein9b_v1.safetensors
     default_scale: 0.8
     priority: 80
+    auto: false
     require_all:
       - act:masturbation
     tags:
@@ -529,6 +551,7 @@ loras:
     default_scale: 0.85
     priority: 105
     exclusive_group: pose
+    auto: false
     require_all:
       - partners:three_men
     require_any:
@@ -564,6 +587,7 @@ loras:
     default_scale: 0.85
     priority: 95
     exclusive_group: pose
+    auto: false
     require_any:
       - position:cowgirl
       - position:reverse_cowgirl
@@ -590,6 +614,7 @@ loras:
     default_scale: 0.85
     priority: 100
     exclusive_group: pose
+    auto: false
     require_all:
       - act:anal
       - position:on_side
@@ -645,6 +670,7 @@ loras:
     default_scale: 0.7
     priority: 85
     exclusive_group: pose
+    auto: false
     require_all:
       - act:dildo_insertion
     tags:

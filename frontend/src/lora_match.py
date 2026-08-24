@@ -65,6 +65,35 @@ def _on_disk(file_name: str, *, names: set[str] | None, lora_dir: Path) -> bool:
     return (lora_dir / Path(file_name).name).is_file()
 
 
+def _from_catalog(
+    entry: dict[str, Any],
+    *,
+    on_disk: set[str] | None,
+    lora_dir: Path,
+    scale: float | None,
+    score: int,
+    reasons: list[str],
+    auto: bool,
+) -> MatchedLora:
+    file_name = (entry.get("file") or "").strip()
+    group = (entry.get("exclusive_group") or "").strip() or None
+    present = _on_disk(file_name, names=on_disk, lora_dir=lora_dir)
+    return MatchedLora(
+        id=entry["id"],
+        name=entry.get("name") or entry["id"],
+        file=file_name,
+        path=file_name if present else None,
+        scale=float(scale if scale is not None else entry.get("default_scale") or 0.8),
+        score=score,
+        reasons=reasons,
+        triggers=list(entry.get("triggers") or []),
+        available=present,
+        auto=auto,
+        exclusive_group=group,
+        prompt_trigger=_prompt_trigger(entry),
+    )
+
+
 def match_loras(
     scene: dict[str, Any],
     *,
@@ -73,14 +102,16 @@ def match_loras(
     max_loras: int | None = None,
     manual: list[dict[str, Any]] | None = None,
     skip_groups: set[str] | None = None,
+    defaults: list[str] | None = None,
 ) -> list[MatchedLora]:
     """
     Score catalog LoRAs against scene tags.
     on_disk: basenames the backend reports as present (preferred).
+    defaults: always-on ids (SNOFS on pose). Tried before auto-match.
     """
     lora_dir = lora_dir or DEFAULT_LORA_DIR
     max_loras = max_loras if max_loras is not None else int(engine_defaults().get("max_loras", 2))
-    if int(max_loras) <= 0 and not manual:
+    if int(max_loras) <= 0:
         return []
     skip_groups = skip_groups or set()
     tags = scene_tags(scene)
@@ -160,9 +191,33 @@ def match_loras(
 
     scored.sort(key=lambda m: m.score, reverse=True)
 
-    # Apply manual overrides / pins.
-    manual = manual or []
     by_id = {m.id: m for m in scored}
+    catalog_by_id = {e.get("id"): e for e in catalog if e.get("id")}
+
+    default_ids: list[str] = []
+    for did in defaults or []:
+        did = str(did).strip()
+        if not did or did in default_ids:
+            continue
+        entry = catalog_by_id.get(did)
+        if not entry or entry.get("enabled") is False:
+            continue
+        default_ids.append(did)
+        if did not in by_id:
+            by_id[did] = _from_catalog(
+                entry,
+                on_disk=on_disk,
+                lora_dir=lora_dir,
+                scale=None,
+                score=10000,
+                reasons=["default"],
+                auto=True,
+            )
+        else:
+            by_id[did].reasons = list(dict.fromkeys(["default", *by_id[did].reasons]))
+
+    # Apply manual overrides / pins (scale, force-in even if tags missed).
+    manual = manual or []
     for pin in manual:
         pid = pin.get("id")
         if not pid:
@@ -170,44 +225,44 @@ def match_loras(
         if pid in by_id:
             if pin.get("scale") is not None:
                 by_id[pid].scale = float(pin["scale"])
-            by_id[pid].auto = False
+            if pid not in default_ids:
+                by_id[pid].auto = False
+                if "manual" not in by_id[pid].reasons:
+                    by_id[pid].reasons = ["manual", *by_id[pid].reasons]
         else:
-            # Force from catalog even if tags didn't match.
-            entry = next((e for e in catalog if e.get("id") == pid), None)
+            entry = catalog_by_id.get(pid)
             if not entry or entry.get("enabled") is False:
                 continue
-            file_name = (entry.get("file") or "").strip()
-            present = _on_disk(file_name, names=on_disk, lora_dir=lora_dir)
-            group = (entry.get("exclusive_group") or "").strip() or None
-            by_id[pid] = MatchedLora(
-                id=pid,
-                name=entry.get("name") or pid,
-                file=file_name,
-                path=file_name if present else None,
-                scale=float(pin.get("scale") if pin.get("scale") is not None else entry.get("default_scale") or 0.8),
+            by_id[pid] = _from_catalog(
+                entry,
+                on_disk=on_disk,
+                lora_dir=lora_dir,
+                scale=pin.get("scale"),
                 score=999,
                 reasons=["manual"],
-                triggers=list(entry.get("triggers") or []),
-                available=present,
                 auto=False,
-                exclusive_group=group,
-                prompt_trigger=_prompt_trigger(entry),
             )
 
-    # Prefer manual pins first, then highest score; cap stack size.
-    pinned = [m for m in by_id.values() if not m.auto]
-    auto = [m for m in by_id.values() if m.auto]
+    # Default prior first (SNOFS), then manual pins, then auto extras.
+    default_m = [by_id[i] for i in default_ids if i in by_id]
+    default_set = set(default_ids)
+    pinned = [m for m in by_id.values() if not m.auto and m.id not in default_set]
+    auto = [m for m in by_id.values() if m.auto and m.id not in default_set]
     auto.sort(key=lambda m: m.score, reverse=True)
 
     selected: list[MatchedLora] = []
     used_files: set[str] = set()
     used_groups: set[str] = set()
-    for m in pinned + auto:
+    seen_ids: set[str] = set()
+    for m in default_m + pinned + auto:
+        if m.id in seen_ids:
+            continue
         if m.file and m.file in used_files:
             continue
         if m.exclusive_group and m.exclusive_group in used_groups:
             continue
         selected.append(m)
+        seen_ids.add(m.id)
         if m.file:
             used_files.add(m.file)
         if m.exclusive_group:

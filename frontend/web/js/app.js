@@ -136,8 +136,8 @@ function directorText() {
   const extras = getSceneValue("features", "extras") || [];
   const scene = currentStudioScene();
   const face = state.refImage ? "your photo" : "need a photo";
-  let crotch = "this plate";
-  if (scene?.director === "lora") crotch = "LoRA (no plate)";
+  let crotch = "this plate + SNOFS";
+  if (scene?.director === "lora") crotch = "SNOFS (no plate)";
   else if (extras.some((e) => String(e).startsWith("prolapse"))) crotch = "prolapse plate";
   else if (extras.includes("vaginal_gape")) crotch = "gape LoRA (pose from plate)";
   const extraBit = extras.length ? extras.map(extraLabel).join(", ") : "none";
@@ -294,6 +294,53 @@ function renderSceneStudio() {
     }
   }
   root.appendChild(extras);
+
+  const loraK = document.createElement("p");
+  loraK.className = "studio-kicker";
+  loraK.textContent = "LoRAs";
+  root.appendChild(loraK);
+  const loraRow = document.createElement("div");
+  loraRow.className = "studio-loras";
+  const defChip = document.createElement("span");
+  defChip.className = "chip locked";
+  defChip.textContent = "SNOFS · default";
+  loraRow.appendChild(defChip);
+  for (const id of Object.keys(state.manualScales)) {
+    if (id === "snofs") continue;
+    const entry = (state.catalog || []).find((c) => c.id === id);
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip active";
+    chip.textContent = `${entry?.name || id} ×`;
+    chip.addEventListener("click", () => {
+      delete state.manualScales[id];
+      renderSceneStudio();
+      scheduleCompose();
+    });
+    loraRow.appendChild(chip);
+  }
+  const loraSel = document.createElement("select");
+  loraSel.innerHTML = `<option value="">+ extra LoRA</option>`;
+  const pinned = new Set(["snofs", ...Object.keys(state.manualScales)]);
+  for (const entry of state.catalog || []) {
+    if (!entry.id || pinned.has(entry.id) || entry.enabled === false) continue;
+    const opt = document.createElement("option");
+    opt.value = entry.id;
+    const miss = entry.available ? "" : " (missing file)";
+    opt.textContent = `${entry.name}${miss}`;
+    loraSel.appendChild(opt);
+  }
+  loraSel.addEventListener("change", () => {
+    const id = loraSel.value;
+    if (!id) return;
+    const entry = (state.catalog || []).find((c) => c.id === id);
+    state.manualScales[id] = Number(entry?.default_scale ?? 0.8);
+    renderSceneStudio();
+    scheduleCompose();
+  });
+  loraRow.appendChild(loraSel);
+  root.appendChild(loraRow);
+
   const plan = studioPlan();
   const planEl = document.createElement("p");
   planEl.className = "director-line";
@@ -1147,7 +1194,7 @@ function applyModeChrome() {
       kind === "undress"
         ? "Undress → same person, same pose"
         : kind === "pose"
-          ? "Your photo + a scene. One extra. Face from you, crotch from the plate."
+          ? "Your photo + a scene. SNOFS on by default. Pin a second LoRA if you need it."
           : "Scene composer → mflux · private local gen";
   }
   const sl = $("#eng-strength");
@@ -1319,6 +1366,7 @@ async function generateRecipe() {
     quantize: Number($("#eng-quant").value) || 4,
     seed: $("#eng-seed").value === "" ? null : Number($("#eng-seed").value),
     max_loras: Number($("#eng-max-loras").value) || 2,
+    manual_loras: Object.entries(state.manualScales).map(([id, scale]) => ({ id, scale })),
     notes: $("#notes-quick")?.value || null,
     takes: state.twoTakes ? 2 : 1,
     _recipe: true,

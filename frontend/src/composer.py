@@ -9,6 +9,20 @@ from src.catalog_loader import bundled_pose_ref, load_fragments
 from src.constraints import apply_edit_preset, preset_caption, preset_director, preset_fragment
 from src.system_prompts import EDIT_IDENTITY_LOCK, SEMEN_LOCK
 
+# FK_allholes training caption (lora.md), first scene only — not the all-fours add-on.
+GANGBANG_LORA_PROMPT = (
+    "the image shows one girl and three men. all three men are penetrating the girl in some way. "
+    "oral, anal and vaginal sex. the girl is turned with her ass to the camera in an half-side view "
+    "on her body. her face is partially visible from side. the first man is lying on his back and "
+    "the girl is straddling on him. he is covered by the girls upper body. the first man is "
+    "penetrating the girls vagina, his testicles are visible and his penis visible penetrates her "
+    "vagina. the face of the first man is not visible. the second man is standing behind the girl, "
+    "his upper body and face is out of frame and not visible. the penis of the second man is clearly "
+    "penetrating the girls anus, while the first man is penetrating her vagina. the third man is "
+    "standing next to the girl. she holds the penis of the third man in her mouth, performing oral "
+    "sex on him."
+)
+
 
 def _frag(fragments: dict[str, Any], key: str, value: Any) -> str | list[str]:
     bucket = fragments.get(key)
@@ -250,8 +264,9 @@ def compose_edit_prompt(
     wants_penis = bool(selected & _PENIS_ACTS)
     preset_id = (scene.get("pose") or {}).get("scene") or (scene.get("preset") or {}).get("scene")
     pose_key = str(preset_id or "")
-    lora_dir = preset_director(pose_key) == "lora"
-    use_plate = bool(pose_ref) and not lora_dir
+    director = preset_director(pose_key)
+    lora_dir = director == "lora"
+    use_plate = bool(pose_ref) and director != "lora"
     caption = preset_caption(pose_key)
     clothing = scene.get("clothing") or {}
     fr = load_fragments("edit")
@@ -261,6 +276,16 @@ def compose_edit_prompt(
         trig = _join_unique(list(extra_triggers))
         if trig:
             lines.append(trig)
+
+    # LoRA test: fire the catalog caption, don't mix in our labeled pose essay.
+    if pose_key == "lora_gangbang" and not use_plate:
+        bits = list(lines)
+        bits.append(EDIT_IDENTITY_LOCK)
+        bits.append(GANGBANG_LORA_PROMPT)
+        notes = (scene.get("instruction") or {}).get("text") or ""
+        if str(notes).strip():
+            bits.append(str(notes).strip())
+        return "\n".join(bits)
 
     if use_plate:
         lines.append("Photo 1: identity, same face, skin, hair.")
@@ -293,7 +318,12 @@ def compose_edit_prompt(
             )
     else:
         lines.append(EDIT_IDENTITY_LOCK)
-        if lora_dir or not use_plate:
+        if pose_key == "lora_gangbang":
+            lines.append(
+                "white bed, tight crop on her ass and the sex. "
+                "not a wide group photo, male upper bodies and faces out of frame"
+            )
+        elif lora_dir or not use_plate:
             lines.append(
                 "Plain white seamless studio background, white void, no room, no furniture."
             )
@@ -355,21 +385,25 @@ def compose_edit_prompt(
         lines.append(pussy + ".")
 
     if "all_holes" in selected or pose_key == "lora_gangbang":
-        lines.append("the girl is turned with her ass to the camera in a half-side view, her face visible from the side")
+        # Match FK_allholes training caption / Civitai example, not a wide lineup.
+        lines.append("one girl and three men, all three men are penetrating the girl")
+        lines.append("oral, anal and vaginal sex")
         lines.append(
-            "the first man lies on his back, she straddles him, "
-            "his erect penis in her pussy, his testicles visible"
+            "the girl is turned with her ass to the camera in a half-side view, "
+            "her face partially visible from the side"
         )
         lines.append(
-            "the second man stands behind her, his erect penis in her asshole"
+            "the first man is lying on his back, she is straddling him, "
+            "he is covered by her upper body, his penis in her vagina, his testicles visible, "
+            "his face not visible"
         )
         lines.append(
-            "the third man stands beside her, she is sucking his erect penis"
+            "the second man is standing behind her, upper body and face out of frame, "
+            "his penis penetrating her anus"
         )
         lines.append(
-            "three completely nude men, no underwear, each erect penis attached to that man's hips. "
-            "Only the girl has a penis in her mouth. The men are fucking her, they are not sucking, "
-            "their mouths are closed, faces out of frame"
+            "the third man is standing next to her, she holds his penis in her mouth, "
+            "performing oral sex, his face out of frame"
         )
     elif "prolapse_fucking" in selected:
         lines.append(

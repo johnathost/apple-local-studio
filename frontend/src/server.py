@@ -117,17 +117,24 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
     # Pose plates already show spread legs/pussy. Spreading LoRAs melt the hole.
     # Cum LoRAs on a copied pussy became a white egg — fluid is prompt-only.
     skip_groups = {"spreading", "cum"} if mode == "pose" and has_pose_plate else None
+    default_ids = (
+        [str(x) for x in (engine_defaults(mode).get("default_loras") or []) if x]
+        if mode == "pose"
+        else []
+    )
     pins = [{"id": i} for i in preset_loras(pose_id)]
-    if pins and max_loras is not None and int(max_loras) < len(pins):
-        max_loras = len(pins)
-    elif pins and max_loras is None:
-        max_loras = max(len(pins), int(engine_defaults(mode).get("max_loras", 2)))
+    needed = len(default_ids) + len(pins) + len(req.manual_loras or [])
+    if needed and max_loras is not None and int(max_loras) < needed:
+        max_loras = needed
+    elif needed and max_loras is None:
+        max_loras = max(needed, int(engine_defaults(mode).get("max_loras", 2)))
     matched = match_loras(
         scene,
         on_disk=set(engine.list_lora_files()),
         max_loras=max_loras,
         manual=[m.model_dump() for m in req.manual_loras] + pins,
         skip_groups=skip_groups,
+        defaults=default_ids,
     )
     triggers: list[str] = []
     if req.include_triggers and mode != "undress":
@@ -240,6 +247,7 @@ def api_recipe(req: RecipeRequest) -> JobResponse:
             "quantize": req.quantize,
             "guidance": req.guidance,
             "max_loras": req.max_loras,
+            "manual_loras": [m.model_dump() for m in req.manual_loras],
             "notes": req.notes,
             "retry_step": req.retry_step,
             "keep_steps": keep_frames(req.keep_steps),

@@ -72,6 +72,7 @@ class RecipeRequest(BaseModel):
     quantize: int | None = None
     guidance: float | None = None
     max_loras: int | None = None
+    manual_loras: list[LoraPin] = Field(default_factory=list)
     notes: str | None = None
     # Re-run one planned step. keep_steps are the frames before it.
     retry_step: int | None = None

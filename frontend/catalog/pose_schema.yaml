@@ -62,3 +62,5 @@ engine_defaults:
   max_loras: 2
   guidance: 2.0
   image_strength: null
+  # Always-on pose prior. Specialists are pins / extra chips, not auto stack.
+  default_loras: [snofs]

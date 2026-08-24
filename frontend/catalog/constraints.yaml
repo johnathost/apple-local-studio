@@ -457,7 +457,7 @@ edit_presets:
   lora_gangbang:
     label: Gangbang · LoRA test
     director: lora
-    loras: [all_holes_gangbang]
+    loras: []
     apply:
       position: { pose: cowgirl }
       act: { primary: [all_holes] }
@@ -465,17 +465,14 @@ edit_presets:
       partners: { count: three_men }
       clothing: { state: keep }
     caption: >-
-      ass to the camera half-side, all holes filled, she straddles a man his
-      penis in her pussy balls visible, a penis in her ass from behind,
-      a penis in her mouth, three nude men
+      all holes filled, ass to the camera half-side, straddling a man
     fragment: >-
-      All holes filled. She straddles one man, a second behind her, a third
-      in her mouth. Nude, penises attached.
+      All holes filled. Training caption from lora.md.
 
   lora_spread_holes:
     label: Spread · two holes LoRA test
     director: lora
-    loras: [spreading_legs_pussy]
+    loras: []
     apply:
       position: { pose: legs_spread }
       act: { primary: [spreading] }
