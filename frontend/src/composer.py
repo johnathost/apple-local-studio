@@ -306,29 +306,24 @@ def wants_genital_override(scene: dict[str, Any]) -> bool:
 
 
 def _sleeve_paragraphs(fr: dict[str, Any], extras: set[str]) -> list[str]:
-    """Anal anatomy block: partner, asscheeks, sleeve, fluids."""
+    """The good_examples notes pack: partner, yellow-brown leak, red sleeve."""
     lines: list[str] = []
     partner = fr.get("anal_prolapse_partner")
     if isinstance(partner, str) and partner.strip():
         lines.append(partner.strip())
-    stack = fr.get("anal_prolapse_stack")
-    if isinstance(stack, str) and stack.strip():
-        lines.append(stack.strip())
+    filth = bool(extras & _SLEEVE_EXTRAS)
+    if filth:
+        fluids = fr.get("anal_prolapse_fluids")
+        if isinstance(fluids, str) and fluids.strip():
+            lines.append(fluids.strip())
     sleeve_key = (
         "anal_prolapse_sleeve_torn"
-        if "rectal_tear" in extras
+        if filth
         else "anal_prolapse_sleeve"
     )
     sleeve_text = fr.get(sleeve_key) or fr.get("anal_prolapse_sleeve")
     if isinstance(sleeve_text, str) and sleeve_text.strip():
         lines.append(sleeve_text.strip())
-    if "rectal_leak" in extras:
-        leak = (fr.get("extras.effects") or {}).get("rectal_leak")
-        if isinstance(leak, str) and leak.strip():
-            lines.append(leak.strip())
-    gap = fr.get("anal_prolapse_gap")
-    if isinstance(gap, str) and gap.strip():
-        lines.append(gap.strip())
     return lines
 
 
@@ -391,7 +386,7 @@ def compose_edit_prompt(
     # Sleeve extras name his cock. Solo/oral would contradict that.
     if extras & _SLEEVE_EXTRAS and str(sex) not in {"anal", "gangbang"}:
         sex = "anal"
-    # Sleeve is prompt anatomy (flesh condom), not the prolapse LoRA.
+    # Sleeve is prompt anatomy (inside-out asshole on his cock), not the prolapse LoRA.
     # Rectal leak / torn sleeve with anal must emit it even if Prolapse
     # was not clicked — otherwise Klein draws a wet pussy and no sleeve.
     sleeve = str(sex) == "anal" and (
@@ -408,8 +403,9 @@ def compose_edit_prompt(
     if isinstance(pose_line, str) and pose_line and str(pose) != "keep":
         lines.append(pose_line)
 
+    sleeve_lines: list[str] = []
     if sleeve:
-        lines.extend(_sleeve_paragraphs(fr, extras))
+        sleeve_lines = _sleeve_paragraphs(fr, extras)
         extras = extras - {"rectal_tear", "rectal_leak"}
     elif sex == "gangbang":
         lines.extend(_gangbang_lines(str(pose)))
@@ -458,6 +454,10 @@ def compose_edit_prompt(
     notes = (scene.get("instruction") or {}).get("text") or ""
     if str(notes).strip():
         lines.append(str(notes).strip())
+
+    # Same place the good_examples notes sat: last, after pose/clothes.
+    if sleeve_lines:
+        lines.extend(sleeve_lines)
 
     if extra_triggers:
         trig = _join_unique(list(extra_triggers))

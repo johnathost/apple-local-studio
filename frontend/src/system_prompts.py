@@ -21,18 +21,24 @@ SEMEN_LOCK = (
 
 # When the edit asks for rectal mucus, not semen. Do not use SEMEN_LOCK on this path.
 RECTAL_FILTH_LOCK = (
-    "Her anus is leaking visible and thick nasty internal rectal fluids that cover his cock and balls."
+    "Her anus is leaking semi transparent yellow and brown internal fluids "
+    "into his huge cock and balls indicating severe rectal tear."
 )
 
 SLEEVE_LOCK = (
-    "He's fucking her anus. Her asscheeks are spread. Her pussy is empty above his cock."
+    "Her anus has a realistic red inverted pushed out rectal tissue covering "
+    "half the length of his dick that remains outside of her ass, still "
+    "attached to her asshole, with visible tear marks."
 )
 
 # Short CFG negative. A kitchen-sink list fights the sleeve.
 ANAL_SCENE_NEGATIVE = (
     "different person, swapped face, "
     "cock in pussy, vaginal sex, labia around the penis, "
-    "latex condom, rubber condom, yellow cap on the glans, covering the head of the penis, "
+    "latex condom, rubber condom, "
+    "white cum, semen, milky lube, pearly white fluid, "
+    "slime on the glans, slime on her pussy, fluids from her pussy, "
+    "tiny head, crotch close-up, soles filling the frame, "
     "cropped head, cropped feet, cropped heels, "
     "wound, blood, gore, extra limbs, cartoon, text, watermark"
 )
@@ -48,10 +54,24 @@ _RECTAL_FILTH_MARKERS = (
     "rectal fluids",
     "leaking thick nasty",
     "nasty internal rectal",
+    "yellow and brown",
+    "yellow-brown",
+    "ass slime",
+    "nasty yellow-brown",
+    "semi transparent yellow",
+    "semi-transparent yellow",
+    "internal fluids",
+    "between that red tissue",
+    "dripping down the sides",
 )
-_ANAL_WRECK_MARKERS = ("tear marks",)
+_ANAL_WRECK_MARKERS = ("tear marks", "stretched and torn")
 _SLEEVE_MARKERS = (
     "flesh condom",
+    "sleeve of her ass",
+    "rosebud",
+    "inside-out",
+    "pushed inside-out",
+    "hugging his dick",
     "base of his cock",
     "head of his dick is uncovered",
     "red inverted",
@@ -278,7 +298,9 @@ def with_system_prompt(
     # Rectal mucus is a different fluid — SEMEN_LOCK's "never yellow" fights it.
     # Sleeve body already has the anal caption. Do not prepend a second copy.
     if wants_sleeve(user):
-        pass
+        system = f"{system} {SLEEVE_LOCK}"
+        if wants_rectal_filth(user):
+            system = f"{system} {RECTAL_FILTH_LOCK}"
     elif wants_rectal_filth(user):
         system = f"{system} {RECTAL_FILTH_LOCK}"
     elif m in {"edit", "pose"} and wants_semen(user):

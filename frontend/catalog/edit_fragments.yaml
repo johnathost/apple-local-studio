@@ -1,37 +1,38 @@
 # SNOFS wants full sentences. photograph — never photorealistic.
 #
 # Sleeve path (anal + prolapse look OR rectal_leak / rectal_tear).
-# Wording is the prompts.md block that actually produced a red sleeve.
+# These three lines are the optional-notes block that produced good_examples/.
 # Prompt-only: do not depend on the prolapse LoRA.
 
 anal_prolapse_partner: >-
   The man is black, his cock has big veins the balls are huge and visible
-  to the camera, a huge thick dick, half of it inserted in her ass.
+  to the camera the dick is 30cm and 10cm wide half of it inserted in her ass.
 
-anal_prolapse_stack: >-
-  He's fucking her anus. Her asscheeks are spread open around his cock.
-  You can see both round asscheeks. His cock is in her anus between her
-  cheeks, not in her pussy. Her pussy is empty, a slit above his cock.
-  The head of his dick is out in the open, not covered.
+anal_prolapse_fluids: >-
+  Her anus is leaking semi transparent yellow and brown internal fluids
+  into his huge cock and balls indicating severe rectal tear.
 
 anal_prolapse_sleeve: >-
-  Her anus has a realistic red inverted pushed out rectal tissue around
-  the base of his cock where it goes into her ass, still attached to her
-  anus. The head of his dick is uncovered and visible.
+  Her anus has a realistic red inverted pushed out rectal tissue covering
+  half the length of his dick that remains outside of her ass, still
+  attached to her asshole.
 
 anal_prolapse_sleeve_torn: >-
-  Her anus has a realistic red inverted pushed out rectal tissue around
-  the base of his cock where it goes into her ass, still attached to her
-  anus, with visible tear marks. The head of his dick is uncovered and
-  visible.
+  Her anus has a realistic red inverted pushed out rectal tissue covering
+  half the length of his dick that remains outside of her ass, still
+  attached to her asshole, with visible tear marks.
+
+anal_prolapse_stack: >-
+  Anal sex. His cock is in her asshole, not in her pussy. Her pussy is
+  empty above his cock.
 
 anal_prolapse_gap: >-
-  Her pussy and her anus are two separate holes. There is a strip of skin
-  between her empty pussy and the cock in her anus. They do not overlap.
+  Two holes. Empty pussy on top. Cock in her ass below. A strip of skin
+  between her cunt and his dick.
 
 anal_perineum_lock: >-
-  Her pussy and her anus are two separate holes. There is a strip of skin
-  between them. Her pussy stays empty above her anus.
+  Two holes. Empty pussy on top, her asshole below. A strip of skin
+  between them.
 
 position.pose:
   keep: >-
@@ -45,9 +46,9 @@ position.pose:
     and right, camera between her feet, her face and tits and pussy and
     anus and both heels in the shot
   hold_heels: >-
-    she's on her back grabbing her own heels, pulling her legs back, cunt
-    and asshole spread at the camera, her face and tits and pussy and anus
-    and both heels in the shot
+    she's on her back grabbing her heels, knees out, heels left and right,
+    camera between her knees looking at her face. Her face and her tits stay
+    big in the frame. You can see her pussy, her asshole, and both heels.
   spread_v: >-
     she's on her back with both legs up in a wide V, heels in the corners,
     camera between her legs, her face and tits and pussy and anus and both
@@ -176,12 +177,12 @@ extras.effects:
   anal_creampie: "cum leaking out of her asshole, anal creampie all over his cock"
   prolapse_creampie: "cum leaking from her prolapsed asshole, cream smeared on the rosebud"
   rectal_leak: >-
-    Her anus is leaking visible thick nasty internal rectal fluids from her
-    ass down the sides of his shaft and onto his balls. The fluids run down
-    his cock from her anus. They do not sit on the head of his dick.
+    Her anus is leaking semi transparent yellow and brown internal fluids
+    into his huge cock and balls indicating severe rectal tear.
   rectal_tear: >-
-    That red rectal meat around his cock has stretch marks. It's still her
-    asshole, attached to her ass.
+    Her anus has a realistic red inverted pushed out rectal tissue covering
+    half the length of his dick that remains outside of her ass, still
+    attached to her asshole, with visible tear marks.
   cum_face: "a fat load on her face, white streaks, a facial"
   cum_tits: "cum all over her tits, glazed nipples"
   cum_ass: "cum on her ass and lower back"
@@ -201,7 +202,7 @@ clothing.state:
   lingerie: "tiny lingerie, her pussy barely covered"
   crotchless: "crotchless panties, her pussy and asshole out"
   thong_aside: "her thong yanked aside, pussy out"
-  fishnets: "ripped fishnets, crotch torn open, pussy and asshole showing"
+  fishnets: "ripped black fishnets with a waistband on her hips, crotch torn open"
   latex: "shiny black latex cut out over her pussy and asshole"
   pantyhose: "pantyhose ripped open at the crotch, pussy out"
   garter: "garter belt and stockings, no panties, pussy and asshole bare"
