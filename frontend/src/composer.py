@@ -162,6 +162,7 @@ _DOGGY_POSES = {
     "doggy_present",
     "all_fours",
 }
+_ORAL_POSES = {"oral_spread", "oral_fold"}
 _RIDING_POSES = {"reverse_lookback"}
 _TOY_TAGS: dict[str, list[str]] = {
     "fingers": ["act:masturbation"],
@@ -328,32 +329,18 @@ def _sleeve_paragraphs(fr: dict[str, Any], extras: set[str]) -> list[str]:
 
 
 def _gangbang_lines(pose: str) -> list[str]:
+    """Fit three men into the pose already in the prompt. Do not restage her."""
+    men = (
+        "gangbang, one girl and three men. "
+        "a cock in her pussy, a cock in her asshole, a cock in her mouth. "
+        "three men with their own hips and legs. she looks at you."
+    )
     if pose == "keep":
         return [
-            "gangbang, sex with three men, all three men are penetrating her.",
+            men,
             "keep her original pose and camera. the men fit around her as she already is.",
         ]
-    if pose in _DOGGY_POSES:
-        return [
-            "gangbang, one girl and three men, all three cocks in her, "
-            "mouth and pussy and asshole getting fucked.",
-            "she's on all fours, ass to the camera.",
-            "one man behind her, his cock in her asshole, "
-            "his upper body and face out of frame.",
-            "another man under her, his cock in her pussy.",
-            "the third man at her face, she's sucking his cock, "
-            "his face out of frame.",
-        ]
-    return [
-        "gangbang, one girl and three men, all three cocks in her, "
-        "mouth and pussy and asshole getting fucked.",
-        "she's on her back, knees to her chest, ass tilted at the camera. "
-        "You can see her face, her tits, her pussy, her asshole, and both heels.",
-        "one man between her legs, his cock in her pussy, hips and thighs attached.",
-        "another man fucking her in the ass, his cock in her asshole.",
-        "the third man at her mouth from the side so her face stays in frame, "
-        "she's sucking his cock, looking at you.",
-    ]
+    return [men]
 
 
 def compose_edit_prompt(
@@ -409,6 +396,8 @@ def compose_edit_prompt(
         extras = extras - {"rectal_tear", "rectal_leak"}
     elif sex == "gangbang":
         lines.extend(_gangbang_lines(str(pose)))
+    elif sex == "oral" and str(pose) in _ORAL_POSES:
+        pass
     else:
         sex_line = _frag(fr, "sex.category", sex)
         if isinstance(sex_line, str) and sex_line:
