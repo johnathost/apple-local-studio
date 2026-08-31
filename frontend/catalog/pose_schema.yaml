@@ -33,51 +33,115 @@ groups:
           - id: spread_heels
             label: Frog-leg
             icon: "🦵"
-            group: legs_spread
-            group_label: Legs spread
-            blurb: Heels planted, knees out, pussy in your face
+            group: heels_out
+            group_label: Heels in the shot
+            blurb: Heels planted left and right, face, tits, both holes
+            for: [solo, masturbation, vaginal, anal]
+          - id: soles_out
+            label: Soles to camera
+            icon: "👠"
+            group: heels_out
+            group_label: Heels in the shot
+            blurb: Both soles and heels facing you, holes in the middle
+            for: [solo, masturbation, vaginal, anal, gangbang]
+          - id: hold_heels
+            label: Holding her heels
+            icon: "✋"
+            group: heels_out
+            group_label: Heels in the shot
+            blurb: Hands on her heels, pulling her legs back
+            for: [solo, masturbation, vaginal, anal, gangbang]
           - id: spread_v
             label: Legs in a V
             icon: "✌️"
-            group: legs_spread
-            group_label: Legs spread
-            blurb: Ankles up, holes stacked, nowhere to hide
+            group: heels_out
+            group_label: Heels in the shot
+            blurb: Ankles high, heels in the corners, both holes
+            for: [solo, masturbation, vaginal, anal, gangbang]
+          - id: happy_baby
+            label: Holding her feet
+            icon: "🦶"
+            group: heels_out
+            group_label: Heels in the shot
+            blurb: Hands on her feet, knees out, heels in frame
+            for: [solo, masturbation, vaginal, anal, gangbang]
           - id: spread_held
             label: Holding open
             icon: "👐"
-            group: legs_spread
-            group_label: Legs spread
-            blurb: Hands on her thighs, pulling herself apart
+            group: heels_out
+            group_label: Heels in the shot
+            blurb: Hands on her thighs, heels planted, tits in frame
+            for: [solo, masturbation]
+          - id: spread_split
+            label: One heel up
+            icon: "⬆️"
+            group: heels_out
+            group_label: Heels in the shot
+            blurb: One heel high, the other out, both feet visible
+            for: [solo, vaginal, anal]
+          - id: butterfly
+            label: Butterfly
+            icon: "🦋"
+            group: heels_out
+            group_label: Heels in the shot
+            blurb: Knees out, heels in, tits and both holes
+            for: [solo, masturbation, vaginal, anal]
           - id: spread_press
             label: Knees to chest
             icon: "🙇"
-            group: legs_spread
-            group_label: Legs spread
-            blurb: Folded in half, ass tilted, ready to be used
-          - id: doggy_lookback
-            label: Looking back
-            icon: "👀"
-            group: all_fours
-            group_label: All fours
-            blurb: Ass to camera, eyes over her shoulder
-          - id: doggy_chest
-            label: Face down, ass up
-            icon: "🙏"
-            group: all_fours
-            group_label: All fours
-            blurb: Chest in the sheets, hips high, presenting
-          - id: doggy_crawl
-            label: Crawling to you
-            icon: "🐾"
-            group: all_fours
-            group_label: All fours
-            blurb: On all fours coming at the lens, tits hanging
-          - id: doggy_present
-            label: Wide-knee present
-            icon: "🍑"
-            group: all_fours
-            group_label: All fours
-            blurb: Knees spread, back arched, both holes offered
+            group: folded
+            group_label: Folded
+            blurb: Ass tilted, heels by her hips, face and tits above
+            for: [vaginal, anal, gangbang]
+          - id: ankles_head
+            label: Ankles by her head
+            icon: "🦶"
+            group: folded
+            group_label: Folded
+            blurb: Heels next to her face, both holes at the camera
+            for: [solo, vaginal, anal, gangbang]
+          - id: spread_shoulders
+            label: Legs on shoulders
+            icon: "🏋️"
+            group: folded
+            group_label: Folded
+            blurb: Heels toward the lens, tits and face above both holes
+            for: [vaginal, anal, gangbang]
+          - id: spread_edge
+            label: Hips at the edge
+            icon: "🛏️"
+            group: folded
+            group_label: Folded
+            blurb: Ass at the edge, heels in the foreground
+            for: [solo, vaginal, anal, gangbang]
+          - id: spread_one_up
+            label: One knee in
+            icon: "🦵"
+            group: folded
+            group_label: Folded
+            blurb: One heel by her chest, the other out, both feet in frame
+            for: [solo, vaginal, anal]
+          - id: lean_back
+            label: Leaning back
+            icon: "💺"
+            group: sitting
+            group_label: Sitting
+            blurb: Chest up, heels toward you, legs open
+            for: [solo, masturbation, vaginal, anal]
+          - id: oral_spread
+            label: Blowjob, legs open
+            icon: "👄"
+            group: folded
+            group_label: Folded
+            blurb: Sucking, heels left and right, tits and holes in frame
+            for: [oral]
+          - id: oral_fold
+            label: Blowjob, folded
+            icon: "💋"
+            group: folded
+            group_label: Folded
+            blurb: Knees to chest, sucking, heels by her hips
+            for: [oral]
 
   - id: toys
     label: How she's getting off
@@ -167,6 +231,8 @@ groups:
           - { id: creampie, label: Creampie, icon: "🥛", blurb: Pussy full, white cum leaking }
           - { id: anal_creampie, label: Ass creampie, icon: "🍑", blurb: Cum dripping from her ass }
           - { id: prolapse_creampie, label: Prolapse leaking, icon: "🌹", blurb: Cream on the rosebud }
+          - { id: rectal_leak, label: Rectal fluids, icon: "🟤", blurb: Yellow-brown mucus from her ass onto his cock }
+          - { id: rectal_tear, label: Torn sleeve, icon: "🩹", blurb: Tear marks on the everted tissue }
           - { id: cum_face, label: Facial, icon: "😌", blurb: White streaks across her face }
           - { id: cum_tits, label: Cum on tits, icon: "🍈", blurb: Glazed nipples, messy chest }
           - { id: cum_ass, label: Cum on ass, icon: "🍑", blurb: Glaze on her cheeks and back }

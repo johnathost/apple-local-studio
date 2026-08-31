@@ -102,6 +102,16 @@ def _compose(req: ComposeRequest) -> ComposeResponse:
         if mode == "pose"
         else []
     )
+    # Good frog-leg anal shots used SNOFS + POV Anal. Stack the weights on
+    # anal / rectal-sleeve without the reverse-cowgirl caption.
+    if mode == "pose":
+        sex = str(((scene.get("sex") or {}).get("category") or "")).strip().lower()
+        extra_fx = (scene.get("extras") or {}).get("effects") or []
+        if isinstance(extra_fx, str):
+            extra_fx = [extra_fx]
+        if sex == "anal" or {"rectal_leak", "rectal_tear"} & {str(x) for x in extra_fx}:
+            if "pov_anal" not in default_ids:
+                default_ids.append("pov_anal")
     needed = len(default_ids) + len(req.manual_loras or [])
     if needed and max_loras is not None and int(max_loras) < needed:
         max_loras = needed

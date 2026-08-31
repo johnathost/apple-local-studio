@@ -116,7 +116,15 @@ FEATURE_TAGS: dict[str, list[str]] = {
     "spit_tits": ["finish:sloppy"],
     "oiled": ["finish:wet"],
     "condom": ["finish:cum_body"],
+    "rectal_leak": ["finish:rectal_leak"],
+    "rectal_tear": ["finish:rectal_leak"],
 }
+
+_VAGINAL_FLUID_EXTRAS = {"dripping", "squirting", "creampie"}
+_SEMEN_HOLE_EXTRAS = {"anal_creampie", "prolapse_creampie"}
+_SLEEVE_EXTRAS = {"rectal_leak", "rectal_tear"}
+# These steal the crotch: wet/used/outie pussy wins over a rectal sleeve.
+_SLEEVE_SKIP_PUSSY = {"creamy", "used", "gaping", "outie", "open"}
 
 _SEX_TAGS: dict[str, list[str]] = {
     "solo": ["partners:solo"],
@@ -128,8 +136,33 @@ _SEX_TAGS: dict[str, list[str]] = {
     "toys": ["act:dildo", "partners:solo"],
 }
 
-_SPREAD_POSES = {"spread_heels", "spread_v", "spread_held", "spread_press", "legs_spread"}
-_DOGGY_POSES = {"doggy_lookback", "doggy_chest", "doggy_crawl", "doggy_present", "all_fours"}
+_SPREAD_POSES = {
+    "spread_heels",
+    "spread_v",
+    "spread_held",
+    "spread_press",
+    "legs_spread",
+    "oral_spread",
+    "oral_fold",
+    "happy_baby",
+    "spread_split",
+    "spread_shoulders",
+    "spread_edge",
+    "spread_one_up",
+    "lean_back",
+    "soles_out",
+    "hold_heels",
+    "butterfly",
+    "ankles_head",
+}
+_DOGGY_POSES = {
+    "doggy_lookback",
+    "doggy_chest",
+    "doggy_crawl",
+    "doggy_present",
+    "all_fours",
+}
+_RIDING_POSES = {"reverse_lookback"}
 _TOY_TAGS: dict[str, list[str]] = {
     "fingers": ["act:masturbation"],
     "dildo_ride_pussy": ["act:dildo", "act:masturbation"],
@@ -188,6 +221,8 @@ def scene_tags(scene: dict[str, Any]) -> set[str]:
         if pose_id in _DOGGY_POSES:
             tags.add("position:all_fours")
             tags.add("position:doggy")
+        if pose_id in _RIDING_POSES:
+            tags.add("position:reverse_cowgirl")
 
     act = scene.get("act") or {}
     for a in act.get("primary") or []:
@@ -270,6 +305,33 @@ def wants_genital_override(scene: dict[str, Any]) -> bool:
     return False
 
 
+def _sleeve_paragraphs(fr: dict[str, Any], extras: set[str]) -> list[str]:
+    """Anal anatomy block: partner, asscheeks, sleeve, fluids."""
+    lines: list[str] = []
+    partner = fr.get("anal_prolapse_partner")
+    if isinstance(partner, str) and partner.strip():
+        lines.append(partner.strip())
+    stack = fr.get("anal_prolapse_stack")
+    if isinstance(stack, str) and stack.strip():
+        lines.append(stack.strip())
+    sleeve_key = (
+        "anal_prolapse_sleeve_torn"
+        if "rectal_tear" in extras
+        else "anal_prolapse_sleeve"
+    )
+    sleeve_text = fr.get(sleeve_key) or fr.get("anal_prolapse_sleeve")
+    if isinstance(sleeve_text, str) and sleeve_text.strip():
+        lines.append(sleeve_text.strip())
+    if "rectal_leak" in extras:
+        leak = (fr.get("extras.effects") or {}).get("rectal_leak")
+        if isinstance(leak, str) and leak.strip():
+            lines.append(leak.strip())
+    gap = fr.get("anal_prolapse_gap")
+    if isinstance(gap, str) and gap.strip():
+        lines.append(gap.strip())
+    return lines
+
+
 def _gangbang_lines(pose: str) -> list[str]:
     if pose == "keep":
         return [
@@ -278,22 +340,24 @@ def _gangbang_lines(pose: str) -> list[str]:
         ]
     if pose in _DOGGY_POSES:
         return [
-            "one girl and three men. all three men are penetrating the girl. "
-            "oral, anal and vaginal sex.",
-            "she is on all fours, ass toward the camera.",
-            "one man is behind her, his penis penetrating her anus, "
+            "gangbang, one girl and three men, all three cocks in her, "
+            "mouth and pussy and asshole getting fucked.",
+            "she's on all fours, ass to the camera.",
+            "one man behind her, his cock in her asshole, "
             "his upper body and face out of frame.",
-            "another man is under her, his penis in her vagina.",
-            "the third man is in front of her, she holds his penis in her mouth, "
-            "performing oral sex, his face out of frame.",
+            "another man under her, his cock in her pussy.",
+            "the third man at her face, she's sucking his cock, "
+            "his face out of frame.",
         ]
     return [
-        "the image shows one girl and three men. all three men are penetrating the girl. "
-        "oral, anal and vaginal sex.",
-        "she is on her back with her legs spread toward the camera.",
-        "one man is between her legs, his penis in her vagina, hips and thighs attached.",
-        "another man is at her anus, his penis penetrating her ass.",
-        "the third man is at her mouth, she is sucking his penis, his face out of frame.",
+        "gangbang, one girl and three men, all three cocks in her, "
+        "mouth and pussy and asshole getting fucked.",
+        "she's on her back, knees to her chest, ass tilted at the camera. "
+        "You can see her face, her tits, her pussy, her asshole, and both heels.",
+        "one man between her legs, his cock in her pussy, hips and thighs attached.",
+        "another man fucking her in the ass, his cock in her asshole.",
+        "the third man at her mouth from the side so her face stays in frame, "
+        "she's sucking his cock, looking at you.",
     ]
 
 
@@ -318,6 +382,24 @@ def compose_edit_prompt(
     ass = _selected_ids(scene, "asshole", "look")
     face = (scene.get("expression") or {}).get("face")
 
+    if "prolapse_creampie" in extras:
+        ass = set(ass)
+        ass.add("prolapse")
+    if "rectal_leak" in extras:
+        extras = extras - _VAGINAL_FLUID_EXTRAS - _SEMEN_HOLE_EXTRAS
+        pussy = pussy - {"creamy"}
+    # Sleeve extras name his cock. Solo/oral would contradict that.
+    if extras & _SLEEVE_EXTRAS and str(sex) not in {"anal", "gangbang"}:
+        sex = "anal"
+    # Sleeve is prompt anatomy (flesh condom), not the prolapse LoRA.
+    # Rectal leak / torn sleeve with anal must emit it even if Prolapse
+    # was not clicked — otherwise Klein draws a wet pussy and no sleeve.
+    sleeve = str(sex) == "anal" and (
+        "prolapse" in ass or bool(extras & _SLEEVE_EXTRAS)
+    )
+    if sleeve:
+        pussy = pussy - _SLEEVE_SKIP_PUSSY
+
     lines: list[str] = []
     if extra_triggers:
         trig = _join_unique(list(extra_triggers))
@@ -327,21 +409,23 @@ def compose_edit_prompt(
     lines.append(EDIT_IDENTITY_LOCK)
     if str(pose) == "keep":
         lines.append("Keep her original pose and camera. Do not invent a new body position.")
-    else:
+    elif not sleeve:
         lines.append(
             "If the photo is a portrait or headshot, extend the crop to a full body in this pose. "
             "Do not redraw her face."
         )
 
+    if sleeve:
+        lines.extend(_sleeve_paragraphs(fr, extras))
+        extras = extras - {"rectal_tear", "rectal_leak"}
+
     pose_line = _frag(fr, "position.pose", pose)
     if isinstance(pose_line, str) and pose_line:
         lines.append(pose_line)
-    if str(pose) in _SPREAD_POSES:
+    if str(pose) in _SPREAD_POSES and not sleeve:
         lines.append(
-            "Her face and her breasts are in the photograph. "
-            "Do not crop her head or chest. "
-            "Do not hide her face behind a thigh. "
-            "Camera looks from her crotch toward her face."
+            "You can see her face, her tits, her pussy, her asshole, and both heels. "
+            "Not a close-up of her crotch. Do not crop her head, her tits, or her feet."
         )
 
     face_line = _frag(fr, "expression.face", face or "keep")
@@ -357,7 +441,7 @@ def compose_edit_prompt(
 
     if sex == "gangbang":
         lines.extend(_gangbang_lines(str(pose)))
-    else:
+    elif not sleeve:
         sex_line = _frag(fr, "sex.category", sex)
         if isinstance(sex_line, str) and sex_line:
             lines.append(sex_line)
@@ -373,14 +457,19 @@ def compose_edit_prompt(
     elif isinstance(pussy_bits, str) and pussy_bits:
         lines.append(pussy_bits)
 
-    if "prolapse_creampie" in extras:
-        ass = set(ass)
-        ass.add("prolapse")
-    ass_bits = _frag(fr, "asshole.look", sorted(ass))
+    ass_for_frag = set(ass)
+    if sleeve:
+        ass_for_frag.discard("prolapse")
+    ass_bits = _frag(fr, "asshole.look", sorted(ass_for_frag))
     if isinstance(ass_bits, list):
         lines.extend(ass_bits)
     elif isinstance(ass_bits, str) and ass_bits:
         lines.append(ass_bits)
+
+    if not sleeve and extras & {"rectal_leak", "rectal_tear"}:
+        perineum = fr.get("anal_perineum_lock")
+        if isinstance(perineum, str) and perineum.strip():
+            lines.append(perineum.strip())
 
     extra_bits = _frag(fr, "extras.effects", sorted(extras))
     if isinstance(extra_bits, list):
@@ -538,7 +627,7 @@ def compose_prompt(
         for x in ((scene.get("finish") or {}).get("effects") or [])
         if _tag_value(x)
     }
-    if finish_ids & {"cum_inside", "cum_face", "cum_body"}:
+    if finish_ids & {"cum_inside", "cum_face", "cum_body"} and "rectal_leak" not in finish_ids:
         chunks.append(SEMEN_LOCK)
 
     prompt = _join_unique(chunks)

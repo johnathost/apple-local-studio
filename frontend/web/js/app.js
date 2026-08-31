@@ -137,6 +137,17 @@ const EXCLUSIVE_MULTI = {
     ["shaved", "bush"],
   ],
   "asshole.look": [["tight", "gaping", "prolapse", "plug"]],
+  "extras.effects": [
+    ["rectal_leak", "dripping"],
+    ["rectal_leak", "squirting"],
+    ["rectal_leak", "creampie"],
+    ["rectal_leak", "anal_creampie"],
+    ["rectal_leak", "prolapse_creampie"],
+  ],
+  "finish.effects": [
+    ["rectal_leak", "wet"],
+    ["rectal_leak", "cum_inside"],
+  ],
 };
 
 function toggleMultiValue(groupId, fieldId, optId) {
@@ -159,6 +170,28 @@ function fieldVisible(field) {
   const show = field?.show_if;
   if (!show) return true;
   return getSceneValue(show.group, show.field) === show.equals;
+}
+
+const POSE_DEFAULTS = {
+  solo: "spread_heels",
+  masturbation: "spread_held",
+  vaginal: "spread_heels",
+  anal: "spread_heels",
+  oral: "oral_spread",
+  gangbang: "spread_shoulders",
+};
+
+function optionAllowedForSex(opt, sex) {
+  if (!opt.for) return true;
+  return opt.for.includes(sex || "solo");
+}
+
+function poseOptions() {
+  const groups = state.schema?.groups || [];
+  const field = groups
+    .find((g) => g.id === "position")
+    ?.fields?.find((f) => f.id === "pose");
+  return field?.options || [];
 }
 
 function groupedOptions(field) {
@@ -242,7 +275,10 @@ function renderStudioField(group, field) {
     const cats = document.createElement("div");
     cats.className = "pose-cats";
     const current = getSceneValue(group.id, field.id);
+    const sex = getSceneValue("sex", "category") || "solo";
     for (const g of groupedOptions(field)) {
+      const opts = g.options.filter((opt) => optionAllowedForSex(opt, sex));
+      if (!opts.length) continue;
       const cat = document.createElement("div");
       cat.className = "pose-cat";
       const heading = document.createElement("div");
@@ -251,7 +287,7 @@ function renderStudioField(group, field) {
       cat.appendChild(heading);
       const grid = document.createElement("div");
       grid.className = "pose-grid";
-      for (const opt of g.options) {
+      for (const opt of opts) {
         grid.appendChild(
           renderOptCard(opt, {
             active: current === opt.id,
@@ -412,6 +448,19 @@ function setSceneValue(groupId, fieldId, value) {
   if (!state.scene[groupId]) state.scene[groupId] = {};
   state.scene[groupId][fieldId] = value;
   state.winner = `${groupId}.${fieldId}`;
+  if (groupId === "sex" && fieldId === "category") {
+    const pose = state.scene.position?.pose;
+    const allowed = new Set(
+      poseOptions()
+        .filter((opt) => optionAllowedForSex(opt, value))
+        .map((opt) => opt.id)
+    );
+    allowed.add("keep");
+    if (pose && !allowed.has(pose)) {
+      if (!state.scene.position) state.scene.position = {};
+      state.scene.position.pose = POSE_DEFAULTS[value] || "spread_heels";
+    }
+  }
   // Sync notes quick box into style.notes
   if (groupId === "style" && fieldId === "notes") {
     const nq = $("#notes-quick");

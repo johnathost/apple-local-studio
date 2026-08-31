@@ -7,6 +7,7 @@ sanitize_order:
   - pussy.look
   - asshole.look
   - extras.effects
+  - finish.effects
 
 on_select:
   sex.category:
@@ -14,28 +15,89 @@ on_select:
       - field: toys.use
         replace_if_in: [fingers, dildo_ride_pussy, dildo_ride_anal, horse_ride_pussy, horse_ride_anal, wand, double]
         replace_with: none
+      - field: position.pose
+        replace_if_in: [oral_spread, oral_fold, reverse_lookback, spread_press, spread_shoulders, doggy_lookback, doggy_present, doggy_chest, doggy_crawl, side_open]
+        replace_with: spread_heels
     vaginal:
       - field: toys.use
         replace_if_in: [fingers, dildo_ride_pussy, dildo_ride_anal, horse_ride_pussy, horse_ride_anal, wand, double]
         replace_with: none
+      - field: position.pose
+        replace_if_in: [oral_spread, oral_fold, spread_held, doggy_lookback, doggy_present, doggy_chest, doggy_crawl, reverse_lookback, side_open]
+        replace_with: spread_heels
     anal:
       - field: toys.use
         replace_if_in: [fingers, dildo_ride_pussy, dildo_ride_anal, horse_ride_pussy, horse_ride_anal, wand, double]
         replace_with: none
+      - field: position.pose
+        replace_if_in: [spread_held, oral_spread, oral_fold, doggy_lookback, doggy_present, doggy_chest, doggy_crawl, reverse_lookback, side_open]
+        replace_with: spread_heels
     oral:
       - field: toys.use
         replace_if_in: [fingers, dildo_ride_pussy, dildo_ride_anal, horse_ride_pussy, horse_ride_anal, wand, double]
         replace_with: none
+      - field: position.pose
+        replace_if_in: [spread_heels, soles_out, hold_heels, spread_v, spread_held, happy_baby, spread_split, butterfly, spread_press, ankles_head, spread_shoulders, spread_edge, spread_one_up, lean_back, doggy_lookback, doggy_present, doggy_chest, doggy_crawl, reverse_lookback, side_open]
+        replace_with: oral_spread
     gangbang:
       - field: toys.use
         replace_if_in: [fingers, dildo_ride_pussy, dildo_ride_anal, horse_ride_pussy, horse_ride_anal, wand, double]
         replace_with: none
+      - field: position.pose
+        replace_if_in: [spread_heels, spread_held, spread_split, spread_one_up, lean_back, butterfly, oral_spread, oral_fold, reverse_lookback, doggy_lookback, doggy_present, doggy_chest, doggy_crawl, side_open]
+        replace_with: spread_shoulders
     masturbation:
       - field: toys.use
         replace_if_in: [none]
         replace_with: fingers
+      - field: position.pose
+        replace_if_in: [oral_spread, oral_fold, reverse_lookback, spread_press, spread_shoulders, spread_edge, spread_split, spread_one_up, side_open, doggy_lookback, doggy_present, doggy_chest, doggy_crawl, ankles_head]
+        replace_with: spread_held
 
   extras.effects:
-    prolapse_creampie: []
+    rectal_leak:
+      - field: extras.effects
+        drop: [dripping, squirting, creampie, anal_creampie, prolapse_creampie]
+      - field: pussy.look
+        drop: [creamy]
+      - field: sex.category
+        replace_if_in: [solo, masturbation, vaginal, oral]
+        replace_with: anal
+      - field: position.pose
+        replace_if_in: [spread_held, oral_spread, oral_fold, doggy_chest, doggy_crawl]
+        replace_with: spread_heels
+    dripping:
+      - field: extras.effects
+        drop: [rectal_leak]
+    squirting:
+      - field: extras.effects
+        drop: [rectal_leak]
+    creampie:
+      - field: extras.effects
+        drop: [rectal_leak]
+    anal_creampie:
+      - field: extras.effects
+        drop: [rectal_leak]
+    prolapse_creampie:
+      - field: extras.effects
+        drop: [rectal_leak]
+    rectal_tear:
+      - field: sex.category
+        replace_if_in: [solo, masturbation, vaginal, oral]
+        replace_with: anal
+      - field: position.pose
+        replace_if_in: [spread_held, oral_spread, oral_fold, doggy_chest, doggy_crawl]
+        replace_with: spread_heels
+
+  finish.effects:
+    rectal_leak:
+      - field: finish.effects
+        drop: [wet, cum_inside]
+    wet:
+      - field: finish.effects
+        drop: [rectal_leak]
+    cum_inside:
+      - field: finish.effects
+        drop: [rectal_leak]
 
 edit_presets: {}

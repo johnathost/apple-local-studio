@@ -193,7 +193,11 @@ def sanitize_scene(
         values = on_select.get(path) or {}
         if not isinstance(values, dict):
             return
-        for selected in _iter_selected(out, path):
+        for selected in list(_iter_selected(out, path)):
+            # Skip values already dropped by an earlier selected option
+            # (mutual extras.effects drops must not annihilate both).
+            if selected not in _iter_selected(out, path):
+                continue
             dropped.extend(_apply_actions(out, values.get(selected)))
 
     winner = (winner or "").strip() or None

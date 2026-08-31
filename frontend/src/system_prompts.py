@@ -19,6 +19,75 @@ SEMEN_LOCK = (
     "Semen is thick, opaque, pearly white; never yellow, golden, or urine-colored."
 )
 
+# When the edit asks for rectal mucus, not semen. Do not use SEMEN_LOCK on this path.
+RECTAL_FILTH_LOCK = (
+    "Her anus is leaking visible and thick nasty internal rectal fluids that cover his cock and balls."
+)
+
+SLEEVE_LOCK = (
+    "He's fucking her anus. Her asscheeks are spread. Her pussy is empty above his cock."
+)
+
+# Short CFG negative. A kitchen-sink list fights the sleeve.
+ANAL_SCENE_NEGATIVE = (
+    "different person, swapped face, "
+    "cock in pussy, vaginal sex, labia around the penis, "
+    "latex condom, rubber condom, yellow cap on the glans, covering the head of the penis, "
+    "cropped head, cropped feet, cropped heels, "
+    "wound, blood, gore, extra limbs, cartoon, text, watermark"
+)
+
+_SEMEN_MARKERS = ("semen", "creampie", "cum:", "cum ")
+_RECTAL_FILTH_MARKERS = (
+    "rectal fluid",
+    "rectal fluids",
+    "rectal mucus",
+    "internal rectal",
+    "rectal body fluid",
+    "rectal body fluids",
+    "rectal fluids",
+    "leaking thick nasty",
+    "nasty internal rectal",
+)
+_ANAL_WRECK_MARKERS = ("tear marks",)
+_SLEEVE_MARKERS = (
+    "flesh condom",
+    "base of his cock",
+    "head of his dick is uncovered",
+    "red inverted",
+    "inverted rectal",
+    "red sleeve",
+    "everted",
+    "rectal lining",
+    "turned inside-out",
+    "crimson rectal",
+    "red cuff",
+    "anal rim around",
+    "asshole turned inside",
+    "red meat",
+)
+
+
+def wants_semen(prompt: str) -> bool:
+    low = (prompt or "").lower()
+    return any(k in low for k in _SEMEN_MARKERS)
+
+
+def wants_rectal_filth(prompt: str) -> bool:
+    low = (prompt or "").lower()
+    return any(k in low for k in _RECTAL_FILTH_MARKERS)
+
+
+def wants_anal_wreck(prompt: str) -> bool:
+    low = (prompt or "").lower()
+    return any(k in low for k in _ANAL_WRECK_MARKERS)
+
+
+def wants_sleeve(prompt: str) -> bool:
+    low = (prompt or "").lower()
+    return any(k in low for k in _SLEEVE_MARKERS)
+
+
 SEX_SCENE_LOCK = (
     "No extra limbs, no melted genitals, no fused pussy-and-anus into one hole, "
     "no floating disconnected penis."
@@ -33,10 +102,9 @@ EDIT_IDENTITY_LOCK = (
 )
 
 SYSTEM_GEN = (
-    "System: Create a single photorealistic explicit adult photograph that makes visual sense. "
+    "System: A single explicit hardcore photograph of adult sex. "
     "Every person depicted is a consenting adult 18 years or older. "
-    "Follow the scene description. Natural skin, realistic lighting, "
-    "no text, no watermark, no illustration. "
+    "Follow the scene. A photograph, no text, no watermark, no illustration. "
     f"{QUALITY_LOCK}"
 )
 
@@ -49,9 +117,9 @@ SYSTEM_UNDRESS = (
 
 SYSTEM_EDIT = (
     "System: Restage the source photograph. "
-    "Keep the same adult's face, hair, and skin (man or woman). "
-    "Change pose, camera, and the requested anatomy to match the edit request. "
-    "This is a photograph, natural skin, no text, no watermark. "
+    "Keep the same adult's face, hair, and skin. "
+    "Fuck her as the edit describes. Change pose, camera, and her body to match. "
+    "A photograph, no text, no watermark. "
     f"{SEX_SCENE_LOCK}"
 )
 
@@ -62,11 +130,11 @@ SYSTEM_EDIT_LORA = (
     "System: One reference photo is WHO. Copy her face exactly from that photograph. "
     "Same face, hair, eyes, nose, mouth, jaw, skin, age, tattoos, and nails. "
     "Do not swap identity. Do not beautify. Do not change ethnicity. "
-    "You may change pose, clothing, and the sex act below the neck. "
+    "Fuck her as the edit describes. Change pose, clothes, and the sex below the neck. "
     "Keep her original facial expression unless the edit asks to change it. "
-    "If the photo is a portrait or headshot, extend the crop to a full body in this pose "
-    "but do not redraw the face. "
-    "Follow the sex act in the edit request. Men are separate people with their own hips and legs. "
+    "If the photo is a portrait or headshot, extend the crop so you can see her tits, "
+    "pussy, asshole, and heels, but do not redraw the face. "
+    "Men are separate people with their own hips and legs and cocks. "
     "A photograph, no text, no watermark."
 )
 
@@ -134,6 +202,52 @@ SEMEN_NEGATIVE = (
     "cervix, swirl hanging from the vulva"
 )
 
+# Rectal mucus / anal filth. Ban vaginal-origin liquid and cloaca; do NOT ban
+# yellow-brown fluid leaving the anus (SEMEN_NEGATIVE does, and that fights this look).
+RECTAL_FILTH_NEGATIVE = (
+    "different person, different face, swapped face, celebrity face, "
+    "generic pornstar face, beauty filter, instagram face, doll face, airbrushed, "
+    "yellow cum, yellow semen, golden cum, orange cum, honey-colored semen, "
+    "urine from urethra, piss from pussy, peeing, golden shower, "
+    "squirting, vaginal discharge, yellow fluid leaking from pussy, "
+    "liquid from vagina, creamy pussy leaking, "
+    "fused pussy and anus, cloaca, one giant genital hole, extra vagina, "
+    "doughnut, donut, pastry, glazed icing, bagel, silicone ring, fleshlight, "
+    "toy sitting on skin, sticker on crotch, "
+    "smooth pink ball, sphere, balloon, tomato, lollipop, ping pong, "
+    "dildo, glass penis, pearl, orb on a stick, detached cock, floating penis, "
+    "vaginal prolapse, tissue hanging from the pussy, insides coming out of the vagina, "
+    "cervix, swirl hanging from the vulva, "
+    "scat on pubic hair, feces on mons, brown smear on bush, "
+    "latex condom, rubber condom, condom on penis, pink condom, pale pink sleeve, "
+    "rolled condom, condom ring, reservoir tip, latex sheath, rubber sleeve, "
+    "skin-colored sleeve, beige rubber, tan condom, "
+    "cock in vagina, penis in pussy, vaginal penetration, labia around the penis, "
+    "bare shaft with nothing around it, penis with no tissue wrapping it, "
+    "labia wrapping the cock, pussy lips around the shaft, "
+    "red ring on the glans, red cap on the tip, doughnut around the head, "
+    "cock ring, lipstick on penis, tomato on the cock, sausage ring, "
+    "smooth rubbery sleeve, inflatable ring, candy-red gloss, "
+    "stacked rings on shaft, ribbed fleshlight, pale pink toy, "
+    "disconnected sleeve, bellows on penis, tube sitting on the cock, "
+    "ruffled flower, flared collar, extra labia around penis, "
+    "petals around the shaft, second vulva on the cock, tissue spreading sideways, "
+    "close-up of crotch, macro genitals, cropped head, cropped feet, cropped breasts, "
+    "wound, gash, knife cut, blood, bloody, gore, ripped flesh, torn open crotch, "
+    "injury, stitches, necrotic, scab, bleeding"
+)
+
+
+def pose_negative_for(prompt: str) -> str:
+    """CFG negative for pose/edit. Anal sleeve uses a short list so CFG does not melt the crotch."""
+    if wants_sleeve(prompt) or wants_rectal_filth(prompt):
+        return ANAL_SCENE_NEGATIVE
+    if wants_anal_wreck(prompt):
+        return ANAL_SCENE_NEGATIVE
+    if wants_semen(prompt):
+        return SEMEN_NEGATIVE
+    return DRY_POSE_NEGATIVE
+
 
 def with_system_prompt(
     user_prompt: str,
@@ -161,10 +275,13 @@ def with_system_prompt(
         return system
     # Only mention semen when the edit actually asks for it. On a dry spread,
     # "pearly white" in the system prompt becomes a pearl glued to the mons.
-    low = user.lower()
-    if m in {"edit", "pose"} and any(
-        k in low for k in ("semen", "creampie", "cum:", "cum ")
-    ):
+    # Rectal mucus is a different fluid — SEMEN_LOCK's "never yellow" fights it.
+    # Sleeve body already has the anal caption. Do not prepend a second copy.
+    if wants_sleeve(user):
+        pass
+    elif wants_rectal_filth(user):
+        system = f"{system} {RECTAL_FILTH_LOCK}"
+    elif m in {"edit", "pose"} and wants_semen(user):
         system = f"{system} {SEMEN_LOCK}"
     if m in {"edit", "pose", "undress"}:
         return f"{system}\n\nEdit request:\n{user}"

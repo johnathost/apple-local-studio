@@ -538,21 +538,17 @@ class MfluxBackend:
             tap = _StepProgress(lambda p: _emit(on_progress, p), steps)
             _register_step_progress(model, tap)
             sys_mode = (system_mode or mode or "").strip().lower()
-            # Pose: skip "deformed / grotesque" (fights gape) but keep yellow-cum lock.
+            # Pose: skip "deformed / grotesque" (fights gape).
             # Undress: no negative (guidance 1.0 anyway).
             if sys_mode == "undress":
                 prev_encode = None
             elif sys_mode == "pose" or (mode == "edit" and sys_mode != "gen"):
-                from src.system_prompts import DRY_POSE_NEGATIVE, SEMEN_NEGATIVE
+                from src.system_prompts import pose_negative_for
 
-                # Combined prompt already includes SEMEN_LOCK only when fluids were asked.
-                fluids = any(
-                    k in (prompt or "").lower()
-                    for k in ("semen", "creampie", "cum:", "cum ")
-                )
-                prev_encode = _install_negative(
-                    model, SEMEN_NEGATIVE if fluids else DRY_POSE_NEGATIVE
-                )
+                # Combined prompt already includes SEMEN_LOCK / RECTAL_FILTH_LOCK
+                # when those fluids were asked. Rectal mucus must not use the
+                # yellow-from-anus semen negative.
+                prev_encode = _install_negative(model, pose_negative_for(prompt))
             else:
                 prev_encode = _install_quality_negative(model)
             try:

@@ -111,6 +111,10 @@ loras:
     priority: 95
     exclusive_group: pose
     auto: false
+    # Weights only. The training caption is reverse-cowgirl facing away and
+    # fights frog-leg; sleeve/anal pose stacks this as a default without
+    # injecting that trigger.
+    prompt_trigger: ""
     require_all:
       - act:anal
     require_any:
