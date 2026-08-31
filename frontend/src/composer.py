@@ -6,7 +6,7 @@ from copy import deepcopy
 from typing import Any
 
 from src.catalog_loader import load_fragments
-from src.system_prompts import EDIT_IDENTITY_LOCK, SEMEN_LOCK
+from src.system_prompts import SEMEN_LOCK
 
 # FK_allholes training caption (lora.md), first scene only — not the all-fours add-on.
 GANGBANG_LORA_PROMPT = (
@@ -401,35 +401,25 @@ def compose_edit_prompt(
         pussy = pussy - _SLEEVE_SKIP_PUSSY
 
     lines: list[str] = []
-    if extra_triggers:
-        trig = _join_unique(list(extra_triggers))
-        if trig:
-            lines.append(trig)
-
-    lines.append(EDIT_IDENTITY_LOCK)
     if str(pose) == "keep":
         lines.append("Keep her original pose and camera. Do not invent a new body position.")
-    elif not sleeve:
-        lines.append(
-            "If the photo is a portrait or headshot, extend the crop to a full body in this pose. "
-            "Do not redraw her face."
-        )
+
+    pose_line = _frag(fr, "position.pose", pose)
+    if isinstance(pose_line, str) and pose_line and str(pose) != "keep":
+        lines.append(pose_line)
 
     if sleeve:
         lines.extend(_sleeve_paragraphs(fr, extras))
         extras = extras - {"rectal_tear", "rectal_leak"}
-
-    pose_line = _frag(fr, "position.pose", pose)
-    if isinstance(pose_line, str) and pose_line:
-        lines.append(pose_line)
-    if str(pose) in _SPREAD_POSES and not sleeve:
-        lines.append(
-            "You can see her face, her tits, her pussy, her asshole, and both heels. "
-            "Not a close-up of her crotch. Do not crop her head, her tits, or her feet."
-        )
+    elif sex == "gangbang":
+        lines.extend(_gangbang_lines(str(pose)))
+    else:
+        sex_line = _frag(fr, "sex.category", sex)
+        if isinstance(sex_line, str) and sex_line:
+            lines.append(sex_line)
 
     face_line = _frag(fr, "expression.face", face or "keep")
-    if isinstance(face_line, str) and face_line:
+    if isinstance(face_line, str) and face_line and str(face or "keep") != "keep":
         lines.append(face_line)
 
     cloth = _frag(fr, "clothing.state", clothing.get("state"))
@@ -438,13 +428,6 @@ def compose_edit_prompt(
     heels = _frag(fr, "clothing.heels", clothing.get("heels"))
     if isinstance(heels, str) and heels:
         lines.append(heels)
-
-    if sex == "gangbang":
-        lines.extend(_gangbang_lines(str(pose)))
-    elif not sleeve:
-        sex_line = _frag(fr, "sex.category", sex)
-        if isinstance(sex_line, str) and sex_line:
-            lines.append(sex_line)
 
     toy = (scene.get("toys") or {}).get("use")
     toy_line = _frag(fr, "toys.use", toy)
@@ -466,11 +449,6 @@ def compose_edit_prompt(
     elif isinstance(ass_bits, str) and ass_bits:
         lines.append(ass_bits)
 
-    if not sleeve and extras & {"rectal_leak", "rectal_tear"}:
-        perineum = fr.get("anal_perineum_lock")
-        if isinstance(perineum, str) and perineum.strip():
-            lines.append(perineum.strip())
-
     extra_bits = _frag(fr, "extras.effects", sorted(extras))
     if isinstance(extra_bits, list):
         lines.extend(extra_bits)
@@ -481,9 +459,10 @@ def compose_edit_prompt(
     if str(notes).strip():
         lines.append(str(notes).strip())
 
-    lines.append(
-        "Her face must match the reference photograph. Same person, not a lookalike."
-    )
+    if extra_triggers:
+        trig = _join_unique(list(extra_triggers))
+        if trig:
+            lines.append(trig)
 
     return "\n".join(lines)
 
@@ -502,9 +481,12 @@ def compose_undress_prompt(
     cloth = _frag(fr, "clothing.state", state)
     if not (isinstance(cloth, str) and cloth):
         cloth = "she is nude, no clothes"
+    if cloth and cloth[0].islower():
+        cloth = cloth[0].upper() + cloth[1:]
     chunks: list[str] = [
-        f"{cloth}. Keep the same person, face, hair, skin, tattoos, pose, camera, and background.",
-        "Do not change body shape or proportions.",
+        f"Strip her. {cloth}",
+        "Same woman, same face, same hair, same skin, same tattoos, same pose, same camera.",
+        "A photograph.",
     ]
     heels = _frag(fr, "clothing.heels", clothing.get("heels"))
     if isinstance(heels, str) and heels:

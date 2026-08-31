@@ -60,6 +60,20 @@ class PromoteRequest(BaseModel):
     name: str
 
 
+class LibraryRename(BaseModel):
+    name: str
+
+
+class LibraryFromOutput(BaseModel):
+    name: str
+    title: str | None = None
+    prompt: str | None = None
+    scene: dict[str, Any] | None = None
+    mode: str | None = None
+    loras: list[Any] | None = None
+    seed: int | None = None
+
+
 class RecipeRequest(BaseModel):
     identity: str
     undress: bool = False

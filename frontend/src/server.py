@@ -28,11 +28,25 @@ from src.constraints import (
     blocked_options,
     sanitize_scene,
 )
+from src.library import (
+    IMAGES_DIR,
+    already_has_source,
+    delete_item,
+    ensure_dirs as ensure_library,
+    get_item,
+    image_path as library_image_path,
+    ingest_bytes,
+    ingest_output,
+    list_items,
+    rename_item,
+)
 from src.models import (
     ComposeRequest,
     ComposeResponse,
     GenerateRequest,
     JobResponse,
+    LibraryFromOutput,
+    LibraryRename,
     PromoteRequest,
     RecipeRequest,
 )
@@ -60,6 +74,7 @@ UPLOADS_DIR = Path(os.environ.get("STUDIO_UPLOADS_DIR", "/data/uploads"))
 
 for d in (OUTPUTS_DIR, UPLOADS_DIR):
     d.mkdir(parents=True, exist_ok=True)
+ensure_library()
 
 app = FastAPI(title="Local Apple Studio", version="0.2.0")
 
@@ -159,6 +174,7 @@ def health() -> dict[str, Any]:
         "engine": eng,
         "outputs_dir": str(OUTPUTS_DIR),
         "uploads_dir": str(UPLOADS_DIR),
+        "library_dir": str(os.environ.get("STUDIO_LIBRARY_DIR", "/data/library")),
     }
 
 
@@ -324,6 +340,103 @@ def api_job(job_id: str) -> JobResponse:
     if not job:
         raise HTTPException(404, "Job not found")
     return _job_response(job)
+
+
+@app.get("/api/library")
+def api_library_list() -> dict[str, Any]:
+    return {"items": list_items()}
+
+
+@app.post("/api/library/upload")
+async def api_library_upload(file: UploadFile = File(...)) -> dict[str, Any]:
+    header = await file.read(16)
+    suffix = sniffed_image_suffix(header)
+    if not suffix:
+        raise HTTPException(400, "Only PNG, JPEG, and WebP images are allowed")
+    chunks = [header]
+    written = len(header)
+    try:
+        while True:
+            chunk = await file.read(1024 * 1024)
+            if not chunk:
+                break
+            written += len(chunk)
+            if written > MAX_IMAGE_BYTES:
+                raise HTTPException(413, f"Upload exceeds {MAX_IMAGE_BYTES} bytes")
+            chunks.append(chunk)
+    except HTTPException:
+        raise
+    raw = b"".join(chunks)
+    stem = Path(file.filename or "").stem.strip() or None
+    try:
+        item = ingest_bytes(raw, suffix=suffix, kind="upload", name=stem, mode="upload")
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    dest = UPLOADS_DIR / f"lib-{item['id']}{suffix}"
+    dest.write_bytes(raw)
+    item["upload_filename"] = dest.name
+    item["upload_url"] = f"/uploads/{dest.name}"
+    return item
+
+
+@app.post("/api/library/from-output")
+def api_library_from_output(req: LibraryFromOutput) -> dict[str, Any]:
+    existing = already_has_source(req.name)
+    if existing:
+        return existing
+    src = _file_in(OUTPUTS_DIR, req.name)
+    item = ingest_output(
+        src,
+        prompt=req.prompt,
+        scene=req.scene,
+        mode=req.mode,
+        loras=req.loras,
+        seed=req.seed,
+        name=req.title,
+    )
+    if not item:
+        raise HTTPException(404, "Output not found")
+    return item
+
+
+@app.patch("/api/library/{item_id}")
+def api_library_rename(item_id: str, req: LibraryRename) -> dict[str, Any]:
+    try:
+        item = rename_item(item_id, req.name)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    if not item:
+        raise HTTPException(404, "Not in library")
+    return item
+
+
+@app.delete("/api/library/{item_id}")
+def api_library_delete(item_id: str) -> dict[str, str]:
+    if not delete_item(item_id):
+        raise HTTPException(404, "Not in library")
+    return {"status": "deleted"}
+
+
+@app.post("/api/library/{item_id}/use")
+def api_library_use(item_id: str) -> dict[str, str]:
+    item = get_item(item_id)
+    if not item:
+        raise HTTPException(404, "Not in library")
+    src = library_image_path(str(item.get("filename") or ""))
+    if not src.is_file():
+        raise HTTPException(404, "Library file missing")
+    raw = src.read_bytes()
+    if len(raw) > MAX_IMAGE_BYTES:
+        raise HTTPException(413, f"Image exceeds {MAX_IMAGE_BYTES} bytes")
+    suffix = sniffed_image_suffix(raw) or src.suffix or ".png"
+    dest = UPLOADS_DIR / f"lib-{uuid.uuid4().hex}{suffix}"
+    dest.write_bytes(raw)
+    return {"filename": dest.name, "url": f"/uploads/{dest.name}", "id": item_id}
+
+
+@app.get("/library/{name}")
+def get_library(name: str) -> FileResponse:
+    return FileResponse(_file_in(IMAGES_DIR, name))
 
 
 @app.post("/api/promote-output")

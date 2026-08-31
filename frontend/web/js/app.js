@@ -25,8 +25,10 @@ const state = {
   lastGenerate: null, // last POST /api/generate body
   lastResult: null, // { image_file, image_url }
   scenes: { extras: [], scenes: [] },
-  studioSimple: true,
   showPrompt: false,
+  libraryOpen: false,
+  libraryItems: [],
+  librarySelected: null,
   undressFirst: false,
   twoTakes: false,
   shoot: null, // { identity, recipe, frames, selected, subjectIndex }
@@ -340,7 +342,7 @@ function renderStudioField(group, field) {
 
 function renderSceneStudio() {
   const root = $("#scene-studio");
-  if (!root || state.editKind !== "pose" || !state.studioSimple) {
+  if (!root || state.editKind !== "pose") {
     root?.classList.add("hidden");
     return;
   }
@@ -742,10 +744,13 @@ function ensureEmptyHint() {
   const thread = $("#chat-thread");
   if (!thread || thread.children.length) return;
   if (state.shoot?.frames?.length) return;
-  const poseSimple = state.editKind === "pose" && state.studioSimple;
-  thread.innerHTML = poseSimple
-    ? `<div class="empty-hint">Drop her photo. Pick a scene. <strong>Make scene</strong> runs one Klein job per step — click a frame to keep going, retry that step if it’s wrong.</div>`
-    : `<div class="empty-hint">Build a scene on the left. Prompt &amp; LoRAs update live on the right. Hit <strong>Generate</strong> when ready.</div>`;
+  const pose = state.editKind === "pose";
+  const undress = state.editKind === "undress";
+  thread.innerHTML = pose
+    ? `<div class="empty-hint">Pick her photo from the library or drop one. Spread her, pick the hole, then hit <strong>Fuck her</strong>.</div>`
+    : undress
+      ? `<div class="empty-hint">Pick her photo. Hit <strong>Strip her</strong> — same pose, clothes off, holes out.</div>`
+      : `<div class="empty-hint">Build a scene on the left. Prompt &amp; LoRAs update live on the right. Hit <strong>Generate</strong> when ready.</div>`;
 }
 
 function formatElapsed(ms) {
@@ -866,6 +871,139 @@ function updateSessionLine() {
       ? `Subject: ${state.refImage.filename} (${n} earlier)`
       : `Subject: ${state.refImage.filename}`;
   undo?.classList.toggle("hidden", n === 0);
+}
+
+function setLibraryOpen(open) {
+  state.libraryOpen = Boolean(open);
+  $("#library-drawer")?.classList.toggle("hidden", !state.libraryOpen);
+  $("#btn-library")?.classList.toggle("active", state.libraryOpen);
+  if (state.libraryOpen) loadLibrary().catch(() => {});
+}
+
+async function loadLibrary() {
+  const data = await api("/api/library");
+  state.libraryItems = data.items || [];
+  renderLibrary();
+  if (state.shoot?.frames?.length) renderFilmstrip();
+}
+
+function renderLibrary() {
+  const grid = $("#library-grid");
+  if (!grid) return;
+  const items = state.libraryItems || [];
+  if (!items.length) {
+    grid.innerHTML = `<p class="library-empty">Nothing saved yet. Upload a photo or generate a take — it lands here so you can name it and fuck it next.</p>`;
+    return;
+  }
+  grid.innerHTML = "";
+  for (const item of items) {
+    const card = document.createElement("article");
+    card.className = "library-card" + (item.id === state.librarySelected ? " active" : "");
+    const img = document.createElement("img");
+    img.src = item.url;
+    img.alt = item.name || "";
+    img.addEventListener("click", () => useLibraryItem(item.id).catch((err) => alert(err.message || err)));
+    const meta = document.createElement("div");
+    meta.className = "lib-meta";
+    const name = document.createElement("input");
+    name.className = "lib-name";
+    name.type = "text";
+    name.value = item.name || "";
+    name.addEventListener("change", () => {
+      renameLibraryItem(item.id, name.value).catch((err) => alert(err.message || err));
+    });
+    const prompt = document.createElement("p");
+    prompt.className = "lib-prompt";
+    prompt.textContent = item.prompt || (item.kind === "upload" ? "Original photo" : "");
+    prompt.title = item.prompt || "";
+    const row = document.createElement("div");
+    row.className = "lib-row";
+    const useBtn = document.createElement("button");
+    useBtn.type = "button";
+    useBtn.className = "ghost sm";
+    useBtn.textContent = "Fuck this one";
+    useBtn.addEventListener("click", () => useLibraryItem(item.id).catch((err) => alert(err.message || err)));
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.className = "ghost sm";
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", () => deleteLibraryItem(item.id).catch((err) => alert(err.message || err)));
+    row.appendChild(useBtn);
+    row.appendChild(delBtn);
+    meta.appendChild(name);
+    meta.appendChild(prompt);
+    meta.appendChild(row);
+    card.appendChild(img);
+    card.appendChild(meta);
+    grid.appendChild(card);
+  }
+}
+
+async function useLibraryItem(id) {
+  const data = await api(`/api/library/${id}/use`, { method: "POST" });
+  if (state.refImage) {
+    state.undoStack.push({ filename: state.refImage.filename, url: state.refImage.url });
+  }
+  setRefImage({ filename: data.filename, url: data.url });
+  state.librarySelected = id;
+  renderLibrary();
+  if (state.mode !== "edit") {
+    await enterStudio("edit");
+  }
+}
+
+async function renameLibraryItem(id, name) {
+  const item = await api(`/api/library/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ name }),
+  });
+  const idx = state.libraryItems.findIndex((it) => it.id === id);
+  if (idx >= 0) state.libraryItems[idx] = item;
+  renderLibrary();
+}
+
+async function deleteLibraryItem(id) {
+  await api(`/api/library/${id}`, { method: "DELETE" });
+  state.libraryItems = state.libraryItems.filter((it) => it.id !== id);
+  if (state.librarySelected === id) state.librarySelected = null;
+  renderLibrary();
+}
+
+async function uploadToLibrary(file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch("/api/library/upload", { method: "POST", body: fd });
+  if (!res.ok) throw new Error("Library upload failed");
+  const item = await res.json();
+  state.libraryItems = [item, ...state.libraryItems.filter((it) => it.id !== item.id)];
+  renderLibrary();
+  if (item.upload_filename) {
+    if (state.refImage) {
+      state.undoStack.push({ filename: state.refImage.filename, url: state.refImage.url });
+    }
+    setRefImage({ filename: item.upload_filename, url: item.upload_url });
+    state.librarySelected = item.id;
+    renderLibrary();
+  }
+  return item;
+}
+
+async function saveTakeToLibrary(imageFile) {
+  const cur = (state.shoot?.frames || []).find((f) => f.image_file === imageFile);
+  const item = await api("/api/library/from-output", {
+    method: "POST",
+    body: JSON.stringify({
+      name: imageFile,
+      prompt: state.prompt || state.lastGenerate?.prompt || "",
+      scene: state.scene,
+      mode: catalogMode(),
+      seed: cur?.seed ?? null,
+    }),
+  });
+  state.libraryItems = [item, ...state.libraryItems.filter((it) => it.id !== item.id)];
+  renderLibrary();
+  renderFilmstrip();
+  return item;
 }
 
 async function continueFromOutput(imageFile) {
@@ -1030,14 +1168,18 @@ function renderFilmstrip() {
     .join("");
   const mainImg = needPick || (cur.takes || []).length > 1
     ? `<div class="take-pair">${takesHtml}</div>
-       ${needPick ? `<p class="muted">Pick the keeper. Then continue from it.</p>` : ""}`
+       ${needPick ? `<p class="muted">Pick the keeper. Then fuck her from that take.</p>` : ""}`
     : `<img src="${escapeHtml(cur.image_url)}" alt="${escapeHtml(cur.label || "")}" />`;
+  const inLib = (state.libraryItems || []).some(
+    (it) => it.source_file === cur.image_file || (cur.image_file && (it.filename || "").includes(cur.image_file))
+  );
   hero.innerHTML = `
+    <div class="take-hero-frame">
     ${mainImg}
     <div class="actions">
       ${
         cur.image_file && !needPick
-          ? `<button type="button" class="ghost sm" data-continue="${escapeHtml(cur.image_file)}">Use as subject</button>`
+          ? `<button type="button" class="ghost sm" data-continue="${escapeHtml(cur.image_file)}">Fuck this one</button>`
           : ""
       }
       ${
@@ -1047,10 +1189,18 @@ function renderFilmstrip() {
           : ""
       }
       ${
+        cur.image_file && !needPick
+          ? `<button type="button" class="ghost sm" data-save-lib="${escapeHtml(cur.image_file)}" ${
+              inLib ? "disabled" : ""
+            }>${inLib ? "In library" : "Save to library"}</button>`
+          : ""
+      }
+      ${
         cur.image_url
           ? `<a class="file-btn" href="${escapeHtml(cur.image_url)}" download>Download</a>`
           : ""
       }
+    </div>
     </div>`;
 }
 
@@ -1191,20 +1341,14 @@ function applyModeChrome() {
   const run = $("#btn-generate");
   if (run) {
     run.textContent =
-      kind === "undress"
-        ? "Undress"
-        : kind === "pose" && state.studioSimple
-          ? "Make scene"
-          : kind === "pose"
-            ? "Apply pose"
-            : "Generate";
+      kind === "undress" ? "Strip her" : kind === "pose" ? "Fuck her" : "Generate";
   }
   const wrap = $("#ref-wrap");
   if (wrap) {
     wrap.classList.toggle("required", edit);
     const label = wrap.childNodes[0];
     if (label && label.nodeType === Node.TEXT_NODE) {
-      label.textContent = edit ? "Source image " : "Optional reference ";
+      label.textContent = edit ? "Her photo " : "Optional reference ";
     }
   }
   const sys = $("#system-line");
@@ -1216,31 +1360,29 @@ function applyModeChrome() {
   if (title) {
     title.textContent =
       kind === "undress"
-        ? "Undress"
-        : kind === "pose" && state.studioSimple
-          ? "Studio"
-          : kind === "pose"
-            ? "Pose"
-            : edit
-              ? "Edit"
-              : "Scene";
+        ? "Strip her"
+        : kind === "pose"
+          ? "Fuck her"
+          : edit
+            ? "Edit"
+            : "Scene";
   }
   const notes = $("#notes-quick");
   if (notes) {
     notes.placeholder =
       kind === "undress"
-        ? "Optional notes (outfit details, jewelry to keep)…"
+        ? "Optional — jewelry to keep, what to rip off…"
         : kind === "pose"
-          ? "Optional notes for the new pose…"
+          ? "Optional — extra filth for this fuck…"
           : "Optional free-text notes / override lines…";
   }
   const sub = document.querySelector(".sub");
   if (sub) {
     sub.textContent =
       kind === "undress"
-        ? "Undress → same person, same pose"
+        ? "Strip her — same face, same pose, clothes off"
         : kind === "pose"
-          ? "Your photo. Pick a pose and extras."
+          ? "Your photo. Spread her. Put a cock in her."
           : "Scene composer → mflux · private local gen";
   }
   const sl = $("#eng-strength");
@@ -1249,17 +1391,15 @@ function applyModeChrome() {
   $("#aspect-row")?.classList.toggle("hidden", edit);
   $("#btn-edit-kinds")?.classList.toggle("hidden", !edit || !kind);
   $("#btn-reset-scene")?.classList.toggle("hidden", edit && !kind);
-  const poseSimple = kind === "pose" && state.studioSimple;
-  $("#btn-studio-advanced")?.classList.toggle("hidden", kind !== "pose");
-  const adv = $("#btn-studio-advanced");
-  if (adv) adv.textContent = state.studioSimple ? "Advanced" : "Simple";
-  $("#btn-toggle-prompt")?.classList.toggle("hidden", !poseSimple);
-  $("#scene-studio")?.classList.toggle("hidden", !poseSimple);
-  $("#builder-root")?.classList.toggle("hidden", poseSimple || (edit && !kind));
+  const editSimple = kind === "pose" || kind === "undress";
+  $("#btn-toggle-prompt")?.classList.toggle("hidden", !editSimple);
+  $("#scene-studio")?.classList.toggle("hidden", kind !== "pose");
+  $("#builder-root")?.classList.toggle("hidden", kind === "pose" || (edit && !kind));
   const layout = $("#studio");
-  layout?.classList.toggle("simple-studio", poseSimple);
-  layout?.classList.toggle("show-prompt", poseSimple && state.showPrompt);
-  if (poseSimple) renderSceneStudio();
+  layout?.classList.toggle("simple-studio", editSimple);
+  layout?.classList.toggle("show-prompt", editSimple && state.showPrompt);
+  $("#btn-pick-library")?.classList.toggle("hidden", !edit);
+  if (kind === "pose") renderSceneStudio();
 }
 
 function showHome() {
@@ -1268,6 +1408,7 @@ function showHome() {
   $("#studio")?.classList.remove("simple-studio", "show-prompt");
   $("#btn-home")?.classList.add("hidden");
   state.editKind = null;
+  setLibraryOpen(false);
   $("#edit-picker")?.classList.add("hidden");
   $("#scene-studio")?.classList.add("hidden");
   $("#builder-root")?.classList.remove("hidden");
@@ -1301,7 +1442,6 @@ async function enterEditKind(kind) {
   state.systemPrompts = { ...state.systemPrompts, ...(defaults.system_prompts || {}) };
   state.manualScales = {};
   state.winner = null;
-  state.studioSimple = next === "pose";
   state.showPrompt = false;
   if (next === "pose") {
     state.scenes = await api("/api/scenes").catch(() => ({ extras: [], scenes: [] }));
@@ -1345,6 +1485,7 @@ async function enterStudio(mode) {
       applyModeChrome();
       showEditPicker();
       $("#builder-root").innerHTML = "";
+      setLibraryOpen(true);
     } else {
       const [schema, defaults] = await Promise.all([
         api(`/api/schema?mode=${state.mode}`),
@@ -1390,7 +1531,7 @@ function setBusy(busy) {
 
 async function generateRecipe() {
   if (!state.refImage) {
-    alert("Need a source photo.");
+    alert("Need her photo. Pick one from the library or upload it.");
     return;
   }
   const plan = studioPlan();
@@ -1452,10 +1593,10 @@ async function generate() {
     return;
   }
   if (state.mode === "edit" && !state.refImage) {
-    alert("Edit image needs a source photo. Choose an image first.");
+    alert("Need her photo. Pick one from the library or upload it.");
     return;
   }
-  if (state.editKind === "pose" && state.studioSimple) {
+  if (state.editKind === "pose") {
     await generateRecipe();
     return;
   }
@@ -1559,6 +1700,7 @@ function pollJob(id) {
           const waitPick = lastDone.takes?.length > 1 && !lastDone.picked;
           if (!waitPick) selectShootFrame(lastDone.index).catch(() => {});
         }
+        loadLibrary().catch(() => {});
       } else if (job.status === "error") {
         clearInterval(state.pollTimer);
         setBusy(false);
@@ -1612,6 +1754,7 @@ async function init() {
   state.engine = defaults.engine || {};
   showHome();
   ensureEmptyHint();
+  loadLibrary().catch(() => {});
   await refreshEngineBadge();
   setInterval(refreshEngineBadge, 15000);
 
@@ -1672,6 +1815,13 @@ async function init() {
       );
       return;
     }
+    const saveLib = e.target.closest("[data-save-lib]");
+    if (saveLib) {
+      saveTakeToLibrary(saveLib.dataset.saveLib).catch((err) =>
+        alert(err.message || "Could not save to library")
+      );
+      return;
+    }
     const cont = e.target.closest("[data-continue]");
     if (cont) {
       if (state.shoot) state.shoot.subjectIndex = null;
@@ -1689,13 +1839,6 @@ async function init() {
     renderSceneStudio();
     await runCompose();
   });
-  $("#btn-studio-advanced")?.addEventListener("click", () => {
-    if (state.editKind !== "pose") return;
-    state.studioSimple = !state.studioSimple;
-    applyModeChrome();
-    renderBuilder();
-    renderSceneStudio();
-  });
   $("#btn-toggle-prompt")?.addEventListener("click", () => {
     state.showPrompt = !state.showPrompt;
     applyModeChrome();
@@ -1711,6 +1854,23 @@ async function init() {
       console.error(err);
       alert(`Could not open ${btn.dataset.editKind}: ${err.message || err}`);
     });
+  });
+  $("#btn-library")?.addEventListener("click", () => {
+    setLibraryOpen(!state.libraryOpen);
+  });
+  $("#btn-pick-library")?.addEventListener("click", () => {
+    setLibraryOpen(true);
+  });
+  $("#library-upload")?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      await uploadToLibrary(file);
+      setLibraryOpen(true);
+    } catch (err) {
+      alert(err.message || "Upload failed");
+    }
   });
   $("#btn-clear-chat").addEventListener("click", () => {
     $("#chat-thread").innerHTML = "";

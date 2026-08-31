@@ -9,20 +9,20 @@ groups:
         type: choice
         default: nude
         options:
-          - { id: nude, label: Nude }
-          - { id: lingerie, label: Lingerie }
-          - { id: partially, label: Partially clothed }
-          - { id: dress_hiked, label: Dress hiked up }
+          - { id: nude, label: Naked, icon: "✨", blurb: "Strip everything. Tits, pussy, asshole out"}
+          - { id: lingerie, label: Lingerie, icon: "👙", blurb: "Tiny set, her cunt barely covered"}
+          - { id: partially, label: Half dressed, icon: "👕", blurb: "Clothes yanked, holes showing"}
+          - { id: dress_hiked, label: Dress hiked, icon: "👗", blurb: "Skirt up, no panties"}
 
       - id: heels
         label: High heels
         type: choice
         default: none
         options:
-          - { id: none, label: None }
-          - { id: black, label: Black }
-          - { id: red, label: Red }
-          - { id: blue, label: Blue }
+          - { id: none, label: Barefoot, icon: "🦶", blurb: "No shoes"}
+          - { id: black, label: Black stilettos, icon: "👠", blurb: "Classic fuck-me heels"}
+          - { id: red, label: Red heels, icon: "👠", blurb: "Loud red, still on"}
+          - { id: blue, label: Blue heels, icon: "👠", blurb: "Blue fuck-me heels"}
 
 engine_defaults:
   width: 1024

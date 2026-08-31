@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import threading
 import time
 import uuid
@@ -11,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from src.engine import EngineError, engine
+from src.library import ingest_output
 
 
 class JobStatus(str, Enum):
@@ -34,6 +36,54 @@ class Job:
     error: str | None = None
     result: dict[str, Any] | None = None
     request: dict[str, Any] = field(default_factory=dict)
+
+
+def _library_ingest_job(job: Job) -> None:
+    """Copy finished takes into /data/library. No-op if already indexed."""
+    req = job.request or {}
+    result = job.result or {}
+    outputs = Path(os.environ.get("STUDIO_OUTPUTS_DIR", "/data/outputs"))
+    seen: set[str] = set()
+    entries: list[tuple[str, str | None, Any]] = []
+    frames = result.get("steps") if isinstance(result.get("steps"), list) else None
+    if frames:
+        for step in frames:
+            prompt = step.get("prompt") or result.get("prompt") or req.get("prompt")
+            takes = step.get("takes") if isinstance(step.get("takes"), list) else None
+            if takes:
+                for take in takes:
+                    file_name = take.get("image_file")
+                    if file_name:
+                        entries.append((str(file_name), prompt, take.get("seed")))
+            elif step.get("image_file"):
+                entries.append((str(step["image_file"]), prompt, step.get("seed")))
+    elif result.get("image_file"):
+        entries.append(
+            (
+                str(result["image_file"]),
+                result.get("prompt") or req.get("prompt"),
+                result.get("seed") if result.get("seed") is not None else req.get("seed"),
+            )
+        )
+    saved: list[dict[str, Any]] = []
+    for file_name, prompt, seed in entries:
+        base = Path(file_name).name
+        if not base or base in seen:
+            continue
+        seen.add(base)
+        item = ingest_output(
+            outputs / base,
+            prompt=prompt,
+            scene=req.get("scene"),
+            mode=str(req.get("system_mode") or req.get("mode") or ""),
+            loras=result.get("loras") or req.get("loras"),
+            seed=seed,
+        )
+        if item:
+            saved.append(item)
+    if saved:
+        result["library"] = saved
+        job.result = result
 
 
 class JobQueue:
@@ -126,7 +176,10 @@ class JobQueue:
                 "seed": req.get("seed"),
                 "prompt": req["prompt"],
                 "loras": req.get("loras") or [],
+                "scene": req.get("scene") or {},
+                "mode": req.get("system_mode") or req.get("mode"),
             }
+            _library_ingest_job(job)
         except EngineError as e:
             job.status = JobStatus.error
             job.error = str(e)
@@ -164,6 +217,7 @@ class JobQueue:
         try:
             run_recipe(job, generate_fn=generate_fn, on_inner_progress=lambda _i: None)
             job.status = JobStatus.done
+            _library_ingest_job(job)
         except EngineError as e:
             job.status = JobStatus.error
             job.error = str(e)

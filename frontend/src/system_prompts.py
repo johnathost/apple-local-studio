@@ -112,7 +112,7 @@ SYSTEM_UNDRESS = (
     "System: Clothing-only edit of the source photograph. "
     "Do not change her face, hair, skin complexion, makeup, tattoos, or body shape. "
     "Do not change pose, camera, framing, lighting, or background. "
-    "Only remove or open the clothing. Natural anatomy, photoreal, no text, no watermark."
+    "Only remove or open the clothing. A photograph, no text, no watermark."
 )
 
 SYSTEM_EDIT = (

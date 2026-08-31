@@ -27,14 +27,14 @@
       <p class="home-kicker">What do you want to do?</p>
       <div class="home-cards" id="home-cards">
         <button type="button" class="home-card" data-enter="gen">
-          <span class="home-card-kicker">New scene</span>
+          <span class="home-card-kicker">From scratch</span>
           <span class="home-card-label">Generate</span>
-          <span class="home-card-copy">Build a scene from scratch. You can still drop in an optional reference photo.</span>
+          <span class="home-card-copy">Build a hardcore scene. Optional reference photo if you want her face locked.</span>
         </button>
         <button type="button" class="home-card" data-enter="edit">
           <span class="home-card-kicker">Existing photo</span>
-          <span class="home-card-label">Edit image</span>
-          <span class="home-card-copy">Change a photo you already have. Keep the person, apply only the edits you ask for.</span>
+          <span class="home-card-label">Fuck this photo</span>
+          <span class="home-card-copy">Keep her face. Strip her, spread her, put a cock in her. Same person, new porn.</span>
         </button>
       </div>
     </section>
@@ -46,7 +46,6 @@
           <h2 id="builder-title">Scene</h2>
           <div class="panel-head-actions">
             <button type="button" id="btn-edit-kinds" class="ghost sm hidden">← Edit modes</button>
-            <button type="button" id="btn-studio-advanced" class="ghost sm hidden">Advanced</button>
             <button type="button" id="btn-toggle-prompt" class="ghost sm hidden">Prompt</button>
             <button type="button" id="btn-reset-scene" class="ghost sm">Reset</button>
           </div>
@@ -55,13 +54,13 @@
           <p class="edit-picker-kicker">What kind of edit?</p>
           <button type="button" class="edit-pick" data-edit-kind="undress">
             <span class="home-card-kicker">Same pose</span>
-            <span class="home-card-label">Undress</span>
-            <span class="home-card-copy">Strip clothes. Keep face, skin, hair, makeup, tattoos, and the original camera.</span>
+            <span class="home-card-label">Strip her</span>
+            <span class="home-card-copy">Clothes off. Same face, same pose, same camera. Tits, pussy, and asshole out.</span>
           </button>
           <button type="button" class="edit-pick" data-edit-kind="pose">
             <span class="home-card-kicker">Restage</span>
-            <span class="home-card-label">Pose edit</span>
-            <span class="home-card-copy">Put her on her back or on all fours. Holes, toys, gangbang.</span>
+            <span class="home-card-label">Fuck her</span>
+            <span class="home-card-copy">Spread her on her back. Cock in her pussy or asshole. Toys, gape, gangbang.</span>
           </button>
         </div>
         <div id="scene-studio" class="scene-studio hidden"></div>
@@ -73,11 +72,22 @@
         <div class="panel-head">
           <h2>Results</h2>
           <div class="panel-head-actions">
+            <button type="button" id="btn-library" class="ghost sm">Library</button>
             <button type="button" id="btn-undo-session" class="ghost sm hidden">Undo subject</button>
             <button type="button" id="btn-clear-chat" class="ghost sm">Clear</button>
           </div>
         </div>
         <p id="session-line" class="session-line hidden"></p>
+        <div id="library-drawer" class="library-drawer hidden">
+          <div class="library-toolbar">
+            <p class="library-kicker">Saved takes and original photos. Pick one to fuck.</p>
+            <label class="file-btn">
+              Upload photo
+              <input type="file" id="library-upload" accept="image/png,image/jpeg,image/webp" hidden />
+            </label>
+          </div>
+          <div id="library-grid" class="library-grid"></div>
+        </div>
         <div id="work-status" class="work-status hidden" aria-live="polite">
           <div class="cheeky-ph" aria-hidden="true">
             <svg class="cheeky-svg" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg">
@@ -96,7 +106,7 @@
               <ellipse cx="78" cy="108" rx="8" ry="5" fill="#fff" opacity="0.28"/>
               <ellipse cx="162" cy="108" rx="8" ry="5" fill="#fff" opacity="0.28"/>
             </svg>
-            <p class="cheeky-caption">Hold still — she’s being edited</p>
+            <p class="cheeky-caption">Hold still — she’s getting fucked</p>
           </div>
           <div class="work-stage">
             <div class="work-copy">
@@ -122,6 +132,7 @@
                 Optional reference
                 <input type="file" id="ref-image" accept="image/png,image/jpeg,image/webp" hidden />
               </label>
+              <button type="button" id="btn-pick-library" class="ghost sm hidden">From library</button>
               <span id="ref-label" class="muted file-name"></span>
               <button type="button" id="btn-clear-ref" class="ghost sm hidden">Clear</button>
               <label class="file-btn hidden" id="pose-wrap">
