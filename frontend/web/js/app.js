@@ -25,8 +25,7 @@ const state = {
   lastGenerate: null, // last POST /api/generate body
   lastResult: null, // { image_file, image_url }
   scenes: { extras: [], scenes: [] },
-  showPrompt: false,
-  libraryOpen: false,
+  sidePanel: null, // null | "prompt" | "library"
   libraryItems: [],
   librarySelected: null,
   undressFirst: false,
@@ -873,11 +872,20 @@ function updateSessionLine() {
   undo?.classList.toggle("hidden", n === 0);
 }
 
+function setSidePanel(which) {
+  if (which && state.sidePanel === which) which = null;
+  state.sidePanel = which || null;
+  applyModeChrome();
+  if (state.sidePanel === "library") loadLibrary().catch(() => {});
+}
+
 function setLibraryOpen(open) {
-  state.libraryOpen = Boolean(open);
-  $("#library-drawer")?.classList.toggle("hidden", !state.libraryOpen);
-  $("#btn-library")?.classList.toggle("active", state.libraryOpen);
-  if (state.libraryOpen) loadLibrary().catch(() => {});
+  if (open) {
+    if (state.sidePanel !== "library") setSidePanel("library");
+    else applyModeChrome();
+  } else if (state.sidePanel === "library") {
+    setSidePanel(null);
+  }
 }
 
 async function loadLibrary() {
@@ -1335,6 +1343,88 @@ async function retryLast() {
   }
 }
 
+const COL_MIN = { left: 260, right: 240, mid: 280 };
+const colWidths = { left: 400, right: 320 };
+
+function loadColumnWidths() {
+  try {
+    const raw = localStorage.getItem("las-cols");
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (Number.isFinite(parsed.left)) colWidths.left = parsed.left;
+    if (Number.isFinite(parsed.right)) colWidths.right = parsed.right;
+  } catch {
+    /* ignore */
+  }
+}
+
+function saveColumnWidths() {
+  localStorage.setItem("las-cols", JSON.stringify(colWidths));
+}
+
+function clampCol(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+function applyColumnWidths() {
+  const layout = $("#studio");
+  if (!layout) return;
+  const rect = layout.getBoundingClientRect();
+  const gutter = 16;
+  const sideOn =
+    !layout.classList.contains("simple-studio") || layout.classList.contains("show-side");
+  const maxLeft = Math.max(
+    COL_MIN.left,
+    rect.width - COL_MIN.mid - gutter - (sideOn ? colWidths.right + gutter : 0)
+  );
+  colWidths.left = clampCol(colWidths.left, COL_MIN.left, maxLeft);
+  if (sideOn) {
+    const maxRight = Math.max(
+      COL_MIN.right,
+      rect.width - COL_MIN.mid - gutter - colWidths.left - gutter
+    );
+    colWidths.right = clampCol(colWidths.right, COL_MIN.right, maxRight);
+    layout.style.setProperty("--right-w", `${Math.round(colWidths.right)}px`);
+  } else {
+    layout.style.removeProperty("--right-w");
+  }
+  layout.style.setProperty("--left-w", `${Math.round(colWidths.left)}px`);
+}
+
+function bindColumnResize() {
+  const layout = $("#studio");
+  if (!layout) return;
+  layout.addEventListener("pointerdown", (e) => {
+    const handle = e.target.closest("[data-resize]");
+    if (!handle || window.matchMedia("(max-width: 860px)").matches) return;
+    const side = handle.dataset.resize;
+    if (side === "right" && layout.classList.contains("simple-studio") && !layout.classList.contains("show-side")) {
+      return;
+    }
+    const startX = e.clientX;
+    const startLeft = colWidths.left;
+    const startRight = colWidths.right;
+    layout.classList.add("resizing");
+    handle.setPointerCapture?.(e.pointerId);
+    const onMove = (ev) => {
+      const dx = ev.clientX - startX;
+      if (side === "left") colWidths.left = startLeft + dx;
+      else colWidths.right = startRight - dx;
+      applyColumnWidths();
+    };
+    const onUp = () => {
+      layout.classList.remove("resizing");
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      saveColumnWidths();
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    e.preventDefault();
+  });
+  window.addEventListener("resize", () => applyColumnWidths());
+}
+
 function applyModeChrome() {
   const edit = state.mode === "edit";
   const kind = state.editKind;
@@ -1391,24 +1481,44 @@ function applyModeChrome() {
   $("#aspect-row")?.classList.toggle("hidden", edit);
   $("#btn-edit-kinds")?.classList.toggle("hidden", !edit || !kind);
   $("#btn-reset-scene")?.classList.toggle("hidden", edit && !kind);
-  const editSimple = kind === "pose" || kind === "undress";
-  $("#btn-toggle-prompt")?.classList.toggle("hidden", !editSimple);
+  const editSimple = edit && (kind === "pose" || kind === "undress" || !kind);
+  const promptBtn = $("#btn-toggle-prompt");
+  promptBtn?.classList.toggle("hidden", !(kind === "pose" || kind === "undress"));
+  if (promptBtn) {
+    const open = state.sidePanel === "prompt";
+    promptBtn.textContent = open ? "Close prompt panel" : "Open prompt panel";
+    promptBtn.classList.toggle("active", open);
+  }
+  const libBtn = $("#btn-library");
+  libBtn?.classList.toggle("hidden", !edit);
+  libBtn?.classList.toggle("active", state.sidePanel === "library");
   $("#scene-studio")?.classList.toggle("hidden", kind !== "pose");
   $("#builder-root")?.classList.toggle("hidden", kind === "pose" || (edit && !kind));
   const layout = $("#studio");
+  const showSide = editSimple ? Boolean(state.sidePanel) : true;
   layout?.classList.toggle("simple-studio", editSimple);
-  layout?.classList.toggle("show-prompt", editSimple && state.showPrompt);
+  layout?.classList.toggle("show-side", Boolean(editSimple && state.sidePanel));
+  const promptPane = $("#prompt-pane");
+  const libPane = $("#library-pane");
+  if (editSimple) {
+    promptPane?.classList.toggle("hidden", state.sidePanel !== "prompt");
+    libPane?.classList.toggle("hidden", state.sidePanel !== "library");
+  } else {
+    promptPane?.classList.remove("hidden");
+    libPane?.classList.add("hidden");
+  }
   $("#btn-pick-library")?.classList.toggle("hidden", !edit);
+  applyColumnWidths();
   if (kind === "pose") renderSceneStudio();
 }
 
 function showHome() {
   $("#home")?.classList.remove("hidden");
   $("#studio")?.classList.add("hidden");
-  $("#studio")?.classList.remove("simple-studio", "show-prompt");
+  $("#studio")?.classList.remove("simple-studio", "show-side");
   $("#btn-home")?.classList.add("hidden");
   state.editKind = null;
-  setLibraryOpen(false);
+  state.sidePanel = null;
   $("#edit-picker")?.classList.add("hidden");
   $("#scene-studio")?.classList.add("hidden");
   $("#builder-root")?.classList.remove("hidden");
@@ -1442,7 +1552,6 @@ async function enterEditKind(kind) {
   state.systemPrompts = { ...state.systemPrompts, ...(defaults.system_prompts || {}) };
   state.manualScales = {};
   state.winner = null;
-  state.showPrompt = false;
   if (next === "pose") {
     state.scenes = await api("/api/scenes").catch(() => ({ extras: [], scenes: [] }));
   }
@@ -1752,6 +1861,8 @@ async function init() {
   const defaults = await api("/api/defaults?mode=gen").catch(() => ({}));
   state.systemPrompts = defaults.system_prompts || state.systemPrompts;
   state.engine = defaults.engine || {};
+  loadColumnWidths();
+  bindColumnResize();
   showHome();
   ensureEmptyHint();
   loadLibrary().catch(() => {});
@@ -1840,8 +1951,7 @@ async function init() {
     await runCompose();
   });
   $("#btn-toggle-prompt")?.addEventListener("click", () => {
-    state.showPrompt = !state.showPrompt;
-    applyModeChrome();
+    setSidePanel(state.sidePanel === "prompt" ? null : "prompt");
   });
   $("#btn-edit-kinds")?.addEventListener("click", () => {
     showEditPicker();
@@ -1856,10 +1966,10 @@ async function init() {
     });
   });
   $("#btn-library")?.addEventListener("click", () => {
-    setLibraryOpen(!state.libraryOpen);
+    setSidePanel(state.sidePanel === "library" ? null : "library");
   });
   $("#btn-pick-library")?.addEventListener("click", () => {
-    setLibraryOpen(true);
+    setSidePanel("library");
   });
   $("#library-upload")?.addEventListener("change", async (e) => {
     const file = e.target.files?.[0];

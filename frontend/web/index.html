@@ -46,7 +46,8 @@
           <h2 id="builder-title">Scene</h2>
           <div class="panel-head-actions">
             <button type="button" id="btn-edit-kinds" class="ghost sm hidden">← Edit modes</button>
-            <button type="button" id="btn-toggle-prompt" class="ghost sm hidden">Prompt</button>
+            <button type="button" id="btn-toggle-prompt" class="ghost sm hidden">Open prompt panel</button>
+            <button type="button" id="btn-library" class="ghost sm hidden">Library</button>
             <button type="button" id="btn-reset-scene" class="ghost sm">Reset</button>
           </div>
         </div>
@@ -67,27 +68,18 @@
         <div id="builder-root" class="builder-scroll"></div>
       </aside>
 
+      <div class="col-resizer" data-resize="left" role="separator" aria-orientation="vertical" aria-label="Resize options panel"></div>
+
       <!-- Chat / history -->
       <section class="panel chat">
         <div class="panel-head">
           <h2>Results</h2>
           <div class="panel-head-actions">
-            <button type="button" id="btn-library" class="ghost sm">Library</button>
             <button type="button" id="btn-undo-session" class="ghost sm hidden">Undo subject</button>
             <button type="button" id="btn-clear-chat" class="ghost sm">Clear</button>
           </div>
         </div>
         <p id="session-line" class="session-line hidden"></p>
-        <div id="library-drawer" class="library-drawer hidden">
-          <div class="library-toolbar">
-            <p class="library-kicker">Saved takes and original photos. Pick one to fuck.</p>
-            <label class="file-btn">
-              Upload photo
-              <input type="file" id="library-upload" accept="image/png,image/jpeg,image/webp" hidden />
-            </label>
-          </div>
-          <div id="library-grid" class="library-grid"></div>
-        </div>
         <div id="work-status" class="work-status hidden" aria-live="polite">
           <div class="cheeky-ph" aria-hidden="true">
             <svg class="cheeky-svg" viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg">
@@ -151,8 +143,11 @@
         </div>
       </section>
 
-      <!-- Prompt + LoRA preview -->
-      <aside class="panel preview">
+      <div class="col-resizer" data-resize="right" role="separator" aria-orientation="vertical" aria-label="Resize side panel"></div>
+
+      <!-- Prompt / Library rail -->
+      <aside class="panel preview" id="side-panel">
+        <div id="prompt-pane" class="side-pane">
         <div class="panel-head">
           <h2>Prompt &amp; LoRAs</h2>
           <label class="toggle">
@@ -199,6 +194,20 @@
         <div id="tag-list" class="tag-list"></div>
 
         <div id="job-status" class="job-status hidden"></div>
+        </div>
+        <div id="library-pane" class="side-pane library-drawer hidden">
+          <div class="panel-head">
+            <h2>Library</h2>
+          </div>
+          <div class="library-toolbar">
+            <p class="library-kicker">Saved takes and original photos. Pick one to fuck.</p>
+            <label class="file-btn">
+              Upload photo
+              <input type="file" id="library-upload" accept="image/png,image/jpeg,image/webp" hidden />
+            </label>
+          </div>
+          <div id="library-grid" class="library-grid"></div>
+        </div>
       </aside>
     </main>
   </div>
